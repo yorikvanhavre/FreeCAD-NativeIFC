@@ -19,6 +19,8 @@ functionality found in BlenderBIM.
 
 #### Auto install
 
+*The advantage of this approach is the ability to update FreeCAD-BlenderBIM workbench via the addon manager.* 
+
 * Open the [Addon Manager preferences](https://wiki.freecad.org/Preferences_Editor#Addon_Manager) via `Edit` → `Preferences` → `Addon Manager` → `Custom Repositories`
 * Add `https://github.com/yorikvanhavre/FreeCAD-BlenderBIM` to `Custom Repositories` list and press `OK`.
 * Start the `Tools` → `Addon Manager` which will automatically find FreeCAD-BlenderBIM addon in the workbench list. 
