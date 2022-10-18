@@ -35,7 +35,8 @@ functionality found in BlenderBIM.
 #### Documentation
 
 * [IfcOpenShell github](https://github.com/IfcOpenShell/IfcOpenShell)
-* [BlenderBIM ifcOpenShell docs](https://blenderbim.org/docs/)
+* [IfcOpenShell docs](https://blenderbim.org/docs-python/ifcopenshell.html)
+* [BlenderBIM docs](https://blenderbim.org/docs/)
 
 #### Code examples
 
