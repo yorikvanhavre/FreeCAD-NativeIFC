@@ -1,12 +1,12 @@
-# BlenderBIM addon for FreeCAD
+## BlenderBIM addon for FreeCAD
 
 This is a preliminary stub to integrate [BlenderBIM](https://blenderbim.org) 
 into FreeCAD. The final goal is to offer in FreeCAD the same level of 
 functionality found in BlenderBIM.
 
-### The plan
+### Roadmap
 
-#### 1. Get a working concept up (no geometry just yet)
+#### Get a working concept up (no geometry just yet)
 
 * [x] Write an importer that allows an initial import of an IFC file into FreeCAD
 * [x] Write a custom parametric FreeCAD object that represents an IFC document in the FreeCAD tree
@@ -17,15 +17,30 @@ functionality found in BlenderBIM.
 
 ### Installation & Usage
 
-#### To install
+#### Auto install
 
-* Navigate to your FreeCAD Mods folder (~/.local/share/FreeCAD/Mods)
+*The advantage of this approach is the ability to update FreeCAD-BlenderBIM workbench via the addon manager.* 
+
+* Open the [Addon Manager preferences](https://wiki.freecad.org/Preferences_Editor#Addon_Manager) via `Edit` → `Preferences` → `Addon Manager` → `Custom Repositories`
+* Add `https://github.com/yorikvanhavre/FreeCAD-BlenderBIM` to `Custom Repositories` list and press `OK`.
+* Start the `Tools` → `Addon Manager` which will automatically find FreeCAD-BlenderBIM addon in the workbench list. 
+* Install FreeCAD-BlenderBIM addon  
+* Restart FreeCAD  
+**Result:** 
+FreeCAD-BlenderBIM workbench should be available in the workbench dropdown list.
+
+
+#### Manual install
+
+* Navigate to your FreeCAD Mods folder (`~/.local/share/FreeCAD/Mods`)
 * Clone this repo there: `git clone https://github.com/yorikvanhavre/FreeCAD-BlenderBIM.git`
+* Restart FreeCAD  
+**Result:** FreeCAD-BlenderBIM workbench should be available in the workbench dropdown list.
 
 #### To test
 
 * Run FreeCAD
-* File -> Open or File -> Insert, select an IFC file
+* `File` → `Open` or `File` → `Insert`, select an IFC file
 * Select the BlenderBIM importer (bb_import)
 * A FreeCAD document is created
 * An object is created representing the IFC root document + project
@@ -52,7 +67,7 @@ d = ifcopenshell.util.element.get_decomposition(p)
 
 Other functions:
 
-**get_aggregate()**
+**`get_aggregate()`**
 
     Retrieves the aggregate of an element.
     
@@ -63,7 +78,7 @@ Other functions:
     element = file.by_type("IfcBeam")[0]
     aggregate = ifcopenshell.util.element.get_aggregate(element)
 
-**get_container()**
+**`get_container()`**
 
     Retrieves the spatial structure container of an element.
     
@@ -82,7 +97,7 @@ Other functions:
         element = file.by_type("IfcWall")[0]
         container = ifcopenshell.util.element.get_container(element)
 
-**get_decomposition()**
+**`get_decomposition()`**
 
     Retrieves the decomposition of an element.
     
@@ -94,7 +109,7 @@ Other functions:
         element = file.by_type("IfcProject")[0]
         decomposition = ifcopenshell.util.element.get_decomposition(element)
 
-**get_elements_by_material()**
+**`get_elements_by_material()`**
 
     Retrieves the elements related to a material.
     
@@ -106,9 +121,9 @@ Other functions:
     material = file.by_type("IfcMaterial")[0]
     elements = ifcopenshell.util.element.get_elements_by_material(file, material)
 
-**get_elements_by_representation()**
+**`get_elements_by_representation()`**
 
-**get_elements_by_style()**
+**`get_elements_by_style()`**
 
     Retrieves the elements related to a style.
     
@@ -120,11 +135,11 @@ Other functions:
     style = file.by_type("IfcSurfaceStyle")[0]
     elements = ifcopenshell.util.element.get_elements_by_style(file, style)
 
-**get_layers()**
+**`get_layers()`**
 
-**get_material()**
+**`get_material()`**
 
-**get_parts()**
+**`get_parts()`**
 
     Retrieves the parts of an element.
     
@@ -135,7 +150,7 @@ Other functions:
     element = file.by_type("IfcElementAssembly")[0]
     parts = ifcopenshell.util.element.get_parts(element)
 
-**get_predefined_type()**
+**`get_predefined_type()`**
 
     Retrieves the PrefefinedType attribute of an element.
     
@@ -146,11 +161,11 @@ Other functions:
     element = ifcopenshell.by_type("IfcWall")[0]
     predefined_type = ifcopenshell.util.element.get_predefined_type(element)
 
-**get_properties()**
+**`get_properties()`**
 
-**get_property_definition()**
+**`get_property_definition()`**
 
-**get_psets()**
+**`get_psets()`**
 
     Retrieve property sets, their related properties' names & values and ids.
     
@@ -166,9 +181,9 @@ Other functions:
         qsets = ifcopenshell.util.element.get_psets(element, qtos_only=True)
         psets_and_qtos = ifcopenshell.util.element.get_psets(element)
 
-**get_quantities()**
+**`get_quantities()`**
 
-**get_referenced_structures()**
+**`get_referenced_structures()`**
 
     Retreives a list of referenced structural elements
     
@@ -180,7 +195,7 @@ Other functions:
         element = file.by_type("IfcWall")[0]
         print(ifcopenshell.util.element.get_referenced_structures(element))
 
-**get_type()**
+**`get_type()`**
 
     Retrieves the Element Type entity related to an element entity.
     
@@ -191,4 +206,4 @@ Other functions:
     element = ifcopenshell.by_type("IfcWall")[0]
     element_type = ifcopenshell.util.element.get_type(element)
 
-**get_types()**
+**`get_types()`**
