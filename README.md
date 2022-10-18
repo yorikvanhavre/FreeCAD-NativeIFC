@@ -15,6 +15,21 @@ functionality found in BlenderBIM.
 * [ ] Write a hook system that allows FreeCAD to save the IFC document
 * [ ] Test what happens when opening a bb file in vanilla FreeCAD
 
+### Installation & Usage
+
+#### To install
+
+* Navigate to your FreeCAD Mods folder (~/.local/share/FreeCAD/Mods)
+* Clone this repo there: `git clone https://github.com/yorikvanhavre/FreeCAD-BlenderBIM.git`
+
+#### To test
+
+* Run FreeCAD
+* File -> Open or File -> Insert, select an IFC file
+* Select the BlenderBIM importer (bb_import)
+* A FreeCAD document is created
+* An object is created representing the IFC root document + project
+
 ### Notes
 
 #### Documentation
