@@ -20,10 +20,23 @@
 # ***************************************************************************
 
 import os
+import multiprocessing
+import time
 
 import FreeCAD
 import ifcopenshell
+from ifcopenshell import geom
 from bb_viewproviders import bb_vp_document
+import Part
+
+ifcsettings = ifcopenshell.geom.settings()
+ifcsettings.set(ifcsettings.DISABLE_TRIANGULATION, True)
+ifcsettings.set(ifcsettings.USE_BREP_DATA,True)
+ifcsettings.set(ifcsettings.SEW_SHELLS,True)
+ifcsettings.set(ifcsettings.USE_WORLD_COORDS,True)
+ifcsettings.set(ifcsettings.APPLY_LAYERSETS,True)
+
+
 
 def open(filename):
     
@@ -40,16 +53,20 @@ def insert(filename, docname):
 
     """Inserts an IFC document in a FreeCAD document"""
     
+    stime = time.time()
     document = FreeCAD.getDocument(docname)
     create_document(filename, document)
     document.recompute()
+    endtime = "%02d:%02d" % (divmod(round(time.time() - stime, 1), 60))
+    fsize = round(os.path.getsize(filename)/1048576, 2)
+    print ("Imported", fsize, "Mb in", endtime)
 
 
 def create_document(filename, document):
 
     """Creates a FreeCAD IFC document object"""
     
-    obj = document.addObject("App::FeaturePython","IfcDocument")
+    obj = document.addObject("Part::FeaturePython","IfcDocument")
     obj.addProperty("App::PropertyString","FilePath","Base","The path to the linked IFC file")
     obj.FilePath = filename
     f = ifcopenshell.open(filename)
@@ -57,6 +74,9 @@ def create_document(filename, document):
     add_properties(p, obj)
     if FreeCAD.GuiUp:
         bb_vp_document.bb_vp_document(obj.ViewObject)
+    geoms = ifcopenshell.util.element.get_decomposition(p)
+    obj.Shape = get_shape(geoms, f)
+
     
 
 def create_object(ifcentity, document):
@@ -104,4 +124,25 @@ def add_properties(ifcentity, obj):
                 obj.addProperty("App::PropertyString", attr, "IFC")
                 if value is not None:
                     setattr(obj, attr, str(value))
+
+
+def get_shape(geoms, ifcfile):
     
+    """Returns a Part shape from a list of IFC entities"""
+
+    shapes = []
+    cores = multiprocessing.cpu_count()-2
+    iterator = ifcopenshell.geom.iterator(ifcsettings, ifcfile, cores, include=geoms, exclude=None)
+    iterator.initialize()
+    while True:
+        item = iterator.get()
+        if item:
+            ifcproduct = ifcfile.by_id(item.guid)
+            brep = item.geometry.brep_data
+            shape = Part.Shape()
+            shape.importBrepFromString(brep, False)
+            shape.scale(1000.0) # IfcOpenShell outputs in meters
+            shapes.append(shape)
+        if not iterator.next():
+            break
+    return Part.makeCompound(shapes)
