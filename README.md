@@ -68,6 +68,7 @@ d = ifcopenshell.util.element.get_decomposition(p)
 Using the geometry iterator
 
 ```python
+import multicore
 settings = ifcopenshell.geom.settings()
 settings.set(settings.DISABLE_TRIANGULATION, True)
 settings.set(settings.USE_BREP_DATA,True)
@@ -76,7 +77,7 @@ settings.set(settings.USE_WORLD_COORDS,True)
 settings.set(settings.APPLY_LAYERSETS,True)
 shapes = []
 cores = multiprocessing.cpu_count()-2
-iterator = ifcopenshell.geom.iterator(ifcsettings, ifcfile, cores, include=geoms, exclude=None)
+iterator = ifcopenshell.geom.iterator(settings, ifcfile, cores, include=entitieslist)
 iterator.initialize()
 while True:
     item = iterator.get()
