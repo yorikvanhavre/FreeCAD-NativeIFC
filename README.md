@@ -26,8 +26,7 @@ functionality found in BlenderBIM.
 * Start the `Tools` → `Addon Manager` which will automatically find FreeCAD-BlenderBIM addon in the workbench list. 
 * Install FreeCAD-BlenderBIM addon  
 * Restart FreeCAD  
-**Result:** 
-FreeCAD-BlenderBIM workbench should be available in the workbench dropdown list.
+**Result:** FreeCAD-BlenderBIM IFC importer should be available in open/insert file dialogs
 
 
 #### Manual install
@@ -35,7 +34,7 @@ FreeCAD-BlenderBIM workbench should be available in the workbench dropdown list.
 * Navigate to your FreeCAD Mods folder (`~/.local/share/FreeCAD/Mods`)
 * Clone this repo there: `git clone https://github.com/yorikvanhavre/FreeCAD-BlenderBIM.git`
 * Restart FreeCAD  
-**Result:** FreeCAD-BlenderBIM workbench should be available in the workbench dropdown list.
+**Result:** FreeCAD-BlenderBIM IFC importer should be available in open/insert file dialogs
 
 #### To test
 
