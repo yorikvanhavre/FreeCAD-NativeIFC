@@ -52,6 +52,8 @@ functionality found in BlenderBIM.
 * [IfcOpenShell github](https://github.com/IfcOpenShell/IfcOpenShell)
 * [IfcOpenShell docs](https://blenderbim.org/docs-python/ifcopenshell.html)
 * [BlenderBIM docs](https://blenderbim.org/docs/)
+* [IfcOpenShell matrix structire](https://github.com/IfcOpenShell/IfcOpenShell/issues/1440)
+* [IfcOpenShell to FreeCAD matrix conversin](https://pythoncvc.net/?cat=203)
 
 #### Code examples
 
