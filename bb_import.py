@@ -27,6 +27,7 @@ import FreeCAD
 import ifcopenshell
 from ifcopenshell import geom
 from bb_viewproviders import bb_vp_document
+from bb_viewproviders import bb_vp_object
 import Part
 
 SCALE = 1000.0 # IfcOpenShell works in meters, FreeCAD works in mm
@@ -70,7 +71,7 @@ def create_document(filename, document):
         bb_vp_document.bb_vp_document(obj.ViewObject)
     geoms = ifcopenshell.util.element.get_decomposition(p)
     obj.Shape = get_shape(geoms, f)
-
+    return obj
 
 
 def create_object(ifcentity, document):
@@ -79,6 +80,9 @@ def create_object(ifcentity, document):
 
     obj = document.addObject("App::FeaturePython","IfcObject")
     add_properties(ifcentity, obj)
+    # for now this is a shapeless object
+    #obj.Shape = get_shape(ifcentity, ifcfile)
+    return obj
 
 
 def add_properties(ifcentity, obj):
@@ -104,14 +108,14 @@ def add_properties(ifcentity, obj):
                 obj.addProperty("App::PropertyFloat", attr, "IFC")
                 setattr(obj, attr, value)
             elif isinstance(value, ifcopenshell.entity_instance):
-                #value = create_object(value)
+                #value = create_object(value, obj.Document)
                 obj.addProperty("App::PropertyLink", attr, "IFC")
                 #setattr(obj, attr, value)
             elif isinstance(value, (list, tuple)) and value:
                 if isinstance(value[0], ifcopenshell.entity_instance):
-                    nvalue = []
+                    #nvalue = []
                     #for elt in value:
-                    #    nvalue.append(create_object(elt))
+                    #    nvalue.append(create_object(elt, obj.Document))
                     obj.addProperty("App::PropertyLinkList", attr, "IFC")
                     #setattr(obj, attr, nvalue)
             else:
@@ -130,6 +134,9 @@ def get_shape(geoms, ifcfile):
     settings.set(settings.SEW_SHELLS,True)
     shapes = []
     cores = multiprocessing.cpu_count()
+    if not isinstance(geoms,(list,tuple)):
+        geoms = [geoms]
+    # temporary
     geoms = [g for g in geoms if (not g.is_a("IfcFurnishingElement") and not g.is_a("IfcSpace"))]
     iterator = ifcopenshell.geom.iterator(settings, ifcfile, cores, include=geoms)
     iterator.initialize()
