@@ -11,7 +11,7 @@ functionality found in BlenderBIM.
 * [x] Write an importer that allows an initial import of an IFC file into FreeCAD
 * [x] Write a custom parametric FreeCAD object that represents an IFC document in the FreeCAD tree
 * [x] Do an initial geometry import
-* [ ] Write a custom parametric FreeCAD object that represents in IFC product in the FreeCAD tree
+* [x] Write a custom parametric FreeCAD object that represents in IFC product in the FreeCAD tree
 * [ ] Allow to expand a document (reveal its children in FreeCAD in the FreeCAD tree)
 * [ ] Write a hook system that allows FreeCAD to save the IFC document
 * [ ] Test what happens when opening a bb file in vanilla FreeCAD
