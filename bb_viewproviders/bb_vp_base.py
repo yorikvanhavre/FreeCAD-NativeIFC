@@ -34,7 +34,7 @@ class bb_vp_base:
         return []
 
     def getDefaultDisplayMode(self):
-        return "Shaded"
+        return "FlatLines"
 
     def setDisplayMode(self,mode):
         return mode

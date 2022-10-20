@@ -29,19 +29,13 @@ from ifcopenshell import geom
 from bb_viewproviders import bb_vp_document
 import Part
 
-ifcsettings = ifcopenshell.geom.settings()
-ifcsettings.set(ifcsettings.DISABLE_TRIANGULATION, True)
-ifcsettings.set(ifcsettings.USE_BREP_DATA,True)
-ifcsettings.set(ifcsettings.SEW_SHELLS,True)
-ifcsettings.set(ifcsettings.USE_WORLD_COORDS,True)
-ifcsettings.set(ifcsettings.APPLY_LAYERSETS,True)
-
+SCALE = 1000.0 # IfcOpenShell works in meters, FreeCAD works in mm
 
 
 def open(filename):
-    
+
     """Opens an IFC file"""
-    
+
     name = os.path.splitext(os.path.basename(filename))[0]
     doc = FreeCAD.newDocument()
     doc.Label = name
@@ -52,7 +46,7 @@ def open(filename):
 def insert(filename, docname):
 
     """Inserts an IFC document in a FreeCAD document"""
-    
+
     stime = time.time()
     document = FreeCAD.getDocument(docname)
     create_document(filename, document)
@@ -65,7 +59,7 @@ def insert(filename, docname):
 def create_document(filename, document):
 
     """Creates a FreeCAD IFC document object"""
-    
+
     obj = document.addObject("Part::FeaturePython","IfcDocument")
     obj.addProperty("App::PropertyString","FilePath","Base","The path to the linked IFC file")
     obj.FilePath = filename
@@ -77,18 +71,18 @@ def create_document(filename, document):
     geoms = ifcopenshell.util.element.get_decomposition(p)
     obj.Shape = get_shape(geoms, f)
 
-    
+
 
 def create_object(ifcentity, document):
-    
+
     """Creates a FreeCAD object from an IFC entity"""
-    
+
     obj = document.addObject("App::FeaturePython","IfcObject")
     add_properties(ifcentity, obj)
 
 
 def add_properties(ifcentity, obj):
-    
+
     """Adds the properties of the given IFC object to a FreeCAD object"""
 
     if getattr(ifcentity, "Name", None):
@@ -127,22 +121,42 @@ def add_properties(ifcentity, obj):
 
 
 def get_shape(geoms, ifcfile):
-    
+
     """Returns a Part shape from a list of IFC entities"""
 
+    settings = ifcopenshell.geom.settings()
+    settings.set(settings.DISABLE_TRIANGULATION, True)
+    settings.set(settings.USE_BREP_DATA,True)
+    settings.set(settings.SEW_SHELLS,True)
     shapes = []
-    cores = multiprocessing.cpu_count()-2
-    iterator = ifcopenshell.geom.iterator(ifcsettings, ifcfile, cores, include=geoms, exclude=None)
+    cores = multiprocessing.cpu_count()
+    geoms = [g for g in geoms if (not g.is_a("IfcFurnishingElement") and not g.is_a("IfcSpace"))]
+    iterator = ifcopenshell.geom.iterator(settings, ifcfile, cores, include=geoms)
     iterator.initialize()
     while True:
         item = iterator.get()
         if item:
-            ifcproduct = ifcfile.by_id(item.guid)
             brep = item.geometry.brep_data
             shape = Part.Shape()
             shape.importBrepFromString(brep, False)
-            shape.scale(1000.0) # IfcOpenShell outputs in meters
+            mat = get_matrix(item.transformation.matrix.data)
+            shape.scale(SCALE)
+            shape.transformShape(mat)
             shapes.append(shape)
         if not iterator.next():
             break
     return Part.makeCompound(shapes)
+
+
+def get_matrix(ios_matrix):
+
+    """Converts an IfcOpenShell matrix tuple into a FreeCAD matrix"""
+
+    # https://github.com/IfcOpenShell/IfcOpenShell/issues/1440
+    # https://pythoncvc.net/?cat=203
+    m_l = list()
+    for i in range(3):
+        line = list(ios_matrix[i::3])
+        line[-1] *= SCALE
+        m_l.extend(line)
+    return FreeCAD.Matrix(*m_l)
