@@ -30,5 +30,5 @@ class bb_vp_object(bb_vp_base.bb_vp_base):
     def __init__(self, vobj):
         super().__init__(vobj)
     
-    def getIcon(self):
-        return os.path.join(os.path.dirname(os.path.dirname(__file__)),"icons","IFC.svg")
+#    def getIcon(self):
+#        return os.path.join(os.path.dirname(os.path.dirname(__file__)),"icons","IFC.svg")

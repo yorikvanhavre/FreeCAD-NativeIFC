@@ -64,32 +64,33 @@ def create_document(filename, document):
     obj = document.addObject("Part::FeaturePython","IfcDocument")
     obj.addProperty("App::PropertyString","FilePath","Base","The path to the linked IFC file")
     obj.FilePath = filename
-    f = ifcopenshell.open(filename)
-    p = f.by_type("IfcProject")[0]
-    add_properties(p, obj)
+    ifcfile = ifcopenshell.open(filename)
+    project = ifcfile.by_type("IfcProject")[0]
+    add_properties(project, obj)
     if FreeCAD.GuiUp:
         bb_vp_document.bb_vp_document(obj.ViewObject)
     # Default to all IfcElement (in the future, user can configure this as a custom filter
     geoms = ifcfile.by_type("IfcElement")
     # Never load feature elements, they can be lazy loaded
     geoms = [e for e in geoms if not e.is_a("IfcFeatureElement")]
-    obj.Shape = get_shape(geoms, f)
+    obj.Shape = get_shape(geoms, ifcfile)
+    create_document_hierarchy(obj, ifcfile)
     return obj
 
 
-def create_document_hierarchy(ifcfile):
-    # This incomplete function creates a spatial tree
+def create_document_hierarchy(obj, ifcfile):
 
-    def create_child(self, parent, related_objects):
+    """Creates a hierarchy recursively under an object"""
+
+    def create_child(parent, related_objects):
         for element in related_objects:
-            obj = document.addObject("Part::FeaturePython", element.is_a())
-            # How do you make the obj a child of the parent?
+            child = create_object(element, parent.Document)
+            parent.Group = parent.Group + [child] # TODO use group extension
             if element.IsDecomposedBy:
                 for rel in element.IsDecomposedBy:
-                    create_child(obj, rel.RelatedObjects)
+                    create_child(child, rel.RelatedObjects)
 
-    obj = document.addObject("Part::FeaturePython", "IfcProject")
-    for rel in ifcfile.IsDecomposedBy or []:
+    for rel in ifcfile[obj.StepId].IsDecomposedBy or []:
         create_child(obj, rel.RelatedObjects)
 
 
@@ -101,6 +102,8 @@ def create_object(ifcentity, document):
     add_properties(ifcentity, obj)
     # for now this is a shapeless object
     #obj.Shape = get_shape(ifcentity, ifcfile)
+    if FreeCAD.GuiUp:
+        bb_vp_object.bb_vp_object(obj.ViewObject)
     return obj
 
 
@@ -112,6 +115,7 @@ def add_properties(ifcentity, obj):
         obj.Label = ifcentity.Name
     else:
         obj.Label = ifcentity.is_a()
+    obj.addProperty("App::PropertyLinkList", "Group", "Base") # TODO use group extension
     for attr, value in ifcentity.get_info().items():
         if attr == "id":
             attr = "StepId"
