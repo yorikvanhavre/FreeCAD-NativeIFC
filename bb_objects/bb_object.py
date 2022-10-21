@@ -20,55 +20,18 @@
 #*                                                                         *
 #***************************************************************************
 
-class bb_vp_base:
+class bb_object:
     
-    """Base class for all blenderbim view providers"""
+    """Base class for all blenderbim objects"""
     
-    def __init__(self, vobj):
-        vobj.Proxy = self
-    
-    def attach(self, vobj):
-        self.Object = vobj.Object
-   
-    def getDisplayModes(self,obj):
-        return []
-
-    def getDefaultDisplayMode(self):
-        return "FlatLines"
-
-    def setDisplayMode(self,mode):
-        return mode
-
-    def onChanged(self, vp, prop):
-        return
-
-    def updateData(self, fp, prop):
+    def onChanged(self, obj, prop):
         return
 
     def __getstate__(self):
         return None
 
-    def __setstate__(self,state):
+    def __setstate__(self, state):
         return None
     
-    def claimChildren(self):
-        children = []
-        relprops = ["Item","ForLayerSet"] # properties that actually store parents
-        for prop in self.Object.PropertiesList:
-            if prop.startswith("Relating") or (prop in relprops):
-                continue
-            else:
-                value = getattr(self.Object, prop)
-                if hasattr(value, "ViewObject"):
-                    children.append(value)
-                elif isinstance(value, list):
-                    for item in value:
-                        if hasattr(item, "ViewObject"):
-                            children.append(item)
-        for parent in self.Object.InList:
-            for prop in parent.PropertiesList:
-                if prop.startswith("Relating") or (prop in relprops):
-                    value = getattr(parent, prop)
-                    if value == self.Object:
-                        children.append(parent)
-        return children
+    def execute (self, obj):
+        return

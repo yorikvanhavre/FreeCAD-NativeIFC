@@ -26,8 +26,10 @@ import time
 import FreeCAD
 import ifcopenshell
 from ifcopenshell import geom
+from bb_objects import bb_object
 from bb_viewproviders import bb_vp_document
 from bb_viewproviders import bb_vp_object
+
 import Part
 
 SCALE = 1000.0 # IfcOpenShell works in meters, FreeCAD works in mm
@@ -62,13 +64,15 @@ def create_document(filename, document):
     """Creates a FreeCAD IFC document object"""
 
     obj = document.addObject("Part::FeaturePython","IfcDocument")
+    obj.Proxy = bb_object.bb_object()
     obj.addProperty("App::PropertyString","FilePath","Base","The path to the linked IFC file")
     obj.FilePath = filename
     ifcfile = ifcopenshell.open(filename)
+    obj.Proxy.ifcfile = ifcfile
     project = ifcfile.by_type("IfcProject")[0]
     add_properties(project, obj)
     if FreeCAD.GuiUp:
-        bb_vp_document.bb_vp_document(obj.ViewObject)
+        obj.ViewObject.Proxy = bb_vp_document.bb_vp_document()
     # Default to all IfcElement (in the future, user can configure this as a custom filter
     geoms = ifcfile.by_type("IfcElement")
     # Never load feature elements, they can be lazy loaded
@@ -99,11 +103,12 @@ def create_object(ifcentity, document):
     """Creates a FreeCAD object from an IFC entity"""
 
     obj = document.addObject("App::FeaturePython","IfcObject")
+    obj.Proxy = bb_object.bb_object()
     add_properties(ifcentity, obj)
     # for now this is a shapeless object
     #obj.Shape = get_shape(ifcentity, ifcfile)
     if FreeCAD.GuiUp:
-        bb_vp_object.bb_vp_object(obj.ViewObject)
+        obj.ViewObject.Proxy = bb_vp_object.bb_vp_object()
     return obj
 
 

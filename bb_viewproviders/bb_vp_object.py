@@ -20,15 +20,52 @@
 #*                                                                         *
 #***************************************************************************
 
-import os
-from bb_viewproviders import bb_vp_base
+class bb_vp_object:
 
-class bb_vp_object(bb_vp_base.bb_vp_base):
-    
-    """View provider for the IFC object"""
-    
-    def __init__(self, vobj):
-        super().__init__(vobj)
-    
-#    def getIcon(self):
-#        return os.path.join(os.path.dirname(os.path.dirname(__file__)),"icons","IFC.svg")
+    """Base class for all blenderbim view providers"""
+
+    def attach(self, vobj):
+        self.Object = vobj.Object
+
+    def getDisplayModes(self, obj):
+        return []
+
+    def getDefaultDisplayMode(self):
+        return "FlatLines"
+
+    def setDisplayMode(self,mode):
+        return mode
+
+    def onChanged(self, vobj, prop):
+        return
+
+    def updateData(self, obj, prop):
+        return
+
+    def __getstate__(self):
+        return None
+
+    def __setstate__(self, state):
+        return None
+
+    def claimChildren(self):
+        children = []
+        relprops = ["Item","ForLayerSet"] # properties that actually store parents
+        for prop in self.Object.PropertiesList:
+            if prop.startswith("Relating") or (prop in relprops):
+                continue
+            else:
+                value = getattr(self.Object, prop)
+                if hasattr(value, "ViewObject"):
+                    children.append(value)
+                elif isinstance(value, list):
+                    for item in value:
+                        if hasattr(item, "ViewObject"):
+                            children.append(item)
+        for parent in self.Object.InList:
+            for prop in parent.PropertiesList:
+                if prop.startswith("Relating") or (prop in relprops):
+                    value = getattr(parent, prop)
+                    if value == self.Object:
+                        children.append(parent)
+        return children

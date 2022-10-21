@@ -21,14 +21,11 @@
 #***************************************************************************
 
 import os
-from bb_viewproviders import bb_vp_base
+from bb_viewproviders import bb_vp_object
 
-class bb_vp_document(bb_vp_base.bb_vp_base):
+class bb_vp_document(bb_vp_object.bb_vp_object):
     
     """View provider for the IFC document object"""
-    
-    def __init__(self, vobj):
-        super().__init__(vobj)
     
     def getIcon(self):
         return os.path.join(os.path.dirname(os.path.dirname(__file__)),"icons","IFC_doc.svg")
