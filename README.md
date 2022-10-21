@@ -6,13 +6,18 @@ functionality found in BlenderBIM.
 
 ### Roadmap
 
-#### Get a working concept up
+#### 1. Get a working concept up
 
 * [x] Write an importer that allows an initial import of an IFC file into FreeCAD
 * [x] Write a custom parametric FreeCAD object that represents an IFC document in the FreeCAD tree
 * [x] Do an initial geometry import
 * [x] Write a custom parametric FreeCAD object that represents in IFC product in the FreeCAD tree
-* [ ] Allow to expand a document (reveal its children in FreeCAD in the FreeCAD tree)
+* [x] Reveal the document structure in the FreeCAD tree
+* [ ] Allow to expand a document (reveal its children)
+
+#### 2. Allow basic editing
+
+* [ ] Allow to change a parameter of an object
 * [ ] Write a hook system that allows FreeCAD to save the IFC document
 * [ ] Test what happens when opening a bb file in vanilla FreeCAD
 
