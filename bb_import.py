@@ -69,9 +69,28 @@ def create_document(filename, document):
     add_properties(p, obj)
     if FreeCAD.GuiUp:
         bb_vp_document.bb_vp_document(obj.ViewObject)
-    geoms = ifcopenshell.util.element.get_decomposition(p)
+    # Default to all IfcElement (in the future, user can configure this as a custom filter
+    geoms = ifcfile.by_type("IfcElement")
+    # Never load feature elements, they can be lazy loaded
+    geoms = [e for e in geoms if not e.is_a("IfcFeatureElement")]
     obj.Shape = get_shape(geoms, f)
     return obj
+
+
+def create_document_hierarchy(ifcfile):
+    # This incomplete function creates a spatial tree
+
+    def create_child(self, parent, related_objects):
+        for element in related_objects:
+            obj = document.addObject("Part::FeaturePython", element.is_a())
+            # How do you make the obj a child of the parent?
+            if element.IsDecomposedBy:
+                for rel in element.IsDecomposedBy:
+                    create_child(obj, rel.RelatedObjects)
+
+    obj = document.addObject("Part::FeaturePython", "IfcProject")
+    for rel in ifcfile.IsDecomposedBy or []:
+        create_child(obj, rel.RelatedObjects)
 
 
 def create_object(ifcentity, document):
@@ -137,13 +156,6 @@ def get_shape(geoms, ifcfile):
         settings.set_context_ids(body_contexts)
     shapes = []
     cores = multiprocessing.cpu_count()
-    if not isinstance(geoms,(list,tuple)):
-        geoms = [geoms]
-    # temporary
-    # Default to all IfcElement (in the future, user can configure this as a custom filter
-    geoms = ifcfile.by_type("IfcElement")
-    # Never load feature elements, they can be lazy loaded
-    geoms = [e for e in geoms if not e.is_a("IfcFeatureElement")]
     iterator = ifcopenshell.geom.iterator(settings, ifcfile, cores, include=geoms)
     is_valid = iterator.initialize()
     if not is_valid:
