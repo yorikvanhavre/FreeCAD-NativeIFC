@@ -11,7 +11,7 @@
 
   <maintainer email="yorik@uncreated.net">Yorik van Havre</maintainer>
 
-  <license file="LICENSE">LGPLv2.1</license>
+  <license file="LICENSE">GPLv3</license>
 
   <pythonmin>3.0.0</pythonmin>
 
