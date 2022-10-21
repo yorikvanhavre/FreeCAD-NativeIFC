@@ -132,14 +132,22 @@ def get_shape(geoms, ifcfile):
     settings.set(settings.DISABLE_TRIANGULATION, True)
     settings.set(settings.USE_BREP_DATA,True)
     settings.set(settings.SEW_SHELLS,True)
+    body_contexts = get_body_context_ids(ifcfile)
+    if body_contexts:
+        settings.set_context_ids(body_contexts)
     shapes = []
     cores = multiprocessing.cpu_count()
     if not isinstance(geoms,(list,tuple)):
         geoms = [geoms]
     # temporary
-    geoms = [g for g in geoms if (not g.is_a("IfcFurnishingElement") and not g.is_a("IfcSpace"))]
+    # Default to all IfcElement (in the future, user can configure this as a custom filter
+    geoms = ifcfile.by_type("IfcElement")
+    # Never load feature elements, they can be lazy loaded
+    geoms = [e for e in geoms if not e.is_a("IfcFeatureElement")]
     iterator = ifcopenshell.geom.iterator(settings, ifcfile, cores, include=geoms)
-    iterator.initialize()
+    is_valid = iterator.initialize()
+    if not is_valid:
+        return
     while True:
         item = iterator.get()
         if item:
@@ -153,6 +161,34 @@ def get_shape(geoms, ifcfile):
         if not iterator.next():
             break
     return Part.makeCompound(shapes)
+
+
+def get_body_context_ids(ifcfile):
+    # Facetation is to accommodate broken Revit files
+    # See https://forums.buildingsmart.org/t/suggestions-on-how-to-improve-clarity-of-representation-context-usage-in-documentation/3663/6?u=moult
+    body_contexts = [
+        c.id()
+        for c in ifcfile.by_type("IfcGeometricRepresentationSubContext")
+        if c.ContextIdentifier in ["Body", "Facetation"]
+    ]
+    # Ideally, all representations should be in a subcontext, but some BIM programs don't do this correctly
+    body_contexts.extend(
+        [
+            c.id()
+            for c in ifcfile.by_type("IfcGeometricRepresentationContext", include_subtypes=False)
+            if c.ContextType == "Model"
+        ]
+    )
+    return body_contexts
+
+def get_plan_contexts_ids(ifcfile):
+    # Annotation is to accommodate broken Revit files
+    # See https://github.com/Autodesk/revit-ifc/issues/187
+    return [
+        c.id()
+        for c in ifcfile.by_type("IfcGeometricRepresentationContext")
+        if c.ContextType in ["Plan", "Annotation"]
+    ]
 
 
 def get_matrix(ios_matrix):
