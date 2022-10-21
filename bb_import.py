@@ -175,6 +175,39 @@ def get_shape(geoms, ifcfile):
     return Part.makeCompound(shapes)
 
 
+def get_mesh(geoms, ifcfile):
+
+    """Returns a Mesh from a list of IFC entities"""
+
+    settings = ifcopenshell.geom.settings()
+    body_contexts = get_body_context_ids(ifcfile)
+    if body_contexts:
+        settings.set_context_ids(body_contexts)
+    meshes = Mesh.Mesh()
+    cores = multiprocessing.cpu_count()
+    iterator = ifcopenshell.geom.iterator(settings, ifcfile, cores, include=geoms)
+    is_valid = iterator.initialize()
+    if not is_valid:
+        return
+    while True:
+        item = iterator.get()
+        if item:
+            verts = item.geometry.verts
+            faces = item.geometry.faces
+            verts = [FreeCAD.Vector(verts[i:i+3]) for i in range(0,len(verts),3)]
+            faces = [tuple(faces[i:i+3]) for i in range(0,len(faces),3)]
+            mesh = Mesh.Mesh((verts,faces))
+            mat = get_matrix(item.transformation.matrix.data)
+            mesh.transform(mat)
+            scale = FreeCAD.Matrix()
+            scale.scale(SCALE)
+            mesh.transform(scale)
+            meshes.addMesh(mesh)
+        if not iterator.next():
+            break
+    return meshe
+
+
 def get_body_context_ids(ifcfile):
     # Facetation is to accommodate broken Revit files
     # See https://forums.buildingsmart.org/t/suggestions-on-how-to-improve-clarity-of-representation-context-usage-in-documentation/3663/6?u=moult
