@@ -14,10 +14,14 @@ data manipulation in FreeCAD is affecting directly the IFC model.
 * [x] Do an initial geometry import
 * [x] Write a custom parametric FreeCAD object that represents in IFC product in the FreeCAD tree
 * [x] Reveal the document structure in the FreeCAD tree
+* [ ] Add a shape caching system
+* [ ] Allow an object shape to be built automatically from its children
 * [ ] Allow to expand a document (reveal its children)
 
 #### 2. Allow basic editing
 
+* [ ] Allow different import strategies (full model, only building structure...)
+* [ ] Allow different storage strategies (the shape is transient or not, coin representation only, etc..)
 * [ ] Allow to change a parameter of an object
 * [ ] Write a hook system that allows FreeCAD to save the IFC document
 * [ ] Test what happens when opening a bb file in vanilla FreeCAD
