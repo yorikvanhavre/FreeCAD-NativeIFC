@@ -100,4 +100,4 @@ while True:
 compound = Part.makeCompound(shapes)
 ```
 
-schependomlaan.ifc of 47Mb imports in 23s
+[schependomlaan.ifc](https://github.com/buildingSMART/Sample-Test-Files/blob/master/IFC%202x3/Schependomlaan/Design%20model%20IFC/IFC%20Schependomlaan.ifc) of 47Mb imports in 23s
