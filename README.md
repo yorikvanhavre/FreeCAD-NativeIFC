@@ -1,7 +1,7 @@
 ## BlenderBIM addon for FreeCAD
 
 This is a preliminary stub to integrate [BlenderBIM](https://blenderbim.org) 
-into FreeCAD. The final goal is to offer in FreeCAD the same level of 
+into [FreeCAD](https://freecad.org). The final goal is to offer in FreeCAD the same level of 
 functionality found in BlenderBIM.
 
 ### Roadmap
