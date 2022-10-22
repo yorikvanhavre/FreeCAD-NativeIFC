@@ -2,7 +2,8 @@
 
 This is a preliminary stub to integrate [BlenderBIM](https://blenderbim.org) 
 into [FreeCAD](https://freecad.org). The final goal is to offer in FreeCAD the same level of 
-functionality found in BlenderBIM.
+functionality found in BlenderBIM, mainly the native handling of IFC files, which means the
+data manipulation in FreeCAD is affecting directly the IFC model.
 
 ### Roadmap
 
