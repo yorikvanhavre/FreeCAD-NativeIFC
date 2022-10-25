@@ -71,7 +71,7 @@ Initial import + getting the main file structure
 
 ```python
 import ifcopenshell
-f = ifcopenshel.open("IfcOpenHouse.ifc")
+f = ifcopenshell.open("IfcOpenHouse.ifc")
 p = f.by_type("IfcProject")[0]
 # get descendents (site, building, and everything inside)
 d = ifcopenshell.util.element.get_decomposition(p)
