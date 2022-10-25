@@ -71,16 +71,17 @@ Initial import + getting the main file structure
 
 ```python
 import ifcopenshell
-f = ifcopenshel.open("IfcOpenHouse.ifc")
-p = f.by_type("IfcProject")[0]
+ifcfile = ifcopenshell.open("IfcOpenHouse.ifc")
+project = ifcfile.by_type("IfcProject")[0]
 # get descendents (site, building, and everything inside)
-d = ifcopenshell.util.element.get_decomposition(p)
+entitieslist = ifcopenshell.util.element.get_decomposition(project)
 ```
 
 Using the geometry iterator
 
 ```python
-import multicore
+from ifcopenshell import geom
+import multiprocessing
 settings = ifcopenshell.geom.settings()
 settings.set(settings.DISABLE_TRIANGULATION, True)
 settings.set(settings.USE_BREP_DATA,True)
