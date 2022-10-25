@@ -20,6 +20,8 @@
 #*                                                                         *
 #***************************************************************************
 
+import os
+
 class bb_vp_object:
 
     """Base class for all blenderbim view providers"""
@@ -48,7 +50,13 @@ class bb_vp_object:
     def __setstate__(self, state):
         return None
 
+    def getIcon(self):
+        return os.path.join(os.path.dirname(os.path.dirname(__file__)),"icons","IFC_object.svg")
+
     def claimChildren(self):
+
+        #TODO refactor / use group extension
+
         children = []
         relprops = ["Item","ForLayerSet"] # properties that actually store parents
         for prop in self.Object.PropertiesList:
@@ -69,3 +77,39 @@ class bb_vp_object:
                     if value == self.Object:
                         children.append(parent)
         return children
+
+
+    def setupContextMenu(self, vobj, menu):
+
+        from PySide2 import QtCore, QtGui, QtWidgets # lazy import
+
+        if self.hasChildren(vobj.Object):
+            path = os.path.dirname(os.path.dirname(__file__))
+            icon = QtGui.QIcon(os.path.join(path ,"icons", "IFC.svg"))
+            action1 = QtWidgets.QAction(icon,"Reveal children", menu)
+            action1.triggered.connect(self.revealChildren)
+            menu.addAction(action1)
+
+
+    def hasChildren(self, obj):
+        
+        """Returns True if this IFC object can be decomposed"""
+        
+        import bb_import # lazy import
+
+        ifcfile = bb_import.get_ifcfile(obj)
+        if ifcfile:
+            return bool(bb_import.get_children(obj, ifcfile))
+        return False
+
+
+    def revealChildren(self):
+
+        """Creates children of this object"""
+
+        import bb_import # lazy import
+
+        ifcfile = bb_import.get_ifcfile(self.Object)
+        if ifcfile:
+            bb_import.create_children(self.Object, ifcfile)
+

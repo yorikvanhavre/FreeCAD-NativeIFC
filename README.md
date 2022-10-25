@@ -14,9 +14,8 @@ data manipulation in FreeCAD is affecting directly the IFC model.
 * [x] Do an initial geometry import
 * [x] Write a custom parametric FreeCAD object that represents in IFC product in the FreeCAD tree
 * [x] Reveal the document structure in the FreeCAD tree
-* [ ] Add a shape caching system
-* [ ] Allow an object shape to be built automatically from its children
-* [ ] Allow to expand a document (reveal its children)
+* [x] Allow an object shape to be built automatically from its children
+* [x] Allow to expand a document (reveal its children)
 
 #### 2. Allow basic editing
 
@@ -25,6 +24,7 @@ data manipulation in FreeCAD is affecting directly the IFC model.
 * [ ] Allow to change a parameter of an object
 * [ ] Write a hook system that allows FreeCAD to save the IFC document
 * [ ] Test what happens when opening a bb file in vanilla FreeCAD
+- [ ] Add a shape caching system
 
 ### Installation & Usage
 
@@ -37,15 +37,14 @@ data manipulation in FreeCAD is affecting directly the IFC model.
 * Start the `Tools` → `Addon Manager` which will automatically find FreeCAD-BlenderBIM addon in the workbench list. 
 * Install FreeCAD-BlenderBIM addon  
 * Restart FreeCAD  
-**Result:** FreeCAD-BlenderBIM IFC importer should be available in open/insert file dialogs
-
+  **Result:** FreeCAD-BlenderBIM IFC importer should be available in open/insert file dialogs
 
 #### Manual install
 
 * Navigate to your FreeCAD Mods folder (`~/.local/share/FreeCAD/Mods`)
 * Clone this repo there: `git clone https://github.com/yorikvanhavre/FreeCAD-BlenderBIM.git`
 * Restart FreeCAD  
-**Result:** FreeCAD-BlenderBIM IFC importer should be available in open/insert file dialogs
+  **Result:** FreeCAD-BlenderBIM IFC importer should be available in open/insert file dialogs
 
 #### To test
 
@@ -54,6 +53,8 @@ data manipulation in FreeCAD is affecting directly the IFC model.
 * Select the BlenderBIM importer (bb_import)
 * A FreeCAD document is created
 * An object is created representing the IFC root document + project
+* Right-click the IFC root document object and select **Expand**
+* A site object, or any other child object is created. You can further expand those children
 
 ### Notes
 

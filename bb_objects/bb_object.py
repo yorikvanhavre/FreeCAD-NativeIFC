@@ -34,4 +34,12 @@ class bb_object:
         return None
     
     def execute (self, obj):
-        return
+        
+        import Part
+
+        shapes = [child.Shape for child in obj.Group if hasattr(child,"Shape")]
+        siteshape = getattr(obj,"SiteShape",None)
+        if siteshape:
+            shapes.append(siteshape)
+        if shapes:
+            obj.Shape = Part.makeCompound(shapes)

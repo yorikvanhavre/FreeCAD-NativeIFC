@@ -25,16 +25,15 @@ import multiprocessing
 import time
 
 import FreeCAD
+import Part
+
 import ifcopenshell
 from ifcopenshell import geom
 from bb_objects import bb_object
 from bb_viewproviders import bb_vp_document
 from bb_viewproviders import bb_vp_object
 
-import Part
-
 SCALE = 1000.0 # IfcOpenShell works in meters, FreeCAD works in mm
-
 
 def open(filename):
 
@@ -74,40 +73,92 @@ def create_document(filename, document):
     add_properties(project, obj)
     if FreeCAD.GuiUp:
         obj.ViewObject.Proxy = bb_vp_document.bb_vp_document()
+    # Perform initial import
     # Default to all IfcElement (in the future, user can configure this as a custom filter
     geoms = ifcfile.by_type("IfcElement")
     # Never load feature elements, they can be lazy loaded
     geoms = [e for e in geoms if not e.is_a("IfcFeatureElement")]
+    # Add site geometry
+    geoms.extend(ifcfile.by_type("IfcSite"))
     obj.Shape = get_shape(geoms, ifcfile)
-    create_document_hierarchy(obj, ifcfile)
+    #create_hierarchy(obj, ifcfile, recursive=True)
     return obj
 
 
-def create_document_hierarchy(obj, ifcfile):
+def create_children(obj, ifcfile, recursive=False):
 
-    """Creates a hierarchy recursively under an object"""
+    """Creates a hierarchy of objects under an object"""
 
-    def create_child(parent, related_objects):
-        for element in related_objects:
-            child = create_object(element, parent.Document)
+    def create_child(parent, element):
+        # do not create if a child with same stepid already exists
+        if not element.id() in [getattr(c,"StepId",0) for c in getattr(parent,"Group",[])]:
+            child = create_object(element, parent.Document, ifcfile)
             parent.Group = parent.Group + [child] # TODO use group extension
-            if element.IsDecomposedBy:
-                for rel in element.IsDecomposedBy:
-                    create_child(child, rel.RelatedObjects)
+            if recursive:
+                create_children(child, ifcfile, recursive)
 
-    for rel in ifcfile[obj.StepId].IsDecomposedBy or []:
-        create_child(obj, rel.RelatedObjects)
+    for child in get_children(obj, ifcfile):
+        create_child(obj, child)
+    obj.Document.recompute()
 
 
-def create_object(ifcentity, document):
+def get_children(obj, ifcfile):
+
+    """Returns the direct descendants of an object"""
+
+    ifcentity = ifcfile[obj.StepId]
+    children = []
+    for rel in getattr(ifcentity, "IsDecomposedBy", []):
+        children.extend(rel.RelatedObjects)
+    for rel in getattr(ifcentity, "ContainsElements", []):
+        children.extend(rel.RelatedElements)
+    return children
+
+
+def get_ifcfile(obj):
+
+    """Returns the ifcfile that handles this object"""
+
+    project = get_project(obj)
+    if hasattr(project,"Proxy"):
+        if hasattr(project.Proxy,"ifcfile"):
+            return project.Proxy.ifcfile
+        else:
+            if project.FilePath:
+                ifcfile = ifcopenshell.open(project.FilePath)
+                project.Proxy.ifcfile = ifcfile
+                return ifcfile
+    return None
+
+
+def get_project(obj):
+
+    """Returns the ifcdocument this object belongs to"""
+
+    # TODO something more robust
+    if hasattr(obj,"FilePath"):
+        return obj
+    for parent in obj.InListRecursive:
+        if hasattr(parent,"FilePath"):
+            return parent
+    return None
+
+
+def create_object(ifcentity, document, ifcfile):
 
     """Creates a FreeCAD object from an IFC entity"""
 
-    obj = document.addObject("App::FeaturePython","IfcObject")
+    obj = document.addObject("Part::FeaturePython","IfcObject")
     obj.Proxy = bb_object.bb_object()
     add_properties(ifcentity, obj)
-    # for now this is a shapeless object
-    #obj.Shape = get_shape(ifcentity, ifcfile)
+    geoms = ifcopenshell.util.element.get_decomposition(ifcentity)
+    geoms = [e for e in geoms if not e.is_a("IfcFeatureElement")]
+    if not geoms:
+        # no children to decompose
+        geoms = [ifcentity]
+    obj.Shape = get_shape(geoms, ifcfile)
+    if ifcentity.is_a("IfcSite"):
+        obj.SiteShape = get_shape([ifcentity], ifcfile)
     if FreeCAD.GuiUp:
         obj.ViewObject.Proxy = bb_vp_object.bb_vp_object()
     return obj
@@ -122,6 +173,8 @@ def add_properties(ifcentity, obj):
     else:
         obj.Label = ifcentity.is_a()
     obj.addProperty("App::PropertyLinkList", "Group", "Base") # TODO use group extension
+    if ifcentity.is_a("IfcSite"):
+        obj.addProperty("Part::PropertyPartShape", "SiteShape", "Base")
     for attr, value in ifcentity.get_info().items():
         if attr == "id":
             attr = "StepId"
@@ -187,6 +240,8 @@ def get_shape(geoms, ifcfile):
 
 def get_mesh(geoms, ifcfile):
 
+    # Unused for now
+
     """Returns a Mesh from a list of IFC entities"""
 
     settings = ifcopenshell.geom.settings()
@@ -235,6 +290,7 @@ def get_body_context_ids(ifcfile):
         ]
     )
     return body_contexts
+
 
 def get_plan_contexts_ids(ifcfile):
     # Annotation is to accommodate broken Revit files
