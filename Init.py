@@ -21,4 +21,4 @@
 #***************************************************************************
 
 # add import/export types
-FreeCAD.addImportType("Industry Foundation Classes (*.ifc)","bb_import")
+FreeCAD.addImportType("Industry Foundation Classes - Native (*.ifc)","bb_import")

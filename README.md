@@ -1,9 +1,6 @@
 ## BlenderBIM addon for FreeCAD
 
-This is a preliminary stub to integrate [BlenderBIM](https://blenderbim.org) 
-into [FreeCAD](https://freecad.org). The final goal is to offer in FreeCAD the same level of 
-functionality found in BlenderBIM, mainly the native handling of IFC files, which means the
-data manipulation in FreeCAD is affecting directly the IFC model.
+This is a preliminary stub to integrate [BlenderBIM](https://blenderbim.org) into [FreeCAD](https://freecad.org). The final goal is to offer in FreeCAD the same level of functionality found in BlenderBIM, mainly the native handling of IFC files, which means the data manipulation in FreeCAD is affecting directly the IFC model.
 
 ### Roadmap
 
@@ -16,12 +13,14 @@ data manipulation in FreeCAD is affecting directly the IFC model.
 * [x] Reveal the document structure in the FreeCAD tree
 * [x] Allow an object shape to be built automatically from its children
 * [x] Allow to expand a document (reveal its children)
+* [ ] Add colors
+* [ ] Enable to expand materials and properties
 
 #### 2. Allow basic editing
 
+* [ ] Allow to change a parameter of an object
 * [ ] Allow different import strategies (full model, only building structure...)
 * [ ] Allow different storage strategies (the shape is transient or not, coin representation only, etc..)
-* [ ] Allow to change a parameter of an object
 * [ ] Write a hook system that allows FreeCAD to save the IFC document
 * [ ] Test what happens when opening a bb file in vanilla FreeCAD
 - [ ] Add a shape caching system
@@ -48,13 +47,25 @@ data manipulation in FreeCAD is affecting directly the IFC model.
 
 #### To test
 
-* Run FreeCAD
+* Install the addon as described above
+* Restart FreeCAD
 * `File` → `Open` or `File` → `Insert`, select an IFC file
-* Select the BlenderBIM importer (bb_import)
+* Select the Native IFC importer (bb_import)
+
+![](doc/images/workflow01.jpg)
+
 * A FreeCAD document is created
 * An object is created representing the IFC root document + project
+
+![](doc/images/workflow02.jpg)
+
 * Right-click the IFC root document object and select **Expand**
+
+![](doc/images/workflow03.jpg)
+
 * A site object, or any other child object is created. You can further expand those children
+
+![](doc/images/workflow04.jpg)
 
 ### Notes
 
@@ -68,7 +79,7 @@ data manipulation in FreeCAD is affecting directly the IFC model.
 
 #### Code examples
 
-Initial import + getting the main file structure
+Initial import + getting the main file structure:
 
 ```python
 import ifcopenshell
@@ -78,7 +89,7 @@ project = ifcfile.by_type("IfcProject")[0]
 entitieslist = ifcopenshell.util.element.get_decomposition(project)
 ```
 
-Using the geometry iterator
+Using the geometry iterator:
 
 ```python
 from ifcopenshell import geom
@@ -108,3 +119,12 @@ compound = Part.makeCompound(shapes)
 ```
 
 [schependomlaan.ifc](https://github.com/buildingSMART/Sample-Test-Files/blob/master/IFC%202x3/Schependomlaan/Design%20model%20IFC/IFC%20Schependomlaan.ifc) of 47Mb imports in 23s
+
+Change a parameter of an object
+
+```python
+cmd = 'attribute.edit_attributes'
+prod = ifcfile.by_type["IfcWall"][0]
+attribs = {"Name": "Foo"}
+ifcopenshell.api.run(cmd, ifcfile, product=prod, attributes=attribs)
+```
