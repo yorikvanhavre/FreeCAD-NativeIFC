@@ -158,7 +158,9 @@ def create_object(ifcentity, document, ifcfile):
         geoms = [ifcentity]
     obj.Shape = get_shape(geoms, ifcfile)
     if ifcentity.is_a("IfcSite"):
-        obj.SiteShape = get_shape([ifcentity], ifcfile)
+        shape = get_shape([ifcentity], ifcfile)
+        if shape:
+            obj.SiteShape = get_shape([ifcentity], ifcfile)
     if FreeCAD.GuiUp:
         obj.ViewObject.Proxy = bb_vp_object.bb_vp_object()
     return obj
