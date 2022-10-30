@@ -135,11 +135,11 @@ def get_project(obj):
 
     """Returns the ifcdocument this object belongs to"""
 
-    # TODO something more robust
-    if hasattr(obj,"FilePath"):
+    if getattr(obj, "Type") == "IfcProject":
         return obj
+
     for parent in obj.InListRecursive:
-        if hasattr(parent,"FilePath"):
+        if getattr(parent, "Type") == "IfcProject":
             return parent
     return None
 
