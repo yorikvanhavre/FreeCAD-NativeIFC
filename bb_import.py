@@ -96,16 +96,48 @@ class IfcImporter():
         self.ifc_file = ifcopenshell.open(self.filename)
 
     def create_project(self):
-        self.project = self.document.addObject('Part::FeaturePython', 'IfcDocument', bb_object.bb_object(), 
+        self.project = {"ifc": self.ifc_file.by_type("IfcProject")[0]}
+        self.project["freecad"] = self.document.addObject('Part::FeaturePython', 'IfcDocument', bb_object.bb_object(), 
             bb_vp_document.bb_vp_document(), False)        
-        self.project.addProperty("App::PropertyString","FilePath","Base","The path to the linked IFC file")
-        self.project.FilePath = self.filename
-        self.project.Proxy.ifcfile = self.ifc_file
-        self.project.addExtension("App::GroupExtensionPython")
-        self.add_properties(self.ifc_file.by_type("IfcProject")[0], self.project)
+        self.project["freecad"].addProperty("App::PropertyString","FilePath","Base","The path to the linked IFC file")
+        self.project["freecad"].FilePath = self.filename
+        self.project["freecad"].Proxy.ifcfile = self.ifc_file
+        self.project["freecad"].addExtension("App::GroupExtensionPython")
+        self.add_properties(self.ifc_file.by_type("IfcProject")[0], self.project["freecad"])
 
     def create_collections(self):
-        pass
+        #if self.ifc_import_settings.collection_mode == "DECOMPOSITION":
+        self.create_decomposition_collections()
+        #elif self.ifc_import_settings.collection_mode == "SPATIAL_DECOMPOSITION":
+        #self.create_spatial_decomposition_collections()
+
+    def create_decomposition_collections(self):
+        self.create_spatial_decomposition_collections()
+        #self.create_aggregate_collections()
+
+    def create_spatial_decomposition_collections(self):
+        for rel_aggregate in self.project["ifc"].IsDecomposedBy or []:
+            self.create_spatial_decomposition_collection(self.project["freecad"], rel_aggregate.RelatedObjects)
+        #self.create_views_collection()
+        #self.create_type_collection()
+
+    def create_spatial_decomposition_collection(self, parent, related_objects):
+        for element in related_objects:
+            #if element not in self.spatial_elements:
+            #    continue
+            global_id = element.GlobalId
+            collection = self.create_fc_object_from_ifc_entity(element)
+            collection.addExtension("App::GroupExtensionPython") # TODO: Check if is more adherent to use geofeature group extension
+            #self.collections[global_id] = collection
+            parent.addObject(collection)
+            if element.IsDecomposedBy:
+                for rel_aggregate in element.IsDecomposedBy:
+                    self.create_spatial_decomposition_collection(collection, rel_aggregate.RelatedObjects)
+
+    def create_fc_object_from_ifc_entity(self, ifcentity):
+        obj = self.document.addObject("Part::FeaturePython","IfcObject", bb_object.bb_object(), bb_vp_object.bb_vp_object(), False)
+        self.add_properties(ifcentity, obj)
+        return obj
 
     def add_properties(self, ifcentity, obj):
         """Adds the properties of the given IFC object to a FreeCAD object"""
@@ -113,12 +145,9 @@ class IfcImporter():
         if ifcentity.is_a("IfcSite"):
             obj.addProperty("Part::PropertyPartShape", "SiteShape", "Base")
         for attr, value in ifcentity.get_info().items():
-            if attr == "id":
-                attr = "StepId"
-            elif attr == "type":
-                attr = "Type"
-            elif attr == "Name":
-                continue
+            if attr == "id": attr = "StepId"
+            elif attr == "type": attr = "Type"
+            elif attr == "Name": continue
             if attr in obj.PropertiesList:
                 return
             if isinstance(value, int):

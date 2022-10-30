@@ -43,3 +43,7 @@ class bb_object:
             shapes.append(siteshape)
         if shapes:
             obj.Shape = Part.makeCompound(shapes)
+
+    def get_corresponding_ifc_element(self):
+        #TODO: To be implemented
+        pass
