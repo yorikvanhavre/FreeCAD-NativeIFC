@@ -50,13 +50,106 @@ def insert(filename, docname):
 
     """Inserts an IFC document in a FreeCAD document"""
 
-    stime = time.time()
+    #stime = time.time()
     document = FreeCAD.getDocument(docname)
-    create_document(filename, document)
-    document.recompute()
-    endtime = "%02d:%02d" % (divmod(round(time.time() - stime, 1), 60))
-    fsize = round(os.path.getsize(filename)/1048576, 2)
-    print ("Imported", fsize, "Mb in", endtime)
+    #create_document(filename, document)
+    #document.recompute()
+    #endtime = "%02d:%02d" % (divmod(round(time.time() - stime, 1), 60))
+    #fsize = round(os.path.getsize(filename)/1048576, 2)
+    #print ("Imported", fsize, "Mb in", endtime)
+    ifc_importer = IfcImporter(document, filename)
+    ifc_importer.execute()
+
+
+class IfcImporter():
+    def __init__(self, fc_document, filename):
+        # TODO: verify if using a temporary document for import could help improve performances: td=App.newDocument("temp", temp=True). doc.RecomputesFrozen=True?
+        self.document = fc_document
+        self.filename = filename
+        self.ifc_file = None
+        self.time = 0
+        self.progress = 0
+
+    def profile_code(self, message):
+        if not self.time:
+            self.time = time.time()
+        print("{} :: {:.2f}".format(message, time.time() - self.time))
+        self.time = time.time()
+        self.update_progress(self.progress + 1)
+
+    def update_progress(self, progress):
+        if progress <= 100:
+            self.progress = progress
+        #bpy.context.window_manager.progress_update(self.progress) TODO : Port to FC
+
+    def execute(self):
+        self.profile_code("Starting import process")
+        self.load_file()
+        self.profile_code("Loading file")
+        self.create_project()
+        self.profile_code("Create project")
+        self.create_collections()
+        self.profile_code("Create collections")
+        self.document.recompute()
+
+    def load_file(self):
+        self.ifc_file = ifcopenshell.open(self.filename)
+
+    def create_project(self):
+        self.project = self.document.addObject('Part::FeaturePython', 'IfcDocument', bb_object.bb_object(), 
+            bb_vp_document.bb_vp_document(), False)        
+        self.project.addProperty("App::PropertyString","FilePath","Base","The path to the linked IFC file")
+        self.project.FilePath = self.filename
+        self.project.Proxy.ifcfile = self.ifc_file
+        self.project.addExtension("App::GroupExtensionPython")
+        self.add_properties(self.ifc_file.by_type("IfcProject")[0], self.project)
+
+    def create_collections(self):
+        pass
+
+    def add_properties(self, ifcentity, obj):
+        """Adds the properties of the given IFC object to a FreeCAD object"""
+        self.set_label_from_ifc_name(ifcentity, obj)
+        if ifcentity.is_a("IfcSite"):
+            obj.addProperty("Part::PropertyPartShape", "SiteShape", "Base")
+        for attr, value in ifcentity.get_info().items():
+            if attr == "id":
+                attr = "StepId"
+            elif attr == "type":
+                attr = "Type"
+            elif attr == "Name":
+                continue
+            if attr in obj.PropertiesList:
+                return
+            if isinstance(value, int):
+                obj.addProperty("App::PropertyInteger", attr, "IFC")
+                setattr(obj, attr, value)
+            elif isinstance(value, float):
+                obj.addProperty("App::PropertyFloat", attr, "IFC")
+                setattr(obj, attr, value)
+            elif isinstance(value, ifcopenshell.entity_instance):
+                #value = create_object(value, obj.Document)
+                obj.addProperty("App::PropertyLink", attr, "IFC")
+                #setattr(obj, attr, value)
+            elif isinstance(value, (list, tuple)) and value:
+                if isinstance(value[0], ifcopenshell.entity_instance):
+                    #nvalue = []
+                    #for elt in value:
+                    #    nvalue.append(create_object(elt, obj.Document))
+                    obj.addProperty("App::PropertyLinkList", attr, "IFC")
+                    #setattr(obj, attr, nvalue)
+            else:
+                obj.addProperty("App::PropertyString", attr, "IFC")
+                if value is not None:
+                    setattr(obj, attr, str(value))
+
+    def set_label_from_ifc_name(self, ifcentity, obj):
+        if getattr(ifcentity, "Name", None):
+            obj.Label = ifcentity.Name
+        else:
+            obj.Label = ifcentity.is_a()
+
+
 
 
 def create_document(filename, document):
