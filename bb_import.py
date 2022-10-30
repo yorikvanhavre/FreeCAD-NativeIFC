@@ -180,33 +180,6 @@ class IfcImporter():
 
 
 
-
-def create_document(filename, document):
-
-    """Creates a FreeCAD IFC document object"""
-
-    obj = document.addObject("Part::FeaturePython","IfcDocument")
-    obj.Proxy = bb_object.bb_object()
-    obj.addProperty("App::PropertyString","FilePath","Base","The path to the linked IFC file")
-    obj.FilePath = filename
-    ifcfile = ifcopenshell.open(filename)
-    obj.Proxy.ifcfile = ifcfile
-    project = ifcfile.by_type("IfcProject")[0]
-    add_properties(project, obj)
-    if FreeCAD.GuiUp:
-        obj.ViewObject.Proxy = bb_vp_document.bb_vp_document()
-    # Perform initial import
-    # Default to all IfcElement (in the future, user can configure this as a custom filter
-    geoms = ifcfile.by_type("IfcElement")
-    # Never load feature elements, they can be lazy loaded
-    geoms = [e for e in geoms if not e.is_a("IfcFeatureElement")]
-    # Add site geometry
-    geoms.extend(ifcfile.by_type("IfcSite"))
-    obj.Shape = get_shape(geoms, ifcfile)
-    #create_hierarchy(obj, ifcfile, recursive=True)
-    return obj
-
-
 def create_children(obj, ifcfile, recursive=False):
 
     """Creates a hierarchy of objects under an object"""
@@ -266,68 +239,6 @@ def get_project(obj):
     return None
 
 
-def create_object(ifcentity, document, ifcfile):
-
-    """Creates a FreeCAD object from an IFC entity"""
-
-    obj = document.addObject("Part::FeaturePython","IfcObject")
-    obj.Proxy = bb_object.bb_object()
-    add_properties(ifcentity, obj)
-    geoms = ifcopenshell.util.element.get_decomposition(ifcentity)
-    geoms = [e for e in geoms if not e.is_a("IfcFeatureElement")]
-    if not geoms:
-        # no children to decompose
-        geoms = [ifcentity]
-    obj.Shape = get_shape(geoms, ifcfile)
-    if ifcentity.is_a("IfcSite"):
-        shape = get_shape([ifcentity], ifcfile)
-        if shape:
-            obj.SiteShape = get_shape([ifcentity], ifcfile)
-    if FreeCAD.GuiUp:
-        obj.ViewObject.Proxy = bb_vp_object.bb_vp_object()
-    return obj
-
-
-def add_properties(ifcentity, obj):
-
-    """Adds the properties of the given IFC object to a FreeCAD object"""
-
-    if getattr(ifcentity, "Name", None):
-        obj.Label = ifcentity.Name
-    else:
-        obj.Label = ifcentity.is_a()
-    obj.addProperty("App::PropertyLinkList", "Group", "Base") # TODO use group extension
-    if ifcentity.is_a("IfcSite"):
-        obj.addProperty("Part::PropertyPartShape", "SiteShape", "Base")
-    for attr, value in ifcentity.get_info().items():
-        if attr == "id":
-            attr = "StepId"
-        elif attr == "type":
-            attr = "Type"
-        elif attr == "Name":
-            continue
-        if attr not in obj.PropertiesList:
-            if isinstance(value, int):
-                obj.addProperty("App::PropertyInteger", attr, "IFC")
-                setattr(obj, attr, value)
-            elif isinstance(value, float):
-                obj.addProperty("App::PropertyFloat", attr, "IFC")
-                setattr(obj, attr, value)
-            elif isinstance(value, ifcopenshell.entity_instance):
-                #value = create_object(value, obj.Document)
-                obj.addProperty("App::PropertyLink", attr, "IFC")
-                #setattr(obj, attr, value)
-            elif isinstance(value, (list, tuple)) and value:
-                if isinstance(value[0], ifcopenshell.entity_instance):
-                    #nvalue = []
-                    #for elt in value:
-                    #    nvalue.append(create_object(elt, obj.Document))
-                    obj.addProperty("App::PropertyLinkList", attr, "IFC")
-                    #setattr(obj, attr, nvalue)
-            else:
-                obj.addProperty("App::PropertyString", attr, "IFC")
-                if value is not None:
-                    setattr(obj, attr, str(value))
 
 
 def get_shape(geoms, ifcfile):
