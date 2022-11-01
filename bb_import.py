@@ -103,6 +103,7 @@ class IfcImporter():
         self.project["freecad"].FilePath = self.filename
         self.project["freecad"].Proxy.ifcfile = self.ifc_file
         self.project["freecad"].addExtension("App::GroupExtensionPython")
+        self.project["freecad"].ViewObject.addExtension('Gui::ViewProviderGroupExtensionPython')
         self.add_properties(self.ifc_file.by_type("IfcProject")[0], self.project["freecad"])
 
     def create_collections(self):
@@ -128,6 +129,7 @@ class IfcImporter():
             global_id = element.GlobalId
             collection = self.create_fc_object_from_ifc_entity(element)
             collection.addExtension("App::GroupExtensionPython") # TODO: Check if is more adherent to use geofeature group extension
+            collection.ViewObject.addExtension('Gui::ViewProviderGroupExtensionPython')
             #self.collections[global_id] = collection
             parent.addObject(collection)
             if element.IsDecomposedBy:

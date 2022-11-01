@@ -53,32 +53,6 @@ class bb_vp_object:
     def getIcon(self):
         return os.path.join(os.path.dirname(os.path.dirname(__file__)),"icons","IFC_object.svg")
 
-    def claimChildren(self):
-
-        #TODO refactor / use group extension
-
-        children = []
-        relprops = ["Item","ForLayerSet"] # properties that actually store parents
-        for prop in self.Object.PropertiesList:
-            if prop.startswith("Relating") or (prop in relprops):
-                continue
-            else:
-                value = getattr(self.Object, prop)
-                if hasattr(value, "ViewObject"):
-                    children.append(value)
-                elif isinstance(value, list):
-                    for item in value:
-                        if hasattr(item, "ViewObject"):
-                            children.append(item)
-        for parent in self.Object.InList:
-            for prop in parent.PropertiesList:
-                if prop.startswith("Relating") or (prop in relprops):
-                    value = getattr(parent, prop)
-                    if value == self.Object:
-                        children.append(parent)
-        return children
-
-
     def setupContextMenu(self, vobj, menu):
 
         from PySide2 import QtCore, QtGui, QtWidgets # lazy import
