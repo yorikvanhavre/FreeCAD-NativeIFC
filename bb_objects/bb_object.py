@@ -43,3 +43,10 @@ class bb_object:
             shapes.append(siteshape)
         if shapes:
             obj.Shape = Part.makeCompound(shapes)
+
+    def get_corresponding_ifc_element(self, obj):
+        import bb_import
+        ifc_file = bb_import.get_ifcfile(obj)
+        if ifc_file and hasattr(obj, "StepId"):
+            return ifc_file.by_id(obj.StepId)
+        return None
