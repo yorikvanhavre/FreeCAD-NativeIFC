@@ -27,6 +27,9 @@ class bb_object:
     def onChanged(self, obj, prop):
         return
 
+    def attach(self, obj):
+        obj.addExtension("App::GroupExtensionPython")
+
     def __getstate__(self):
         return None
 
