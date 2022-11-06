@@ -63,7 +63,7 @@ def create_document(filename, document):
 
     """Creates a FreeCAD IFC document object"""
     obj = document.addObject('Part::FeaturePython', 'IfcDocument', bb_object.bb_object(), 
-            bb_vp_document.bb_vp_document(), True)
+            bb_vp_document.bb_vp_document(), False)
 
     obj.addProperty("App::PropertyString","FilePath","Base","The path to the linked IFC file")
     obj.FilePath = filename
@@ -91,7 +91,7 @@ def create_children(obj, ifcfile, recursive=False):
         # do not create if a child with same stepid already exists
         if not element.id() in [getattr(c,"StepId",0) for c in getattr(parent,"Group",[])]:
             child = create_object(element, parent.Document, ifcfile)
-            parent.addObject(child)
+            parent.Group = parent.Group + [child] # TODO use group extension
             if recursive:
                 create_children(child, ifcfile, recursive)
 
@@ -146,7 +146,7 @@ def create_object(ifcentity, document, ifcfile):
 
     """Creates a FreeCAD object from an IFC entity"""
     obj = document.addObject('Part::FeaturePython', 'IfcObject', bb_object.bb_object(), 
-            bb_vp_object.bb_vp_object(), True)
+            bb_vp_object.bb_vp_object(), False)
     add_properties(ifcentity, obj)
     geoms = ifcopenshell.util.element.get_decomposition(ifcentity)
     geoms = [e for e in geoms if not e.is_a("IfcFeatureElement")]
@@ -171,6 +171,7 @@ def add_properties(ifcentity, obj):
         obj.Label = ifcentity.Name
     else:
         obj.Label = ifcentity.is_a()
+    obj.addProperty("App::PropertyLinkList", "Group", "Base") # TODO use group extension
     if ifcentity.is_a("IfcSite"):
         obj.addProperty("Part::PropertyPartShape", "SiteShape", "Base")
     for attr, value in ifcentity.get_info().items():
