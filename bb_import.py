@@ -158,6 +158,8 @@ def create_object(ifcentity, document, ifcfile):
         shape = get_shape([ifcentity], ifcfile)
         if shape:
             obj.SiteShape = get_shape([ifcentity], ifcfile)
+        else:
+            obj.SiteShape = obj.Shape
     return obj
 
 
