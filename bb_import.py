@@ -62,9 +62,9 @@ def insert(filename, docname):
 def create_document(filename, document):
 
     """Creates a FreeCAD IFC document object"""
-    obj = document.addObject('Part::FeaturePython', 'IfcDocument', bb_object.bb_object(), 
-            bb_vp_document.bb_vp_document(), False)
-
+    obj = document.addObject('Part::FeaturePython', 'IfcDocument',
+                             bb_object.bb_object(),
+                             bb_vp_document.bb_vp_document(), False)
     obj.addProperty("App::PropertyString","FilePath","Base","The path to the linked IFC file")
     obj.FilePath = filename
     ifcfile = ifcopenshell.open(filename)
@@ -79,7 +79,7 @@ def create_document(filename, document):
     # Add site geometry
     geoms.extend(ifcfile.by_type("IfcSite"))
     obj.Shape = get_shape(geoms, ifcfile)
-    #create_hierarchy(obj, ifcfile, recursive=True)
+    #create_hierarchy(obj, ifcfile, recursive=True) # TODO offer different import strategies
     return obj
 
 
@@ -133,11 +133,11 @@ def get_project(obj):
 
     """Returns the ifcdocument this object belongs to"""
 
-    if getattr(obj, "Type") == "IfcProject":
+    proj_types = ("IfcProject","IfcProjectLibrary")
+    if getattr(obj, "Type", None) in proj_types:
         return obj
-
     for parent in obj.InListRecursive:
-        if getattr(parent, "Type") == "IfcProject":
+        if getattr(parent, "Type", None) in proj_types:
             return parent
     return None
 
@@ -145,8 +145,9 @@ def get_project(obj):
 def create_object(ifcentity, document, ifcfile):
 
     """Creates a FreeCAD object from an IFC entity"""
-    obj = document.addObject('Part::FeaturePython', 'IfcObject', bb_object.bb_object(), 
-            bb_vp_object.bb_vp_object(), False)
+    obj = document.addObject('Part::FeaturePython', 'IfcObject',
+                             bb_object.bb_object(),
+                             bb_vp_object.bb_vp_object(), False)
     add_properties(ifcentity, obj)
     geoms = ifcopenshell.util.element.get_decomposition(ifcentity)
     geoms = [e for e in geoms if not e.is_a("IfcFeatureElement")]
