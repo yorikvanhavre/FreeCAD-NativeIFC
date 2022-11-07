@@ -270,7 +270,7 @@ def get_mesh(geoms, ifcfile):
             meshes.addMesh(mesh)
         if not iterator.next():
             break
-    return meshe
+    return mesh
 
 
 def get_body_context_ids(ifcfile):

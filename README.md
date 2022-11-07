@@ -78,8 +78,8 @@ This is a preliminary stub to integrate [BlenderBIM](https://blenderbim.org) int
 * [IfcOpenShell github](https://github.com/IfcOpenShell/IfcOpenShell)
 * [IfcOpenShell docs](https://blenderbim.org/docs-python/ifcopenshell.html)
 * [BlenderBIM docs](https://blenderbim.org/docs/)
-* [IfcOpenShell matrix structire](https://github.com/IfcOpenShell/IfcOpenShell/issues/1440)
-* [IfcOpenShell to FreeCAD matrix conversin](https://pythoncvc.net/?cat=203)
+* [IfcOpenShell matrix structure](https://github.com/IfcOpenShell/IfcOpenShell/issues/1440)
+* [IfcOpenShell to FreeCAD matrix conversion](https://pythoncvc.net/?cat=203)
 
 #### Code examples
 
@@ -89,7 +89,7 @@ Initial import + getting the main file structure:
 import ifcopenshell
 ifcfile = ifcopenshell.open("IfcOpenHouse.ifc")
 project = ifcfile.by_type("IfcProject")[0]
-# get descendents (site, building, and everything inside)
+# get descendants (site, building, and everything inside)
 entitieslist = ifcopenshell.util.element.get_decomposition(project)
 ```
 
