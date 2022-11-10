@@ -2,23 +2,14 @@
 <package format="1" xmlns="https://wiki.freecad.org/Package_Metadata">
 
   <name>NativeIFC</name>
-
   <description>A FreeCAD module to work with IFC files natively</description>
-
   <version>2022.10.20</version>
-
   <date>2022-10-20</date>
-
   <maintainer email="yorik@uncreated.net">Yorik van Havre</maintainer>
-
   <license file="LICENSE">GPLv3</license>
-
   <pythonmin>3.0.0</pythonmin>
-
   <url branch="main" type="repository">https://github.com/yorikvanhavre/FreeCAD-NativeIFC</url>
-
   <url type="readme">https://github.com/yorikvanhavre/FreeCAD-NativeIFC/raw/main/README.md</url>
-
   <icon>icons/IFC.svg</icon>
 
   <content>
@@ -26,6 +17,10 @@
       <depend optional="False" type="python">ifcopenshell</depend>
       <icon>icons/IFC.svg</icon>
       <subdirectory>./</subdirectory>
+      <tag>IFC</tag>
+      <tag>BIM</tag>
+      <tag>Arch</tag>
+      <tag>import</tag>
     </workbench>
   </content>
 
