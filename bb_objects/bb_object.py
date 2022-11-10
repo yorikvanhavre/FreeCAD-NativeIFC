@@ -35,17 +35,21 @@ class bb_object:
     
     def execute (self, obj):
         
-        import Part
+        import Part # lazy import
 
         shapes = [child.Shape for child in obj.Group if hasattr(child,"Shape")]
-        siteshape = getattr(obj,"SiteShape",None)
-        if siteshape:
-            shapes.append(siteshape)
         if shapes:
-            obj.Shape = Part.makeCompound(shapes)
+            siteshape = getattr(obj,"SiteShape",None)
+            if siteshape:
+                obj.Shape = siteshape
+            else:
+                obj.Shape = Part.makeCompound(shapes)
+
 
     def get_corresponding_ifc_element(self, obj):
-        import bb_import
+
+        import bb_import # lazy import
+
         ifc_file = bb_import.get_ifcfile(obj)
         if ifc_file and hasattr(obj, "StepId"):
             return ifc_file.by_id(obj.StepId)

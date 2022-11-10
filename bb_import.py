@@ -91,7 +91,18 @@ def create_children(obj, ifcfile, recursive=False):
         # do not create if a child with same stepid already exists
         if not element.id() in [getattr(c,"StepId",0) for c in getattr(parent,"Group",[])]:
             child = create_object(element, parent.Document, ifcfile)
-            parent.Group = parent.Group + [child] # TODO use group extension
+            # adjust display # TODO this is just a workaround to the group extension
+            if FreeCAD.GuiUp:
+                if parent.Type != "IfcSite":
+                    parent.ViewObject.hide()
+                for c in parent.Group:
+                    c.ViewObject.show()
+
+            parent.addObject(child)
+            if element.is_a("IfcSite"):
+                # force-create a building too if we just created a site
+                building = [o for o in get_children(child, ifcfile) if o.is_a("IfcBuilding")][0]
+                create_child(child, building)
             if recursive:
                 create_children(child, ifcfile, recursive)
 
@@ -152,15 +163,12 @@ def create_object(ifcentity, document, ifcfile):
     geoms = ifcopenshell.util.element.get_decomposition(ifcentity)
     geoms = [e for e in geoms if not e.is_a("IfcFeatureElement")]
     if not geoms:
-        # no children to decompose
         geoms = [ifcentity]
     obj.Shape = get_shape(geoms, ifcfile)
     if ifcentity.is_a("IfcSite"):
         shape = get_shape([ifcentity], ifcfile)
         if shape:
             obj.SiteShape = get_shape([ifcentity], ifcfile)
-        else:
-            obj.SiteShape = obj.Shape
     return obj
 
 
@@ -172,7 +180,9 @@ def add_properties(ifcentity, obj):
         obj.Label = ifcentity.Name
     else:
         obj.Label = ifcentity.is_a()
-    obj.addProperty("App::PropertyLinkList", "Group", "Base") # TODO use group extension
+    obj.addExtension('App::GroupExtensionPython')
+    if FreeCAD.GuiUp:
+        obj.ViewObject.addExtension("Gui::ViewProviderGroupExtensionPython")
     if ifcentity.is_a("IfcSite"):
         obj.addProperty("Part::PropertyPartShape", "SiteShape", "Base")
     for attr, value in ifcentity.get_info().items():

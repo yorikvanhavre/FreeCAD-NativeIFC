@@ -13,21 +13,20 @@ This is a preliminary stub to integrate [BlenderBIM](https://blenderbim.org) int
 * [x] Reveal the document structure in the FreeCAD tree
 * [x] Allow an object shape to be built automatically from its children
 * [x] Allow to expand a document (reveal its children)
-- [ ] Use group extension
+* [x] Use group extension
 * [ ] Add colors
 * [ ] Enable to expand materials and properties
 
 #### 2. Allow basic editing
 
-- [ ] Use enums in enum-based properties
-- [ ] Find a way to not store the whole enum in the file
+* [ ] Use enums in enum-based properties
+* [ ] Find a way to not store the whole enum in the file
 * [ ] Allow to change a parameter of an object
 * [ ] Allow different import strategies (full model, only building structure...)
 * [ ] Allow different storage strategies (the shape is transient or not, coin representation only, etc..)
 * [ ] Write a hook system that allows FreeCAD to save the IFC document
 * [ ] Test what happens when opening a bb file in vanilla FreeCAD
-
-- [ ] Add a shape caching system
+* [ ] Add a shape caching system
 
 ### Installation & Usage
 
