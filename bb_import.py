@@ -78,7 +78,10 @@ def create_document(filename, document):
     geoms = [e for e in geoms if not e.is_a("IfcFeatureElement")]
     # Add site geometry
     geoms.extend(ifcfile.by_type("IfcSite"))
-    obj.Shape = get_shape(geoms, ifcfile)
+    shape, colors = get_shape(geoms, ifcfile)
+    obj.Shape = shape
+    if FreeCAD.GuiUp:
+        obj.ViewObject.DiffuseColor = colors
     #create_hierarchy(obj, ifcfile, recursive=True) # TODO offer different import strategies
     return obj
 
@@ -164,11 +167,16 @@ def create_object(ifcentity, document, ifcfile):
     geoms = [e for e in geoms if not e.is_a("IfcFeatureElement")]
     if not geoms:
         geoms = [ifcentity]
-    obj.Shape = get_shape(geoms, ifcfile)
+    shape, colors = get_shape(geoms, ifcfile)
+    obj.Shape = shape
+    if FreeCAD.GuiUp:
+        obj.ViewObject.DiffuseColor = colors
     if ifcentity.is_a("IfcSite"):
-        shape = get_shape([ifcentity], ifcfile)
+        shape, colors = get_shape([ifcentity], ifcfile)
         if shape:
-            obj.SiteShape = get_shape([ifcentity], ifcfile)
+            obj.SiteShape = shape
+            if FreeCAD.GuiUp:
+                obj.ViewObject.DiffuseColor = colors
     return obj
 
 
@@ -228,6 +236,7 @@ def get_shape(geoms, ifcfile):
     if body_contexts:
         settings.set_context_ids(body_contexts)
     shapes = []
+    colors = []
     cores = multiprocessing.cpu_count()
     iterator = ifcopenshell.geom.iterator(settings, ifcfile, cores, include=geoms)
     is_valid = iterator.initialize()
@@ -243,9 +252,15 @@ def get_shape(geoms, ifcfile):
             shape.scale(SCALE)
             shape.transformShape(mat)
             shapes.append(shape)
+            color = item.geometry.surface_styles
+            #color = (color[0], color[1], color[2], 1.0 - color[3])
+            # TODO temp workaround for tranparency bug
+            color = (color[0], color[1], color[2], 0.0)
+            for i in range(len(shape.Faces)):
+                colors.append(color)
         if not iterator.next():
             break
-    return Part.makeCompound(shapes)
+    return Part.makeCompound(shapes), colors
 
 
 def get_mesh(geoms, ifcfile):

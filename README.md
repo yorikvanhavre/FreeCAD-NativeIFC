@@ -14,7 +14,7 @@ This is a preliminary stub to integrate [BlenderBIM](https://blenderbim.org) int
 * [x] Allow an object shape to be built automatically from its children
 * [x] Allow to expand a document (reveal its children)
 * [x] Use group extension
-* [ ] Add colors
+* [x] Add colors
 * [ ] Enable to expand materials and properties
 
 #### 2. Allow basic editing
@@ -32,20 +32,20 @@ This is a preliminary stub to integrate [BlenderBIM](https://blenderbim.org) int
 
 #### Auto install
 
-*The advantage of this approach is the ability to update FreeCAD-BlenderBIM workbench via the addon manager.* 
+*The advantage of this approach is the ability to update FreeCAD-BlenderBIM workbench via the addon manager.*
 
 * Open the [Addon Manager preferences](https://wiki.freecad.org/Preferences_Editor#Addon_Manager) via `Edit` → `Preferences` → `Addon Manager` → `Custom Repositories`
 * Add `https://github.com/yorikvanhavre/FreeCAD-NativeIFC` to `Custom Repositories` list. In the `Branch` section indicate the `main` branch. Press `OK`.
-* Start the `Tools` → `Addon Manager` which will automatically find FreeCAD-BlenderBIM addon in the workbench list. 
-* Install FreeCAD-NativeIFC addon  
-* Restart FreeCAD  
+* Start the `Tools` → `Addon Manager` which will automatically find FreeCAD-BlenderBIM addon in the workbench list.
+* Install FreeCAD-NativeIFC addon
+* Restart FreeCAD
   **Result:** FreeCAD-NativeIFC importer should be available in open/insert file dialogs
 
 #### Manual install
 
 * Navigate to your FreeCAD Mods folder (`~/.local/share/FreeCAD/Mods`)
 * Clone this repo there: `git clone https://github.com/yorikvanhavre/FreeCAD-NativeIFC.git`
-* Restart FreeCAD  
+* Restart FreeCAD
   **Result:** FreeCAD-NativeIFC importer should be available in open/insert file dialogs
 
 #### To test
@@ -104,6 +104,7 @@ settings.set(settings.SEW_SHELLS,True)
 settings.set(settings.USE_WORLD_COORDS,True)
 settings.set(settings.APPLY_LAYERSETS,True)
 shapes = []
+colors = []
 cores = multiprocessing.cpu_count()-2
 iterator = ifcopenshell.geom.iterator(settings, ifcfile, cores, include=entitieslist)
 iterator.initialize()
@@ -116,6 +117,7 @@ while True:
         shape.importBrepFromString(brep, False)
         shape.scale(1000.0) # IfcOpenShell outputs in meters
         shapes.append(shape)
+        colors.append(item.geometry.surface_styles)
     if not iterator.next():
         break
 compound = Part.makeCompound(shapes)
@@ -131,3 +133,4 @@ prod = ifcfile.by_type["IfcWall"][0]
 attribs = {"Name": "Foo"}
 ifcopenshell.api.run(cmd, ifcfile, product=prod, attributes=attribs)
 ```
+
