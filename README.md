@@ -1,4 +1,4 @@
-## BlenderBIM addon for FreeCAD
+## NativeIFC addon for FreeCAD
 
 This is a preliminary stub to integrate [BlenderBIM](https://blenderbim.org) into [FreeCAD](https://freecad.org). The final goal is to offer in FreeCAD the same level of functionality found in BlenderBIM, mainly the native handling of IFC files, which means the data manipulation in FreeCAD is affecting directly the IFC model.
 
@@ -36,25 +36,25 @@ This is a preliminary stub to integrate [BlenderBIM](https://blenderbim.org) int
 *The advantage of this approach is the ability to update FreeCAD-BlenderBIM workbench via the addon manager.* 
 
 * Open the [Addon Manager preferences](https://wiki.freecad.org/Preferences_Editor#Addon_Manager) via `Edit` → `Preferences` → `Addon Manager` → `Custom Repositories`
-* Add `https://github.com/yorikvanhavre/FreeCAD-BlenderBIM` to `Custom Repositories` list. In the `Branch` section indicate the `main` branch. Press `OK`.
+* Add `https://github.com/yorikvanhavre/FreeCAD-NativeIFC` to `Custom Repositories` list. In the `Branch` section indicate the `main` branch. Press `OK`.
 * Start the `Tools` → `Addon Manager` which will automatically find FreeCAD-BlenderBIM addon in the workbench list. 
-* Install FreeCAD-BlenderBIM addon  
+* Install FreeCAD-NativeIFC addon  
 * Restart FreeCAD  
-  **Result:** FreeCAD-BlenderBIM IFC importer should be available in open/insert file dialogs
+  **Result:** FreeCAD-NativeIFC importer should be available in open/insert file dialogs
 
 #### Manual install
 
 * Navigate to your FreeCAD Mods folder (`~/.local/share/FreeCAD/Mods`)
-* Clone this repo there: `git clone https://github.com/yorikvanhavre/FreeCAD-BlenderBIM.git`
+* Clone this repo there: `git clone https://github.com/yorikvanhavre/FreeCAD-NativeIFC.git`
 * Restart FreeCAD  
-  **Result:** FreeCAD-BlenderBIM IFC importer should be available in open/insert file dialogs
+  **Result:** FreeCAD-NativeIFC importer should be available in open/insert file dialogs
 
 #### To test
 
 * Install the addon as described above
 * Restart FreeCAD
 * `File` → `Open` or `File` → `Insert`, select an IFC file
-* Select the Native IFC importer (bb_import)
+* Select the Native IFC importer
 
 ![](doc/images/workflow01.jpg)
 
