@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no" ?>
 <package format="1" xmlns="https://wiki.freecad.org/Package_Metadata">
 
-  <name>BlenderBIM</name>
+  <name>NativeIFC</name>
 
-  <description>This is a preliminary stub to integrate BlenderBIM into FreeCAD. The final goal is to offer in FreeCAD the same level of functionality found in BlenderBIM.</description>
+  <description>A FreeCAD module to work with IFC files natively</description>
 
   <version>2022.10.20</version>
 
@@ -15,9 +15,9 @@
 
   <pythonmin>3.0.0</pythonmin>
 
-  <url branch="main" type="repository">https://github.com/yorikvanhavre/FreeCAD-BlenderBIM</url>
+  <url branch="main" type="repository">https://github.com/yorikvanhavre/FreeCAD-NativeIFC</url>
 
-  <url type="readme">https://github.com/yorikvanhavre/FreeCAD-BlenderBIM/raw/main/README.md</url>
+  <url type="readme">https://github.com/yorikvanhavre/FreeCAD-NativeIFC/raw/main/README.md</url>
 
   <icon>icons/IFC.svg</icon>
 
