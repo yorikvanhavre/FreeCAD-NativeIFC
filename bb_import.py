@@ -30,7 +30,7 @@ import Part
 import ifcopenshell
 from ifcopenshell import geom
 from bb_objects import bb_object
-from bb_viewproviders import bb_vp_document
+from bb_viewproviders import bb_vp_project
 from bb_viewproviders import bb_vp_object
 
 SCALE = 1000.0 # IfcOpenShell works in meters, FreeCAD works in mm
@@ -52,11 +52,83 @@ def insert(filename, docname):
 
     stime = time.time()
     document = FreeCAD.getDocument(docname)
-    create_document(filename, document)
+    ifc_importer = IfcImporter(document, filename)
+    ifc_importer.execute()
     document.recompute()
-    endtime = "%02d:%02d" % (divmod(round(time.time() - stime, 1), 60))
-    fsize = round(os.path.getsize(filename)/1048576, 2)
-    print ("Imported", fsize, "Mb in", endtime)
+
+class IfcImporter:
+    def __init__(self, fc_document, filename):
+        self.settings_geom = ifcopenshell.geom.settings()
+        self.settings_geom.set(self.settings_geom.DISABLE_TRIANGULATION, True)
+        self.settings_geom.set(self.settings_geom.USE_BREP_DATA,True)
+        self.settings_geom.set(self.settings_geom.SEW_SHELLS,True)
+        self.IMPORT_ONLY_PROJECT = False
+        self.CREATE_PLACEHOLDER_SHAPES = True
+        self.fc_document = fc_document
+        self.filename = filename
+        self.ifc_file = None
+        self.time = 0
+        self.debug_mode = True
+        self.progress = 0
+
+    def profile_code(self, message):
+        if not self.time:
+            self.time = time.time()
+        FreeCAD.Console.PrintMessage("{} :: {:.2f}\n".format(message, time.time() - self.time))
+        self.time = time.time()
+        self.update_progress(self.progress + 1)
+
+    def update_progress(self, progress):
+        if progress <= 100:
+            self.progress = progress
+        self.progress_bar.next(progress)
+
+    def execute(self):
+        self.progress_bar = FreeCAD.Base.ProgressIndicator()
+        self.progress_bar.start("Started Import Ifc...", 0)
+        self.load_file()
+        self.profile_code("Loading file")
+        self.create_project()
+        self.profile_code("Create project")
+        if self.IMPORT_ONLY_PROJECT:
+            self.progress_bar.stop()
+            return
+        #self.create_spatial_containers()
+        #self.profile_code("Create spatial containers")
+        self.progress_bar.stop()
+
+    def load_file(self):
+        self.ifc_file = ifcopenshell.open(self.filename)
+
+    def create_project(self):
+        self.ifc_project = self.ifc_file.by_type("IfcProject")[0]
+        self.fc_project = self.fc_document.addObject('Part::FeaturePython',
+                                                      'IfcProject',
+                                                      bb_object.bb_object(), 
+                                                      bb_vp_project.bb_vp_project(),
+                                                      False)        
+        self.fc_project.addProperty("App::PropertyString","FilePath","Base","The path to the linked IFC file")
+        self.fc_project.FilePath = self.filename
+        self.fc_project.Proxy.ifc_file = self.ifc_file
+        add_properties(self.ifc_project, self.fc_project)
+        if self.CREATE_PLACEHOLDER_SHAPES:
+            self.assign_placeholder_shape(self.fc_project)
+
+    def create_spatial_containers(self):
+        pass
+    
+    def assign_placeholder_shape(self, fc_obj):
+        # assign a shape to the fc object as a compount of child object shape
+        # Default to all IfcElement (in the future, user can configure this as a custom filter
+        geoms = self.ifc_file.by_type("IfcElement")
+        # Never load feature elements, they can be lazy loaded
+        geoms = [e for e in geoms if not e.is_a("IfcFeatureElement")]
+        # Add site geometry
+        geoms.extend(self.ifc_file.by_type("IfcSite"))
+        shape, colors = get_shape(geoms, self.ifc_file)
+        fc_obj.Shape = shape
+        if FreeCAD.GuiUp:
+            fc_obj.ViewObject.DiffuseColor = colors
 
 
 def create_document(filename, document):
@@ -64,7 +136,7 @@ def create_document(filename, document):
     """Creates a FreeCAD IFC document object"""
     obj = document.addObject('Part::FeaturePython', 'IfcDocument',
                              bb_object.bb_object(),
-                             bb_vp_document.bb_vp_document(), False)
+                             bb_vp_project.bb_vp_project(), False)
     obj.addProperty("App::PropertyString","FilePath","Base","The path to the linked IFC file")
     obj.FilePath = filename
     ifcfile = ifcopenshell.open(filename)
