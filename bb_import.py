@@ -58,10 +58,10 @@ def insert(filename, docname):
 
 class IfcImporter:
     def __init__(self, fc_document, filename):
-        self.settings_geom = ifcopenshell.geom.settings()
-        self.settings_geom.set(self.settings_geom.DISABLE_TRIANGULATION, True)
-        self.settings_geom.set(self.settings_geom.USE_BREP_DATA,True)
-        self.settings_geom.set(self.settings_geom.SEW_SHELLS,True)
+        self.settings = ifcopenshell.geom.settings()
+        self.settings.set(self.settings.DISABLE_TRIANGULATION, True)
+        self.settings.set(self.settings.USE_BREP_DATA,True)
+        self.settings.set(self.settings.SEW_SHELLS,True)
         self.IMPORT_ONLY_PROJECT = False
         self.CREATE_PLACEHOLDER_SHAPES = True
         self.fc_document = fc_document
@@ -76,7 +76,7 @@ class IfcImporter:
             self.time = time.time()
         FreeCAD.Console.PrintMessage("{} :: {:.2f}\n".format(message, time.time() - self.time))
         self.time = time.time()
-        self.update_progress(self.progress + 1)
+        #self.update_progress(self.progress + 1)
 
     def update_progress(self, progress):
         if progress <= 100:
@@ -84,18 +84,18 @@ class IfcImporter:
         self.progress_bar.next(progress)
 
     def execute(self):
-        self.progress_bar = FreeCAD.Base.ProgressIndicator()
-        self.progress_bar.start("Started Import Ifc...", 0)
+        #self.progress_bar = FreeCAD.Base.ProgressIndicator()
+        #self.progress_bar.start("Started Import Ifc...", 0)
         self.load_file()
         self.profile_code("Loading file")
         self.create_project()
         self.profile_code("Create project")
         if self.IMPORT_ONLY_PROJECT:
-            self.progress_bar.stop()
+            #self.progress_bar.stop()
             return
-        #self.create_spatial_containers()
-        #self.profile_code("Create spatial containers")
-        self.progress_bar.stop()
+        self.create_hierarchy(self.fc_project)
+        self.profile_code("Create hierarchy")
+        #self.progress_bar.stop()
 
     def load_file(self):
         self.ifc_file = ifcopenshell.open(self.filename)
@@ -114,17 +114,78 @@ class IfcImporter:
         if self.CREATE_PLACEHOLDER_SHAPES:
             self.assign_placeholder_shape(self.fc_project)
 
-    def create_spatial_containers(self):
-        pass
+    def create_hierarchy(self, fc_obj):
+        for ifc_child in self.get_ifcentities_related_to_fcobj(fc_obj):
+            self.create_hierarchy_node(fc_obj, ifc_child)
+
+    def create_hierarchy_node(self, parent, ifc_entity):
+        # do not create if a child with same stepid already exists
+        if not ifc_entity.id() in [getattr(c,"StepId",0) for c in getattr(parent,"Group",[])]:
+            child = self.create_object(ifc_entity)
+            parent.addObject(child)
+        self.create_hierarchy(child)
+
+    def create_object(self, ifcentity):
+        """Creates a FreeCAD object from an IFC entity"""
+        obj = self.fc_document.addObject('Part::FeaturePython',
+                                            'IfcObject',
+                                            bb_object.bb_object(),
+                                            bb_vp_object.bb_vp_object(),
+                                            False)
+        add_properties(ifcentity, obj)
+        FreeCAD.Console.PrintMessage("Creating shape of {}\n".format(ifcentity.get_info()["Name"]))
+        iterator = ifcopenshell.geom.iterator(self.settings, self.ifc_file, multiprocessing.cpu_count(), include=[ifcentity])
+        is_valid = iterator.initialize()
+        if not is_valid:
+            FreeCAD.Console.PrintMessage("Failed to run geometry iterator on {}\n".format(ifcentity.get_info()["Name"]))
+            return obj
+        shapes = []
+        colors = []
+        while True:
+            item = iterator.get()
+            if item:
+                brep = item.geometry.brep_data
+                shape = Part.Shape()
+                shape.importBrepFromString(brep, False)
+                mat = get_matrix(item.transformation.matrix.data)
+                shape.scale(SCALE)
+                shape.transformShape(mat)
+                shapes.append(shape)
+                color = item.geometry.surface_styles
+                #color = (color[0], color[1], color[2], 1.0 - color[3])
+                # TODO temp workaround for tranparency bug
+                color = (color[0], color[1], color[2], 0.0)
+                for i in range(len(shape.Faces)):
+                    colors.append(color)
+            if not iterator.next():
+                break
+        try:
+            obj.Shape = shapes[0]
+            if FreeCAD.GuiUp:
+                obj.ViewObject.DiffuseColor = colors
+        except:
+            FreeCAD.Console.PrintMessage("Failed to assign shape to {}: {}\n".format(ifcentity.get_info()["Name"], shapes))
+            pass
+        return obj
+
+    def get_ifcentities_related_to_fcobj(self, fcobj):
+        """Returns the direct ifc descendants of a fc object"""
+        ifcentity = fcobj.Proxy.get_corresponding_ifc_element(fcobj)
+        ifc_children = []
+        for rel in getattr(ifcentity, "IsDecomposedBy", []):
+            ifc_children.extend(rel.RelatedObjects)
+        for rel in getattr(ifcentity, "ContainsElements", []):
+            ifc_children.extend(rel.RelatedElements)
+        return ifc_children
     
     def assign_placeholder_shape(self, fc_obj):
-        # assign a shape to the fc object as a compount of child object shape
-        # Default to all IfcElement (in the future, user can configure this as a custom filter
-        geoms = self.ifc_file.by_type("IfcElement")
-        # Never load feature elements, they can be lazy loaded
+        """assign a shape to the object, as a compound of the shapes of the object childrens"""
+
+        ifcentity = fc_obj.Proxy.get_corresponding_ifc_element(fc_obj)
+        geoms = ifcopenshell.util.element.get_decomposition(ifcentity)
         geoms = [e for e in geoms if not e.is_a("IfcFeatureElement")]
-        # Add site geometry
-        geoms.extend(self.ifc_file.by_type("IfcSite"))
+        if not geoms:
+            geoms = [ifcentity]
         shape, colors = get_shape(geoms, self.ifc_file)
         fc_obj.Shape = shape
         if FreeCAD.GuiUp:
