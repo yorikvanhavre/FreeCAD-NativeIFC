@@ -131,32 +131,6 @@ class IfcImporter:
             fc_obj.ViewObject.DiffuseColor = colors
 
 
-def create_document(filename, document):
-
-    """Creates a FreeCAD IFC document object"""
-    obj = document.addObject('Part::FeaturePython', 'IfcDocument',
-                             bb_object.bb_object(),
-                             bb_vp_project.bb_vp_project(), False)
-    obj.addProperty("App::PropertyString","FilePath","Base","The path to the linked IFC file")
-    obj.FilePath = filename
-    ifcfile = ifcopenshell.open(filename)
-    obj.Proxy.ifcfile = ifcfile
-    project = ifcfile.by_type("IfcProject")[0]
-    add_properties(project, obj)
-    # Perform initial import
-    # Default to all IfcElement (in the future, user can configure this as a custom filter
-    geoms = ifcfile.by_type("IfcElement")
-    # Never load feature elements, they can be lazy loaded
-    geoms = [e for e in geoms if not e.is_a("IfcFeatureElement")]
-    # Add site geometry
-    geoms.extend(ifcfile.by_type("IfcSite"))
-    shape, colors = get_shape(geoms, ifcfile)
-    obj.Shape = shape
-    if FreeCAD.GuiUp:
-        obj.ViewObject.DiffuseColor = colors
-    #create_hierarchy(obj, ifcfile, recursive=True) # TODO offer different import strategies
-    return obj
-
 
 def create_children(obj, ifcfile, recursive=False):
 
