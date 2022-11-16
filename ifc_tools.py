@@ -40,6 +40,7 @@ SCALE = 1000.0 # IfcOpenShell works in meters, FreeCAD works in mm
 def create_document(filename, document):
 
     """Creates a FreeCAD IFC document object"""
+
     obj = document.addObject('Part::FeaturePython', 'IfcDocument',
                              ifc_object.ifc_object(),
                              ifc_vp_document.ifc_vp_document(), False)
@@ -137,6 +138,7 @@ def get_project(obj):
 def create_object(ifcentity, document, ifcfile):
 
     """Creates a FreeCAD object from an IFC entity"""
+
     obj = document.addObject('Part::FeaturePython', 'IfcObject',
                              ifc_object.ifc_object(),
                              ifc_vp_object.ifc_vp_object(), False)
@@ -181,7 +183,6 @@ def add_properties(ifcentity, obj):
             continue
         attr_def = next((a for a in attr_defs if a.name() == attr), None)
         data_type = ifcopenshell.util.attribute.get_primitive_type(attr_def) if attr_def else None
-        print(attr,data_type)
         if attr not in obj.PropertiesList:
             if isinstance(value, int):
                 obj.addProperty("App::PropertyInteger", attr, "IFC")
