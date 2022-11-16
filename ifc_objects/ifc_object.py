@@ -47,9 +47,9 @@ class ifc_object:
 
     def get_ifc_element(self, obj):
 
-        import ifc_import # lazy import
+        import ifc_tools # lazy import
 
-        ifc_file = ifc_import.get_ifcfile(obj)
+        ifc_file = ifc_tools.get_ifcfile(obj)
         if ifc_file and hasattr(obj, "StepId"):
             return ifc_file.by_id(obj.StepId)
         return None

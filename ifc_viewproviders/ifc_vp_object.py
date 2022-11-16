@@ -70,11 +70,11 @@ class ifc_vp_object:
         
         """Returns True if this IFC object can be decomposed"""
         
-        import ifc_import # lazy import
+        import ifc_tools # lazy import
 
-        ifcfile = ifc_import.get_ifcfile(obj)
+        ifcfile = ifc_tools.get_ifcfile(obj)
         if ifcfile:
-            return bool(ifc_import.get_children(obj, ifcfile))
+            return bool(ifc_tools.get_children(obj, ifcfile))
         return False
 
 
@@ -82,9 +82,9 @@ class ifc_vp_object:
 
         """Creates children of this object"""
 
-        import ifc_import # lazy import
+        import ifc_tools # lazy import
 
-        ifcfile = ifc_import.get_ifcfile(self.Object)
+        ifcfile = ifc_tools.get_ifcfile(self.Object)
         if ifcfile:
-            ifc_import.create_children(self.Object, ifcfile)
+            ifc_tools.create_children(self.Object, ifcfile)
 
