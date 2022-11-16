@@ -160,7 +160,7 @@ def create_object(ifcentity, document, ifcfile):
     return obj
 
 
-def add_properties(ifcentity, obj):
+def add_properties(ifcentity, obj, links=False):
 
     """Adds the properties of the given IFC object to a FreeCAD object"""
 
@@ -194,16 +194,18 @@ def add_properties(ifcentity, obj):
                 obj.addProperty("App::PropertyBool", attr, "IFC")
                 setattr(obj, attr, value) #will trigger error. TODO: Fix this
             elif isinstance(value, ifcopenshell.entity_instance):
-                #value = create_object(value, obj.Document)
-                obj.addProperty("App::PropertyLink", attr, "IFC")
-                #setattr(obj, attr, value)
+                if links:
+                    #value = create_object(value, obj.Document)
+                    obj.addProperty("App::PropertyLink", attr, "IFC")
+                    #setattr(obj, attr, value)
             elif isinstance(value, (list, tuple)) and value:
                 if isinstance(value[0], ifcopenshell.entity_instance):
-                    #nvalue = []
-                    #for elt in value:
-                    #    nvalue.append(create_object(elt, obj.Document))
-                    obj.addProperty("App::PropertyLinkList", attr, "IFC")
-                    #setattr(obj, attr, nvalue)
+                    if links:
+                        #nvalue = []
+                        #for elt in value:
+                        #    nvalue.append(create_object(elt, obj.Document))
+                        obj.addProperty("App::PropertyLinkList", attr, "IFC")
+                        #setattr(obj, attr, nvalue)
             elif data_type == "enum":
                 obj.addProperty("App::PropertyEnumeration", attr, "IFC")
                 items = ifcopenshell.util.attribute.get_enum_items(attr_def)
@@ -287,6 +289,15 @@ def get_mesh(geoms, ifcfile):
         if not iterator.next():
             break
     return mesh
+
+
+def set_attribute(ifcfile, element, attribute, value):
+
+    """Sets the value of an attribute of an IFC element"""
+
+    cmd = 'attribute.edit_attributes'
+    attribs = {attribute: value}
+    ifcopenshell.api.run(cmd, ifcfile, product=element, attributes=attribs)
 
 
 def get_body_context_ids(ifcfile):
