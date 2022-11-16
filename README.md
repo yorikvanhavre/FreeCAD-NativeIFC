@@ -15,11 +15,11 @@ This is a preliminary stub to integrate [BlenderBIM](https://blenderbim.org) int
 * [x] Allow to expand a document (reveal its children)
 * [x] Use group extension
 * [x] Add colors
-* [ ] Enable to expand materials and properties
+* [ ] Enable to expand attributes, materials and properties
 
 #### 2. Allow basic editing
 
-* [ ] Use enums in enum-based properties
+* [x] Use enums in enum-based properties
 * [ ] Find a way to not store the whole enum in the file
 * [ ] Allow to change a parameter of an object
 * [ ] Allow different import strategies (full model, only building structure...)

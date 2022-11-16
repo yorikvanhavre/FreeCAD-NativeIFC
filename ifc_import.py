@@ -29,6 +29,7 @@ import Part
 
 import ifcopenshell
 from ifcopenshell import geom
+from ifcopenshell.util import attribute
 from ifc_objects import ifc_object
 from ifc_viewproviders import ifc_vp_document
 from ifc_viewproviders import ifc_vp_object
@@ -65,7 +66,7 @@ def create_document(filename, document):
     obj = document.addObject('Part::FeaturePython', 'IfcDocument',
                              ifc_object.ifc_object(),
                              ifc_vp_document.ifc_vp_document(), False)
-    obj.addProperty("App::PropertyString","FilePath","Base","The path to the linked IFC file")
+    obj.addProperty("App::PropertyFile","FilePath","Base","The path to the linked IFC file")
     obj.FilePath = filename
     ifcfile = ifcopenshell.open(filename)
     obj.Proxy.ifcfile = ifcfile
@@ -193,6 +194,7 @@ def add_properties(ifcentity, obj):
         obj.ViewObject.addExtension("Gui::ViewProviderGroupExtensionPython")
     if ifcentity.is_a("IfcSite"):
         obj.addProperty("Part::PropertyPartShape", "SiteShape", "Base")
+    attr_defs = ifcentity.wrapped_data.declaration().as_entity().all_attributes()
     for attr, value in ifcentity.get_info().items():
         if attr == "id":
             attr = "StepId"
@@ -200,6 +202,9 @@ def add_properties(ifcentity, obj):
             attr = "Type"
         elif attr == "Name":
             continue
+        attr_def = next((a for a in attr_defs if a.name() == attr), None)
+        data_type = ifcopenshell.util.attribute.get_primitive_type(attr_def) if attr_def else None
+        print(attr,data_type)
         if attr not in obj.PropertiesList:
             if isinstance(value, int):
                 obj.addProperty("App::PropertyInteger", attr, "IFC")
@@ -207,6 +212,9 @@ def add_properties(ifcentity, obj):
             elif isinstance(value, float):
                 obj.addProperty("App::PropertyFloat", attr, "IFC")
                 setattr(obj, attr, value)
+            elif data_type == "boolean":
+                obj.addProperty("App::PropertyBool", attr, "IFC")
+                setattr(obj, attr, value) #will trigger error. TODO: Fix this
             elif isinstance(value, ifcopenshell.entity_instance):
                 #value = create_object(value, obj.Document)
                 obj.addProperty("App::PropertyLink", attr, "IFC")
@@ -218,6 +226,11 @@ def add_properties(ifcentity, obj):
                     #    nvalue.append(create_object(elt, obj.Document))
                     obj.addProperty("App::PropertyLinkList", attr, "IFC")
                     #setattr(obj, attr, nvalue)
+            elif data_type == "enum":
+                obj.addProperty("App::PropertyEnumeration", attr, "IFC")
+                items = ifcopenshell.util.attribute.get_enum_items(attr_def)
+                setattr(obj, attr, items)
+                setattr(obj, attr, value)
             else:
                 obj.addProperty("App::PropertyString", attr, "IFC")
                 if value is not None:

@@ -45,8 +45,7 @@ class ifc_object:
             else:
                 obj.Shape = Part.makeCompound(shapes)
 
-
-    def get_corresponding_ifc_element(self, obj):
+    def get_ifc_element(self, obj):
 
         import ifc_import # lazy import
 
