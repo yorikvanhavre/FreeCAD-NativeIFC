@@ -29,9 +29,9 @@ import Part
 
 import ifcopenshell
 from ifcopenshell import geom
-from bb_objects import bb_object
-from bb_viewproviders import bb_vp_document
-from bb_viewproviders import bb_vp_object
+from ifc_objects import ifc_object
+from ifc_viewproviders import ifc_vp_document
+from ifc_viewproviders import ifc_vp_object
 
 SCALE = 1000.0 # IfcOpenShell works in meters, FreeCAD works in mm
 
@@ -63,8 +63,8 @@ def create_document(filename, document):
 
     """Creates a FreeCAD IFC document object"""
     obj = document.addObject('Part::FeaturePython', 'IfcDocument',
-                             bb_object.bb_object(),
-                             bb_vp_document.bb_vp_document(), False)
+                             ifc_object.ifc_object(),
+                             ifc_vp_document.ifc_vp_document(), False)
     obj.addProperty("App::PropertyString","FilePath","Base","The path to the linked IFC file")
     obj.FilePath = filename
     ifcfile = ifcopenshell.open(filename)
@@ -160,8 +160,8 @@ def create_object(ifcentity, document, ifcfile):
 
     """Creates a FreeCAD object from an IFC entity"""
     obj = document.addObject('Part::FeaturePython', 'IfcObject',
-                             bb_object.bb_object(),
-                             bb_vp_object.bb_vp_object(), False)
+                             ifc_object.ifc_object(),
+                             ifc_vp_object.ifc_vp_object(), False)
     add_properties(ifcentity, obj)
     geoms = ifcopenshell.util.element.get_decomposition(ifcentity)
     geoms = [e for e in geoms if not e.is_a("IfcFeatureElement")]

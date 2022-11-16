@@ -20,11 +20,28 @@
 #*                                                                         *
 #***************************************************************************
 
-class bb_object:
-    
-    """Base class for all blenderbim objects"""
-    
-    def onChanged(self, obj, prop):
+import os
+
+class ifc_vp_object:
+
+    """Base class for all blenderbim view providers"""
+
+    def attach(self, vobj):
+        self.Object = vobj.Object
+
+    def getDisplayModes(self, obj):
+        return []
+
+    def getDefaultDisplayMode(self):
+        return "FlatLines"
+
+    def setDisplayMode(self,mode):
+        return mode
+
+    def onChanged(self, vobj, prop):
+        return
+
+    def updateData(self, obj, prop):
         return
 
     def __getstate__(self):
@@ -32,25 +49,42 @@ class bb_object:
 
     def __setstate__(self, state):
         return None
-    
-    def execute (self, obj):
+
+    def getIcon(self):
+        return os.path.join(os.path.dirname(os.path.dirname(__file__)),"icons","IFC_object.svg")
+
+
+    def setupContextMenu(self, vobj, menu):
+
+        from PySide2 import QtCore, QtGui, QtWidgets # lazy import
+
+        if self.hasChildren(vobj.Object):
+            path = os.path.dirname(os.path.dirname(__file__))
+            icon = QtGui.QIcon(os.path.join(path ,"icons", "IFC.svg"))
+            action1 = QtWidgets.QAction(icon,"Reveal children", menu)
+            action1.triggered.connect(self.revealChildren)
+            menu.addAction(action1)
+
+
+    def hasChildren(self, obj):
         
-        import Part # lazy import
+        """Returns True if this IFC object can be decomposed"""
+        
+        import ifc_import # lazy import
 
-        shapes = [child.Shape for child in obj.Group if hasattr(child,"Shape")]
-        if shapes:
-            siteshape = getattr(obj,"SiteShape",None)
-            if siteshape:
-                obj.Shape = siteshape
-            else:
-                obj.Shape = Part.makeCompound(shapes)
+        ifcfile = ifc_import.get_ifcfile(obj)
+        if ifcfile:
+            return bool(ifc_import.get_children(obj, ifcfile))
+        return False
 
 
-    def get_corresponding_ifc_element(self, obj):
+    def revealChildren(self):
 
-        import bb_import # lazy import
+        """Creates children of this object"""
 
-        ifc_file = bb_import.get_ifcfile(obj)
-        if ifc_file and hasattr(obj, "StepId"):
-            return ifc_file.by_id(obj.StepId)
-        return None
+        import ifc_import # lazy import
+
+        ifcfile = ifc_import.get_ifcfile(self.Object)
+        if ifcfile:
+            ifc_import.create_children(self.Object, ifcfile)
+

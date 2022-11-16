@@ -21,9 +21,9 @@
 #***************************************************************************
 
 import os
-from bb_viewproviders import bb_vp_object
+from ifc_viewproviders import ifc_vp_object
 
-class bb_vp_document(bb_vp_object.bb_vp_object):
+class ifc_vp_document(ifc_vp_object.ifc_vp_object):
     
     """View provider for the IFC document object"""
     
