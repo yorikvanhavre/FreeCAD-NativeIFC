@@ -25,7 +25,17 @@ class ifc_object:
     """Base class for all blenderbim objects"""
     
     def onChanged(self, obj, prop):
-        return
+        # link the values
+        if prop == "IfcType" and hasattr(obj,"Type") and obj.Type != obj.IfcType:
+            obj.Type = obj.IfcType
+        elif prop == "Type" and hasattr(obj,"IfcType") and obj.Type != obj.IfcType:
+            obj.IfcType = obj.Type
+
+    def onDocumentRestored(self, obj):
+        import ifc_tools
+        t = obj.IfcType
+        obj.Type = ifc_tools.get_ifc_classes(t)
+        obj.Type = t
 
     def __getstate__(self):
         return None

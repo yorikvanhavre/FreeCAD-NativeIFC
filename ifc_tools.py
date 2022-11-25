@@ -177,14 +177,22 @@ def add_properties(ifcentity, obj, links=False):
     for attr, value in ifcentity.get_info().items():
         if attr == "id":
             attr = "StepId"
-        elif attr == "type":
-            attr = "Type"
         elif attr == "Name":
             continue
         attr_def = next((a for a in attr_defs if a.name() == attr), None)
         data_type = ifcopenshell.util.attribute.get_primitive_type(attr_def) if attr_def else None
         if attr not in obj.PropertiesList:
-            if isinstance(value, int):
+            if attr == "type":
+                # main enum property, not saved to file
+                obj.addProperty("App::PropertyEnumeration", "Type", "IFC")
+                obj.setPropertyStatus("Type","Transient")
+                setattr(obj, "Type", get_ifc_classes(value))
+                setattr(obj, "Type", value)
+                # companion hidden propertym that gets saved to file
+                obj.addProperty("App::PropertyString", "IfcType", "IFC")
+                obj.setPropertyStatus("IfcType","Hidden")
+                setattr(obj, "IfcType", value)
+            elif isinstance(value, int):
                 obj.addProperty("App::PropertyInteger", attr, "IFC")
                 setattr(obj, attr, value)
             elif isinstance(value, float):
@@ -215,6 +223,18 @@ def add_properties(ifcentity, obj, links=False):
                 obj.addProperty("App::PropertyString", attr, "IFC")
                 if value is not None:
                     setattr(obj, attr, str(value))
+
+
+def get_ifc_classes(ifcclass):
+
+    """Returns a list of sibling classes from a given IFC class"""
+
+    # temporarily use Arch IFC types dictionary
+    # TODO: use ifcopenshell to return only siblings to a given class
+    import ArchIFC
+    types = ["Ifc"+v.replace(" ","") for v in ArchIFC.IfcTypes]
+    types.extend(["IfcProject","IfcProjectLibrary"])
+    return types
 
 
 def get_shape(geoms, ifcfile):
