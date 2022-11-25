@@ -136,3 +136,15 @@ attribs = {"Name": "Foo"}
 ifcopenshell.api.run(cmd, ifcfile, product=prod, attributes=attribs)
 ```
 
+Working with classes and types:
+
+```python
+# getting supertypes for types
+>>> ifcopenshell.util.type.get_applicable_types("IfcWall")
+['IfcWallType']
+>>> ifcopenshell.util.type.get_applicable_entities("IfcWallType")
+['IfcWall', 'IfcWallElementedCase', 'IfcWallStandardCase']
+
+
+
+```
