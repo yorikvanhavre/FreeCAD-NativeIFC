@@ -23,6 +23,7 @@ This is a preliminary stub to integrate [BlenderBIM](https://blenderbim.org) int
 * [ ] Fetch attribute documentation
 * [ ] Fetch context-dependent Ifc types
 * [x] Find a way to not store the whole enum in the file
+* [ ] Add progress feedback
 * [ ] Allow to change a parameter of an object
 * [ ] Allow different import strategies (full model, only building structure...)
 * [ ] Allow different storage strategies (the shape is transient or not, coin representation only, etc..)
