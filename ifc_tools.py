@@ -150,12 +150,14 @@ def create_object(ifcentity, document, ifcfile):
     shape, colors = get_shape(geoms, ifcfile)
     obj.Shape = shape
     if FreeCAD.GuiUp:
+        obj.ViewObject.ShapeColor = colors[0]
         obj.ViewObject.DiffuseColor = colors
     if ifcentity.is_a("IfcSite"):
         shape, colors = get_shape([ifcentity], ifcfile)
         if shape:
             obj.SiteShape = shape
             if FreeCAD.GuiUp:
+                obj.ViewObject.ShapeColor = colors[0]
                 obj.ViewObject.DiffuseColor = colors
     return obj
 

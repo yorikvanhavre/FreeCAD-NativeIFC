@@ -42,7 +42,15 @@ class ifc_vp_object:
         return
 
     def updateData(self, obj, prop):
-        return
+        if prop == "Shape" and getattr(obj, "Group", None):
+            colors = []
+            for child in obj.Group:
+                colors.extend(child.ViewObject.DiffuseColor)
+            siteshape = getattr(obj, "SiteShape", None)
+            if siteshape:
+                colors.extend([obj.ViewObject.ShapeColor for f in obj.SiteShape.Faces])
+            if colors:
+                obj.ViewObject.DiffuseColor = colors
 
     def __getstate__(self):
         return None
