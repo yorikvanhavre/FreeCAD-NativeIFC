@@ -49,9 +49,5 @@ def insert(filename, docname):
     fsize = round(os.path.getsize(filename)/1048576, 2)
     print ("Imported", fsize, "Mb in", endtime)
     if FreeCAD.GuiUp:
-        p = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Mod/Start")
-        p = p.GetString("AutoloadModule","")
-        if p:
-            import FreeCADGui
-            FreeCADGui.activateWorkbench("BIMWorkbench")
-
+        from StartPage import StartPage
+        StartPage.postStart()
