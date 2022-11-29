@@ -25,6 +25,7 @@ import time
 import FreeCAD
 import ifc_tools
 
+SWITCH_WB = False # switch WB after import
 
 def open(filename):
 
@@ -48,6 +49,6 @@ def insert(filename, docname):
     endtime = "%02d:%02d" % (divmod(round(time.time() - stime, 1), 60))
     fsize = round(os.path.getsize(filename)/1048576, 2)
     print ("Imported", fsize, "Mb in", endtime)
-    if FreeCAD.GuiUp:
+    if FreeCAD.GuiUp and SWITCH_WB:
         from StartPage import StartPage
         StartPage.postStart()
