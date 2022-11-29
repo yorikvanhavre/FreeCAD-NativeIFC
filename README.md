@@ -25,6 +25,7 @@ This is a preliminary stub to integrate [BlenderBIM](https://blenderbim.org) int
 * [x] Find a way to not store the whole enum in the file
 * [ ] Add progress feedback
 * [x] Allow to change an attibute of an object
+* [x] Allow to manually save the linked IFC file
 * [ ] Allow different import strategies (full model, only building structure...)
 * [ ] Allow different storage strategies (the shape is transient or not, coin representation only, etc..)
 * [ ] Write a hook system that allows FreeCAD to save the IFC document
