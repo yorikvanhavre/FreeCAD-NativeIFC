@@ -14,8 +14,7 @@ This is a preliminary stub to integrate [BlenderBIM](https://blenderbim.org) int
 * [x] Allow an object shape to be built automatically from its children
 * [x] Allow to expand a document (reveal its children)
 * [x] Use group extension
-* [x] Add colors
-* [ ] Enable to expand attributes, materials and properties
+* [x] Support colors
 
 #### 2. Allow basic editing
 
@@ -26,11 +25,21 @@ This is a preliminary stub to integrate [BlenderBIM](https://blenderbim.org) int
 * [ ] Add progress feedback
 * [x] Allow to change an attibute of an object
 * [x] Allow to manually save the linked IFC file
-* [ ] Allow different import strategies (full model, only building structure...)
 * [ ] Allow different storage strategies (the shape is transient or not, coin representation only, etc..)
 * [ ] Write a hook system that allows FreeCAD to save the IFC document
-* [ ] Test what happens when opening a NativeIFC file in vanilla FreeCAD
+* [ ] Test (and solve!) what happens when opening a NativeIFC file in vanilla FreeCAD
 * [ ] Add a shape caching system
+
+#### 3. Allow adding new objects
+
+* [ ] Allow different import strategies (full model, only building structure...)
+* [ ] Allow to create an IFC document without an existing IFC file
+* [ ] Allow to add building structure (building, storey...)
+* [ ] Allow to add a simple generic IFC product
+
+#### 4. Allow editing other types of elements
+
+* [ ] Enable to expand attributes, materials and properties
 
 ### Installation
 
