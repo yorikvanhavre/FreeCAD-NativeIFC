@@ -22,7 +22,7 @@ This is a preliminary stub to integrate [BlenderBIM](https://blenderbim.org) int
 * [ ] Fetch attribute documentation
 * [x] Fetch context-dependent IFC types
 * [x] Find a way to not store the whole enum in the file
-* [ ] Add progress feedback
+* [x] Add progress feedback
 * [x] Allow to change an attibute of an object
 * [x] Allow to manually save the linked IFC file
 * [ ] Allow different storage strategies (the shape is transient or not, coin representation only, etc..)

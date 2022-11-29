@@ -24,6 +24,7 @@ import os
 import multiprocessing
 
 import FreeCAD
+from FreeCAD import Base
 import Part
 
 import ifcopenshell
@@ -245,6 +246,10 @@ def get_shape(geoms, ifcfile):
 
     """Returns a Part shape from a list of IFC entities"""
 
+    progressbar = Base.ProgressIndicator()
+    total = len(geoms)
+    progressbar.start("Generating "+str(total)+" shapes...",total)
+    count = 0
     settings = ifcopenshell.geom.settings()
     settings.set(settings.DISABLE_TRIANGULATION, True)
     settings.set(settings.USE_BREP_DATA,True)
@@ -275,8 +280,11 @@ def get_shape(geoms, ifcfile):
             color = (color[0], color[1], color[2], 0.0)
             for i in range(len(shape.Faces)):
                 colors.append(color)
+            progressbar.next(True)
+            count += 1
         if not iterator.next():
             break
+    progressbar.stop()
     return Part.makeCompound(shapes), colors
 
 
