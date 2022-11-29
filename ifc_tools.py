@@ -28,6 +28,7 @@ import Part
 
 import ifcopenshell
 from ifcopenshell import geom
+from ifcopenshell import api
 from ifcopenshell.util import attribute
 from ifc_objects import ifc_object
 from ifc_viewproviders import ifc_vp_document
@@ -45,6 +46,8 @@ def create_document(filename, document):
                              ifc_object.ifc_object(),
                              ifc_vp_document.ifc_vp_document(), False)
     obj.addProperty("App::PropertyFile","FilePath","Base","The path to the linked IFC file")
+    obj.addProperty("App::PropertyBool","Modified","Base")
+    obj.setPropertyStatus("Modified","Hidden")
     obj.FilePath = filename
     ifcfile = ifcopenshell.open(filename)
     schema = ifcfile.wrapped_data.schema_name()
@@ -316,9 +319,17 @@ def set_attribute(ifcfile, element, attribute, value):
 
     """Sets the value of an attribute of an IFC element"""
 
+    if attribute == "Type":
+        print("Changing class is not yet implemented")
+        return False
     cmd = 'attribute.edit_attributes'
     attribs = {attribute: value}
-    ifcopenshell.api.run(cmd, ifcfile, product=element, attributes=attribs)
+    if hasattr(element, attribute):
+        if getattr(element, attribute) != value:
+            FreeCAD.Console.PrintLog("Changing IFC attribute value of "+str(attribute)+": "+str(value)+"\n")
+            ifcopenshell.api.run(cmd, ifcfile, product=element, attributes=attribs)
+            return True
+    return False
 
 
 def get_body_context_ids(ifcfile):

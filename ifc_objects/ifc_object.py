@@ -21,9 +21,9 @@
 #***************************************************************************
 
 class ifc_object:
-    
-    """Base class for all blenderbim objects"""
-    
+
+    """Base class for all IFC-based objects"""
+
     def onChanged(self, obj, prop):
 
         # link Type property to its hidder IfcType counterpart
@@ -33,6 +33,16 @@ class ifc_object:
         elif prop == "Type" and hasattr(obj,"IfcType") and obj.Type != obj.IfcType:
             obj.IfcType = obj.Type
             self.rebuild_classlist(obj)
+
+        # edit an IFC attribute
+        if obj.getGroupOfProperty(prop) == "IFC":
+            if prop in ["IfcType","StepId"]:
+                pass
+            else:
+                self.edit_attribute(obj, prop, obj.getPropertyByName(prop))
+        elif prop == "Label":
+            self.edit_attribute(obj, "Name", obj.Label)
+
 
     def onDocumentRestored(self, obj):
 
@@ -55,9 +65,9 @@ class ifc_object:
 
     def __setstate__(self, state):
         return None
-    
+
     def execute (self, obj):
-        
+
         import Part # lazy import
 
         shapes = [child.Shape for child in obj.Group if hasattr(child,"Shape")]
@@ -76,3 +86,15 @@ class ifc_object:
         if ifc_file and hasattr(obj, "StepId"):
             return ifc_file.by_id(obj.StepId)
         return None
+
+    def edit_attribute(self, obj, attribute, value):
+
+        """Edits an attribute of an underlying IFC object"""
+
+        import ifc_tools # lazy import
+
+        ifcfile = ifc_tools.get_ifcfile(obj)
+        elt = self.get_ifc_element(obj)
+        if elt and ifc_tools.set_attribute(ifcfile, elt, attribute, value):
+            proj = ifc_tools.get_project(obj)
+            proj.Modified = True
