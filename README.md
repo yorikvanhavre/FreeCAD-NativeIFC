@@ -39,7 +39,7 @@ This is a preliminary stub to integrate [BlenderBIM](https://blenderbim.org) int
 
 * Open the [Addon Manager preferences](https://wiki.freecad.org/Preferences_Editor#Addon_Manager) via `Edit` → `Preferences` → `Addon Manager` → `Custom Repositories`
 * Add `https://github.com/yorikvanhavre/FreeCAD-NativeIFC` to `Custom Repositories` list. In the `Branch` section indicate the `main` branch. Press `OK`.
-* Start the `Tools` → `Addon Manager` which will automatically find FreeCAD-BlenderBIM addon in the workbench list.
+* Start the `Tools` → `Addon Manager` which will automatically find FreeCAD-NativeIFC addon in the workbench list.
 * Install FreeCAD-NativeIFC addon
 * Restart FreeCAD
   **Result:** FreeCAD-NativeIFC importer should be available in open/insert file dialogs
