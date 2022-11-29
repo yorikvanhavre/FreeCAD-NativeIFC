@@ -21,7 +21,7 @@ This is a preliminary stub to integrate [BlenderBIM](https://blenderbim.org) int
 
 * [x] Use enums in enum-based properties
 * [ ] Fetch attribute documentation
-* [ ] Fetch context-dependent Ifc types
+* [x] Fetch context-dependent Ifc types
 * [x] Find a way to not store the whole enum in the file
 * [ ] Add progress feedback
 * [ ] Allow to change a parameter of an object

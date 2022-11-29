@@ -25,17 +25,30 @@ class ifc_object:
     """Base class for all blenderbim objects"""
     
     def onChanged(self, obj, prop):
-        # link the values
+
+        # link Type property to its hidder IfcType counterpart
         if prop == "IfcType" and hasattr(obj,"Type") and obj.Type != obj.IfcType:
             obj.Type = obj.IfcType
+            self.rebuild_classlist(obj)
         elif prop == "Type" and hasattr(obj,"IfcType") and obj.Type != obj.IfcType:
             obj.IfcType = obj.Type
+            self.rebuild_classlist(obj)
 
     def onDocumentRestored(self, obj):
-        import ifc_tools
-        t = obj.IfcType
-        obj.Type = ifc_tools.get_ifc_classes(t)
-        obj.Type = t
+
+        self.rebuild_classlist(obj)
+
+    def rebuild_classlist(self, obj):
+
+        """rebuilds the list of Type property according to current class"""
+
+        import ifc_tools # lazy import
+
+        ifcclass = obj.IfcType
+        ifcfile = ifc_tools.get_ifcfile(obj)
+        schema = ifcfile.wrapped_data.schema_name()
+        obj.Type = ifc_tools.get_ifc_classes(ifcclass, schema)
+        obj.Type = ifcclass
 
     def __getstate__(self):
         return None

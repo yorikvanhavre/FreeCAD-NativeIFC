@@ -34,7 +34,7 @@ from ifc_viewproviders import ifc_vp_document
 from ifc_viewproviders import ifc_vp_object
 
 SCALE = 1000.0 # IfcOpenShell works in meters, FreeCAD works in mm
-
+DEFAULT_SCHEMA = 'IFC4' # The default schema to work with if no other info
 
 
 def create_document(filename, document):
@@ -47,9 +47,10 @@ def create_document(filename, document):
     obj.addProperty("App::PropertyFile","FilePath","Base","The path to the linked IFC file")
     obj.FilePath = filename
     ifcfile = ifcopenshell.open(filename)
+    schema = ifcfile.wrapped_data.schema_name()
     obj.Proxy.ifcfile = ifcfile
     project = ifcfile.by_type("IfcProject")[0]
-    add_properties(project, obj)
+    add_properties(project, obj, schema)
     # Perform initial import
     # Default to all IfcElement (in the future, user can configure this as a custom filter
     geoms = ifcfile.by_type("IfcElement")
@@ -139,10 +140,11 @@ def create_object(ifcentity, document, ifcfile):
 
     """Creates a FreeCAD object from an IFC entity"""
 
+    schema = ifcfile.wrapped_data.schema_name()
     obj = document.addObject('Part::FeaturePython', 'IfcObject',
                              ifc_object.ifc_object(),
                              ifc_vp_object.ifc_vp_object(), False)
-    add_properties(ifcentity, obj)
+    add_properties(ifcentity, obj, schema)
     geoms = ifcopenshell.util.element.get_decomposition(ifcentity)
     geoms = [e for e in geoms if not e.is_a("IfcFeatureElement")]
     if not geoms:
@@ -162,7 +164,7 @@ def create_object(ifcentity, document, ifcfile):
     return obj
 
 
-def add_properties(ifcentity, obj, links=False):
+def add_properties(ifcentity, obj, schema=DEFAULT_SCHEMA, links=False):
 
     """Adds the properties of the given IFC object to a FreeCAD object"""
 
@@ -188,7 +190,7 @@ def add_properties(ifcentity, obj, links=False):
                 # main enum property, not saved to file
                 obj.addProperty("App::PropertyEnumeration", "Type", "IFC")
                 obj.setPropertyStatus("Type","Transient")
-                setattr(obj, "Type", get_ifc_classes(value))
+                setattr(obj, "Type", get_ifc_classes(value, schema))
                 setattr(obj, "Type", value)
                 # companion hidden propertym that gets saved to file
                 obj.addProperty("App::PropertyString", "IfcType", "IFC")
@@ -227,16 +229,13 @@ def add_properties(ifcentity, obj, links=False):
                     setattr(obj, attr, str(value))
 
 
-def get_ifc_classes(ifcclass):
+def get_ifc_classes(ifcclass, schema="IFC4"):
 
     """Returns a list of sibling classes from a given IFC class"""
 
-    # temporarily use Arch IFC types dictionary
-    # TODO: use ifcopenshell to return only siblings to a given class
-    import ArchIFC
-    types = ["Ifc"+v.replace(" ","") for v in ArchIFC.IfcTypes]
-    types.extend(["IfcProject","IfcProjectLibrary"])
-    return types
+    schema = ifcopenshell.ifcopenshell_wrapper.schema_by_name(schema)
+    declaration = schema.declaration_by_name(ifcclass)
+    return [sub.name() for sub in declaration.supertype().subtypes()]
 
 
 def get_shape(geoms, ifcfile):
