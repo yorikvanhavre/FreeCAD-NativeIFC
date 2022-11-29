@@ -145,7 +145,13 @@ Working with classes and types:
 ['IfcWallType']
 >>> ifcopenshell.util.type.get_applicable_entities("IfcWallType")
 ['IfcWall', 'IfcWallElementedCase', 'IfcWallStandardCase']
-
-
-
 ```
+
+Working with schema classes:
+
+```python
+schema = ifcopenshell.ifcopenshell_wrapper.schema_by_name('IFC4')
+declaration = schema.declaration_by_name('IfcWall')
+print(declaration.supertype())
+for subtype in declaration.supertype().subtypes():
+    print(subtype.name())
