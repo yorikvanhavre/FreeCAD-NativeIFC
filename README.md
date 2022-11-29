@@ -21,17 +21,17 @@ This is a preliminary stub to integrate [BlenderBIM](https://blenderbim.org) int
 
 * [x] Use enums in enum-based properties
 * [ ] Fetch attribute documentation
-* [x] Fetch context-dependent Ifc types
+* [x] Fetch context-dependent IFC types
 * [x] Find a way to not store the whole enum in the file
 * [ ] Add progress feedback
-* [ ] Allow to change a parameter of an object
+* [x] Allow to change an attibute of an object
 * [ ] Allow different import strategies (full model, only building structure...)
 * [ ] Allow different storage strategies (the shape is transient or not, coin representation only, etc..)
 * [ ] Write a hook system that allows FreeCAD to save the IFC document
-* [ ] Test what happens when opening a bb file in vanilla FreeCAD
+* [ ] Test what happens when opening a NativeIFC file in vanilla FreeCAD
 * [ ] Add a shape caching system
 
-### Installation & Usage
+### Installation
 
 #### Auto install
 
@@ -51,7 +51,9 @@ This is a preliminary stub to integrate [BlenderBIM](https://blenderbim.org) int
 * Restart FreeCAD
   **Result:** FreeCAD-NativeIFC importer should be available in open/insert file dialogs
 
-#### To test
+### Usage
+
+The workflow below allows to test what works already (refer to the above list to know what has been implemented):
 
 * Install the addon as described above
 * Restart FreeCAD
@@ -72,6 +74,18 @@ This is a preliminary stub to integrate [BlenderBIM](https://blenderbim.org) int
 * A site object, or any other child object is created. You can further expand those children
 
 ![](doc/images/workflow04.jpg)
+
+* Try changing one parameter, for ex the **Label** properry of an object
+
+![](doc/images/workflow05.jpg)
+
+* When any attribute of the linked IFC file has changed, the icon of the IFC document object shows a red dot, and a **save** option becomes available when right-clicking it
+
+![](doc/images/workflow06.jpg)
+
+* After saving, only the changed parameters have changed in the linked IFC file
+
+![](doc/images/workflow07.jpg)
 
 ### Notes
 
