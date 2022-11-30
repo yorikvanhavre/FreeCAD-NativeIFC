@@ -26,6 +26,7 @@ import multiprocessing
 import FreeCAD
 from FreeCAD import Base
 import Part
+import Mesh
 
 import ifcopenshell
 from ifcopenshell import geom
@@ -39,11 +40,15 @@ SCALE = 1000.0 # IfcOpenShell works in meters, FreeCAD works in mm
 DEFAULT_SCHEMA = 'IFC4' # The default schema to work with if no other info
 
 
-def create_document(filename, document):
+def create_document(filename, document, shapemode=True):
 
     """Creates a FreeCAD IFC document object"""
 
-    obj = document.addObject('Part::FeaturePython', 'IfcDocument',
+    if shapemode:
+        otype = 'Part::FeaturePython'
+    else:
+        otype = 'Mesh::FeaturePython'
+    obj = document.addObject(otype, 'IfcDocument',
                              ifc_object.ifc_object(),
                              ifc_vp_document.ifc_vp_document(), False)
     obj.addProperty("App::PropertyFile","FilePath","Base","The path to the linked IFC file")
@@ -62,22 +67,25 @@ def create_document(filename, document):
     geoms = [e for e in geoms if not e.is_a("IfcFeatureElement")]
     # Add site geometry
     geoms.extend(ifcfile.by_type("IfcSite"))
-    shape, colors = get_shape(geoms, ifcfile)
-    obj.Shape = shape
-    if FreeCAD.GuiUp:
-        obj.ViewObject.DiffuseColor = colors
+    if shapemode:
+        shape, colors = get_shape(geoms, ifcfile)
+        obj.Shape = shape
+    else:
+        mesh, colors = get_mesh(geoms, ifcfile)
+        obj.Mesh = mesh
+    set_colors(obj, colors)
     #create_hierarchy(obj, ifcfile, recursive=True) # TODO offer different import strategies
     return obj
 
 
-def create_children(obj, ifcfile, recursive=False):
+def create_children(obj, ifcfile, recursive=False, shapemode=True):
 
     """Creates a hierarchy of objects under an object"""
 
     def create_child(parent, element):
         # do not create if a child with same stepid already exists
         if not element.id() in [getattr(c,"StepId",0) for c in getattr(parent,"Group",[])]:
-            child = create_object(element, parent.Document, ifcfile)
+            child = create_object(element, parent.Document, ifcfile, shapemode)
             # adjust display # TODO this is just a workaround to the group extension
             if FreeCAD.GuiUp:
                 if parent.Type != "IfcSite":
@@ -140,12 +148,16 @@ def get_project(obj):
     return None
 
 
-def create_object(ifcentity, document, ifcfile):
+def create_object(ifcentity, document, ifcfile, shapemode=True):
 
     """Creates a FreeCAD object from an IFC entity"""
 
+    if shapemode:
+        otype = 'Part::FeaturePython'
+    else:
+        otype = 'Mesh::FeaturePython'
     schema = ifcfile.wrapped_data.schema_name()
-    obj = document.addObject('Part::FeaturePython', 'IfcObject',
+    obj = document.addObject(otype, 'IfcObject',
                              ifc_object.ifc_object(),
                              ifc_vp_object.ifc_vp_object(), False)
     add_properties(ifcentity, obj, schema)
@@ -153,18 +165,26 @@ def create_object(ifcentity, document, ifcfile):
     geoms = [e for e in geoms if not e.is_a("IfcFeatureElement")]
     if not geoms:
         geoms = [ifcentity]
-    shape, colors = get_shape(geoms, ifcfile)
-    obj.Shape = shape
-    if FreeCAD.GuiUp:
-        obj.ViewObject.ShapeColor = colors[0]
-        obj.ViewObject.DiffuseColor = colors
+    if shapemode:
+        shape, colors = get_shape(geoms, ifcfile)
+        obj.Shape = shape
+    else:
+        mesh, colors = get_mesh(geoms, ifcfile)
+        obj.Mesh = mesh
+    set_colors(obj, colors)
     if ifcentity.is_a("IfcSite"):
-        shape, colors = get_shape([ifcentity], ifcfile)
-        if shape:
-            obj.SiteShape = shape
-            if FreeCAD.GuiUp:
-                obj.ViewObject.ShapeColor = colors[0]
-                obj.ViewObject.DiffuseColor = colors
+        if shapemode:
+            obj.addProperty("Part::PropertyPartShape", "SiteShape", "Base")
+            shape, colors = get_shape([ifcentity], ifcfile)
+            if shape:
+                obj.SiteShape = shape
+                set_colors(obj, colors)
+        else:
+            obj.addProperty("Mesh::PropertyMeshKernel", "SiteShape", "Base")
+            mesh, colors = get_mesh([ifcentity], ifcfile)
+            if mesh:
+                obj.SiteShape = mesh
+                set_colors(obj, colors)
     return obj
 
 
@@ -179,23 +199,23 @@ def add_properties(ifcentity, obj, schema=DEFAULT_SCHEMA, links=False):
     obj.addExtension('App::GroupExtensionPython')
     if FreeCAD.GuiUp:
         obj.ViewObject.addExtension("Gui::ViewProviderGroupExtensionPython")
-    if ifcentity.is_a("IfcSite"):
-        obj.addProperty("Part::PropertyPartShape", "SiteShape", "Base")
     attr_defs = ifcentity.wrapped_data.declaration().as_entity().all_attributes()
     for attr, value in ifcentity.get_info().items():
-        if attr == "id":
+        if attr == "type":
+            attr = "Type"
+        elif attr == "id":
             attr = "StepId"
         elif attr == "Name":
             continue
         attr_def = next((a for a in attr_defs if a.name() == attr), None)
         data_type = ifcopenshell.util.attribute.get_primitive_type(attr_def) if attr_def else None
         if attr not in obj.PropertiesList:
-            if attr == "type":
+            if attr == "Type":
                 # main enum property, not saved to file
-                obj.addProperty("App::PropertyEnumeration", "Type", "IFC")
-                obj.setPropertyStatus("Type","Transient")
-                setattr(obj, "Type", get_ifc_classes(value, schema))
-                setattr(obj, "Type", value)
+                obj.addProperty("App::PropertyEnumeration", attr, "IFC")
+                obj.setPropertyStatus(attr,"Transient")
+                setattr(obj, attr, get_ifc_classes(value, schema))
+                setattr(obj, attr, value)
                 # companion hidden propertym that gets saved to file
                 obj.addProperty("App::PropertyString", "IfcType", "IFC")
                 obj.setPropertyStatus("IfcType","Hidden")
@@ -203,6 +223,8 @@ def add_properties(ifcentity, obj, schema=DEFAULT_SCHEMA, links=False):
             elif isinstance(value, int):
                 obj.addProperty("App::PropertyInteger", attr, "IFC")
                 setattr(obj, attr, value)
+                if attr == "StepId":
+                    obj.setPropertyStatus(attr,"ReadOnly")
             elif isinstance(value, float):
                 obj.addProperty("App::PropertyFloat", attr, "IFC")
                 setattr(obj, attr, value)
@@ -233,6 +255,16 @@ def add_properties(ifcentity, obj, schema=DEFAULT_SCHEMA, links=False):
                     setattr(obj, attr, str(value))
 
 
+def set_colors(obj, colors):
+
+    """Sets the given colors to an object"""
+    if FreeCAD.GuiUp and colors:
+        if hasattr(obj.ViewObject,"ShapeColor"):
+            obj.ViewObject.ShapeColor = colors[0][:3]
+        if hasattr(obj.ViewObject,"DiffuseColor"):
+            obj.ViewObject.DiffuseColor = colors
+
+
 def get_ifc_classes(ifcclass, schema="IFC4"):
 
     """Returns a list of sibling classes from a given IFC class"""
@@ -249,7 +281,6 @@ def get_shape(geoms, ifcfile):
     progressbar = Base.ProgressIndicator()
     total = len(geoms)
     progressbar.start("Generating "+str(total)+" shapes...",total)
-    count = 0
     settings = ifcopenshell.geom.settings()
     settings.set(settings.DISABLE_TRIANGULATION, True)
     settings.set(settings.USE_BREP_DATA,True)
@@ -281,7 +312,6 @@ def get_shape(geoms, ifcfile):
             for i in range(len(shape.Faces)):
                 colors.append(color)
             progressbar.next(True)
-            count += 1
         if not iterator.next():
             break
     progressbar.stop()
@@ -290,10 +320,11 @@ def get_shape(geoms, ifcfile):
 
 def get_mesh(geoms, ifcfile):
 
-    # Unused for now
-
     """Returns a Mesh from a list of IFC entities"""
 
+    progressbar = Base.ProgressIndicator()
+    total = len(geoms)
+    progressbar.start("Generating "+str(total)+" shapes...",total)
     settings = ifcopenshell.geom.settings()
     body_contexts = get_body_context_ids(ifcfile)
     if body_contexts:
@@ -302,6 +333,7 @@ def get_mesh(geoms, ifcfile):
     cores = multiprocessing.cpu_count()
     iterator = ifcopenshell.geom.iterator(settings, ifcfile, cores, include=geoms)
     is_valid = iterator.initialize()
+    colors = []
     if not is_valid:
         return
     while True:
@@ -311,16 +343,21 @@ def get_mesh(geoms, ifcfile):
             faces = item.geometry.faces
             verts = [FreeCAD.Vector(verts[i:i+3]) for i in range(0,len(verts),3)]
             faces = [tuple(faces[i:i+3]) for i in range(0,len(faces),3)]
-            mesh = Mesh.Mesh((verts,faces))
             mat = get_matrix(item.transformation.matrix.data)
-            mesh.transform(mat)
-            scale = FreeCAD.Matrix()
-            scale.scale(SCALE)
-            mesh.transform(scale)
+            mat.scale(SCALE)
+            verts = [mat.multVec(v.multiply(SCALE)) for v  in verts]
+            mesh = Mesh.Mesh((verts,faces))
             meshes.addMesh(mesh)
+            # TODO buggy
+            #color = item.geometry.surface_styles
+            #color = (color[0], color[1], color[2], 0.0)
+            #for i in range(len(faces)):
+            #    colors.append(color)
+            progressbar.next(True)
         if not iterator.next():
             break
-    return mesh
+    progressbar.stop()
+    return meshes, colors
 
 
 def set_attribute(ifcfile, element, attribute, value):

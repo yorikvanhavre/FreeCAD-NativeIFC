@@ -26,6 +26,7 @@ import FreeCAD
 import ifc_tools
 
 SWITCH_WB = False # switch WB after import
+SHAPEMODE = True # True for shape, False for mesh
 
 def open(filename):
 
@@ -44,7 +45,7 @@ def insert(filename, docname):
 
     stime = time.time()
     document = FreeCAD.getDocument(docname)
-    ifc_tools.create_document(filename, document)
+    ifc_tools.create_document(filename, document, SHAPEMODE)
     document.recompute()
     endtime = "%02d:%02d" % (divmod(round(time.time() - stime, 1), 60))
     fsize = round(os.path.getsize(filename)/1048576, 2)

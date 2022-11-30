@@ -70,15 +70,28 @@ class ifc_object:
 
         import Part # lazy import
 
-        shapes = [child.Shape for child in obj.Group if hasattr(child,"Shape")]
+        shapes = [child.Shape for child in obj.Group if child.isDerivedFrom("Part::Feature")]
+        siteshape = getattr(obj,"SiteShape",None)
         if shapes:
-            siteshape = getattr(obj,"SiteShape",None)
-            if siteshape:
+            if isinstance(siteshape,Part.Shape):
                 obj.Shape = siteshape
             else:
                 obj.Shape = Part.makeCompound(shapes)
+        else:
+            import Mesh
+            meshes = [child.Mesh for child in obj.Group if child.isDerivedFrom("Mesh::Feature")]
+            if meshes:
+                if isinstance(siteshape,Mesh.Mesh):
+                    obj.Mesh = siteshape
+                else:
+                    mesh = Mesh.Mesh()
+                    for m in meshes:
+                        mesh.addMesh(m)
+                    obj.Mesh = mesh
 
     def get_ifc_element(self, obj):
+
+        """Returns the corresponding IFC element of this object"""
 
         import ifc_tools # lazy import
 

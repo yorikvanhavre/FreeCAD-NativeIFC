@@ -93,6 +93,7 @@ class ifc_vp_object:
         import ifc_tools # lazy import
 
         ifcfile = ifc_tools.get_ifcfile(self.Object)
+        smode = self.Object.isDerivedFrom("Part::Feature")
         if ifcfile:
-            ifc_tools.create_children(self.Object, ifcfile)
+            ifc_tools.create_children(self.Object, ifcfile, shapemode=smode)
 

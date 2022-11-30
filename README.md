@@ -10,21 +10,22 @@ This is a preliminary stub to integrate [BlenderBIM](https://blenderbim.org) int
 * [x] Write a custom parametric FreeCAD object that represents an IFC document in the FreeCAD tree
 * [x] Do an initial geometry import
 * [x] Write a custom parametric FreeCAD object that represents in IFC product in the FreeCAD tree
-* [x] Reveal the document structure in the FreeCAD tree
+* [x] Reveal the document structure in the FreeCAD tree f63ab63
 * [x] Allow an object shape to be built automatically from its children
-* [x] Allow to expand a document (reveal its children)
-* [x] Use group extension
-* [x] Support colors
+* [x] Allow to expand a document (reveal its children) c2a3b8b
+* [x] Use group extension b0a4029
+* [x] Support colors 2ae42c5
 
 #### 2. Allow basic editing
 
-* [x] Use enums in enum-based properties
+* [x] Use enums in enum-based properties e9ad068
 * [ ] Fetch attribute documentation
-* [x] Fetch context-dependent IFC types
-* [x] Find a way to not store the whole enum in the file
-* [x] Add progress feedback
-* [x] Allow to change an attibute of an object
-* [x] Allow to manually save the linked IFC file
+* [x] Fetch context-dependent IFC types e4a54532
+* [x] Find a way to not store the whole enum in the file d794d52
+* [x] Add progress feedback 0568f58
+* [x] Allow to change an attibute of an object d280005
+* [x] Allow to manually save the linked IFC file d280005
+* [x] Implement mesh mode
 * [ ] Allow different storage strategies (the shape is transient or not, coin representation only, etc..)
 * [ ] Write a hook system that allows FreeCAD to save the IFC document
 * [ ] Test (and solve!) what happens when opening a NativeIFC file in vanilla FreeCAD
