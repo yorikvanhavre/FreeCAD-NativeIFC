@@ -187,6 +187,6 @@ for subtype in declaration.supertype().subtypes():
 | ---- | --------- | ------------------- | ------------------ | ------------------ | ------------------- |
 | [IfcOpenHouse](https://github.com/aothms/IfcOpenHouse) | 0.1Mb | < 1s | < 1s | Yes | Yes |
 | [AC20 FCK Haus](https://www.ifcwiki.org/images/e/e3/AC20-FZK-Haus.ifc) | 2.6Mb | 2s | Untested | Yes | Yes |
-| Schultz residence | 22Mb | 27s | Untested | Untested | Untested |
-| King Arch | 26Mb | 77s | Untested | Untested | Untested |
+| [Schultz residence](https://github.com/OpeningDesign/Schultz_Residence/tree/master/Model) | 22Mb | 27s | Untested | Untested | Untested |
+| [King Street](http://www.simaud.org/datasets/) | 26Mb | 77s | Untested | Untested | Untested |
 | [Schependomlaan](https://github.com/buildingSMART/Sample-Test-Files/blob/master/IFC%202x3/Schependomlaan/Design%20model%20IFC/IFC%20Schependomlaan.ifc) | 49Mb | 21s | Untested | Untested | Untested |
