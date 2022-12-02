@@ -21,7 +21,7 @@
 #***************************************************************************
 
 import os
-from ifc_viewproviders import ifc_vp_object
+from viewproviders import ifc_vp_object
 
 class ifc_vp_document(ifc_vp_object.ifc_vp_object):
 

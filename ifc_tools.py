@@ -32,9 +32,9 @@ import ifcopenshell
 from ifcopenshell import geom
 from ifcopenshell import api
 from ifcopenshell.util import attribute
-from ifc_objects import ifc_object
-from ifc_viewproviders import ifc_vp_document
-from ifc_viewproviders import ifc_vp_object
+from objects import ifc_object
+from viewproviders import ifc_vp_document
+from viewproviders import ifc_vp_object
 
 SCALE = 1000.0 # IfcOpenShell works in meters, FreeCAD works in mm
 DEFAULT_SCHEMA = 'IFC4' # The default schema to work with if no other info
