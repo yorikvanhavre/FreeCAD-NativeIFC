@@ -10,21 +10,21 @@ This is a preliminary stub to integrate [BlenderBIM](https://blenderbim.org) int
 * [x] Write a custom parametric FreeCAD object that represents an IFC document in the FreeCAD tree
 * [x] Do an initial geometry import
 * [x] Write a custom parametric FreeCAD object that represents in IFC product in the FreeCAD tree
-* [x] Reveal the document structure in the FreeCAD tree f63ab63
+* [x] Reveal the document structure in the FreeCAD tree
 * [x] Allow an object shape to be built automatically from its children
-* [x] Allow to expand a document (reveal its children) c2a3b8b
-* [x] Use group extension b0a4029
-* [x] Support colors 2ae42c5
+* [x] Allow to expand a document (reveal its children)
+* [x] Use group extension
+* [x] Support colors
 
 #### 2. Allow basic editing
 
-* [x] Use enums in enum-based properties e9ad068
+* [x] Use enums in enum-based properties
 * [ ] Fetch attribute documentation
-* [x] Fetch context-dependent IFC types e4a54532
-* [x] Find a way to not store the whole enum in the file d794d52
-* [x] Add progress feedback 0568f58
-* [x] Allow to change an attibute of an object d280005
-* [x] Allow to manually save the linked IFC file d280005
+* [x] Fetch context-dependent IFC types
+* [x] Find a way to not store the whole enum in the file
+* [x] Add progress feedback
+* [x] Allow to change an attibute of an object
+* [x] Allow to manually save the linked IFC file
 * [x] Implement mesh mode
 * [ ] Allow different storage strategies (the shape is transient or not, coin representation only, etc..)
 * [ ] Write a hook system that allows FreeCAD to save the IFC document
@@ -151,7 +151,6 @@ while True:
 compound = Part.makeCompound(shapes)
 ```
 
-[schependomlaan.ifc](https://github.com/buildingSMART/Sample-Test-Files/blob/master/IFC%202x3/Schependomlaan/Design%20model%20IFC/IFC%20Schependomlaan.ifc) of 47Mb imports in 23s
 
 Change a parameter of an object
 
@@ -180,3 +179,14 @@ declaration = schema.declaration_by_name('IfcWall')
 print(declaration.supertype())
 for subtype in declaration.supertype().subtypes():
     print(subtype.name())
+```
+
+### Performance
+
+| File | File size | Import time (shape) | Import time (mesh) | Building structure | Individual elements |
+| ---- | --------- | ----------- | ------------------ | ------------------- |
+| [IfcOpenHouse](https://github.com/aothms/IfcOpenHouse) | 0.1Mb | < 1s | < 1s | Yes | Yes |
+| [AC20 FCK Haus](https://www.ifcwiki.org/images/e/e3/AC20-FZK-Haus.ifc) | 2.6Mb | 2s | Untested | Yes | Yes |
+| Schultz residence | 22Mb | 27s | Untested | Untested | Untested |
+| King Arch | 26Mb | Untested | Untested | Untested | Untested |
+| [Schependomlaan](https://github.com/buildingSMART/Sample-Test-Files/blob/master/IFC%202x3/Schependomlaan/Design%20model%20IFC/IFC%20Schependomlaan.ifc) | 49Mb | 21s | Untested | Untested | Untested |
