@@ -73,10 +73,13 @@ class ifc_object:
         shapes = [child.Shape for child in obj.Group if child.isDerivedFrom("Part::Feature")]
         siteshape = getattr(obj,"SiteShape",None)
         if shapes:
-            if isinstance(siteshape,Part.Shape):
+            if isinstance(siteshape,Part.Shape) and not siteshape.isNull():
                 obj.Shape = siteshape
-            else:
+            elif obj.HoldShape:
                 obj.Shape = Part.makeCompound(shapes)
+            else:
+                # workaround for group extension bug: add a dummy placeholder shape)
+                obj.Shape = Part.makeBox(1,1,1)
         else:
             import Mesh
             meshes = [child.Mesh for child in obj.Group if child.isDerivedFrom("Mesh::Feature")]

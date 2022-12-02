@@ -69,8 +69,8 @@ class ifc_vp_object:
         if self.hasChildren(vobj.Object):
             path = os.path.dirname(os.path.dirname(__file__))
             icon = QtGui.QIcon(os.path.join(path ,"icons", "IFC.svg"))
-            action1 = QtWidgets.QAction(icon,"Reveal children", menu)
-            action1.triggered.connect(self.revealChildren)
+            action1 = QtWidgets.QAction(icon,"Expand children", menu)
+            action1.triggered.connect(self.expandChildren)
             menu.addAction(action1)
 
 
@@ -86,7 +86,7 @@ class ifc_vp_object:
         return False
 
 
-    def revealChildren(self):
+    def expandChildren(self):
 
         """Creates children of this object"""
 
@@ -95,5 +95,5 @@ class ifc_vp_object:
         ifcfile = ifc_tools.get_ifcfile(self.Object)
         smode = self.Object.isDerivedFrom("Part::Feature")
         if ifcfile:
-            ifc_tools.create_children(self.Object, ifcfile, shapemode=smode)
+            ifc_tools.create_children(self.Object, ifcfile, shapemode=smode, holdshape=self.Object.HoldShape)
 

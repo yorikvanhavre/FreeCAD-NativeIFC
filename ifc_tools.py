@@ -40,7 +40,7 @@ SCALE = 1000.0 # IfcOpenShell works in meters, FreeCAD works in mm
 DEFAULT_SCHEMA = 'IFC4' # The default schema to work with if no other info
 
 
-def create_document(filename, document, shapemode=True):
+def create_document(filename, document, shapemode=True, holdshape=False):
 
     """Creates a FreeCAD IFC document object"""
 
@@ -60,25 +60,26 @@ def create_document(filename, document, shapemode=True):
     obj.Proxy.ifcfile = ifcfile
     project = ifcfile.by_type("IfcProject")[0]
     add_properties(project, obj, schema)
+    obj.HoldShape = holdshape
     # Perform initial import
     # Default to all IfcElement (in the future, user can configure this as a custom filter
-    geoms = ifcfile.by_type("IfcElement")
-    # Never load feature elements, they can be lazy loaded
-    geoms = [e for e in geoms if not e.is_a("IfcFeatureElement")]
+    geoms = filter_elements(ifcfile.by_type("IfcElement"))
     # Add site geometry
     geoms.extend(ifcfile.by_type("IfcSite"))
     if shapemode:
         shape, colors = get_shape(geoms, ifcfile)
-        obj.Shape = shape
+        if shape:
+            obj.Shape = shape
     else:
         mesh, colors = get_mesh(geoms, ifcfile)
-        obj.Mesh = mesh
+        if mesh:
+            obj.Mesh = mesh
     set_colors(obj, colors)
-    #create_hierarchy(obj, ifcfile, recursive=True) # TODO offer different import strategies
+    #create_children(obj, ifcfile, recursive=True) # TODO offer different import strategies
     return obj
 
 
-def create_children(obj, ifcfile, recursive=False, shapemode=True):
+def create_children(obj, ifcfile, recursive=False, shapemode=True, holdshape=False):
 
     """Creates a hierarchy of objects under an object"""
 
@@ -87,7 +88,7 @@ def create_children(obj, ifcfile, recursive=False, shapemode=True):
         if not element.id() in [getattr(c,"StepId",0) for c in getattr(parent,"Group",[])]:
             child = create_object(element, parent.Document, ifcfile, shapemode)
             # adjust display # TODO this is just a workaround to the group extension
-            if FreeCAD.GuiUp:
+            if FreeCAD.GuiUp and holdshape:
                 if parent.Type != "IfcSite":
                     parent.ViewObject.hide()
                 for c in parent.Group:
@@ -116,7 +117,11 @@ def get_children(obj, ifcfile):
         children.extend(rel.RelatedObjects)
     for rel in getattr(ifcentity, "ContainsElements", []):
         children.extend(rel.RelatedElements)
-    return children
+    for rel in getattr(ifcentity, "HasOpenings", []):
+        children.extend([rel.RelatedOpeningElement])
+    for rel in getattr(ifcentity, "HasFillings", []):
+        children.extend([rel.RelatedBuildingElement])
+    return filter_elements(children)
 
 
 def get_ifcfile(obj):
@@ -161,30 +166,34 @@ def create_object(ifcentity, document, ifcfile, shapemode=True):
                              ifc_object.ifc_object(),
                              ifc_vp_object.ifc_vp_object(), False)
     add_properties(ifcentity, obj, schema)
-    geoms = ifcopenshell.util.element.get_decomposition(ifcentity)
-    geoms = [e for e in geoms if not e.is_a("IfcFeatureElement")]
-    if not geoms:
-        geoms = [ifcentity]
+    geoms = [ifcentity]
     if shapemode:
         shape, colors = get_shape(geoms, ifcfile)
-        obj.Shape = shape
     else:
         mesh, colors = get_mesh(geoms, ifcfile)
-        obj.Mesh = mesh
-    set_colors(obj, colors)
     if ifcentity.is_a("IfcSite"):
         if shapemode:
             obj.addProperty("Part::PropertyPartShape", "SiteShape", "Base")
-            shape, colors = get_shape([ifcentity], ifcfile)
             if shape:
                 obj.SiteShape = shape
-                set_colors(obj, colors)
         else:
             obj.addProperty("Mesh::PropertyMeshKernel", "SiteShape", "Base")
-            mesh, colors = get_mesh([ifcentity], ifcfile)
             if mesh:
                 obj.SiteShape = mesh
-                set_colors(obj, colors)
+    else:
+        geoms = (ifcopenshell.util.element.get_decomposition(ifcentity))
+        geoms = filter_elements(geoms)
+        if shapemode:
+            if not shape:
+                shape, colors = get_shape(geoms, ifcfile)
+            if shape:
+                obj.Shape = shape
+        else:
+            if not mesh:
+                mesh, colors = get_mesh(geoms, ifcfile)
+            if mesh:
+                obj.Mesh = mesh
+    set_colors(obj, colors)
     return obj
 
 
@@ -199,6 +208,7 @@ def add_properties(ifcentity, obj, schema=DEFAULT_SCHEMA, links=False):
     obj.addExtension('App::GroupExtensionPython')
     if FreeCAD.GuiUp:
         obj.ViewObject.addExtension("Gui::ViewProviderGroupExtensionPython")
+    obj.addProperty("App::PropertyBool", "HoldShape", "Base")
     attr_defs = ifcentity.wrapped_data.declaration().as_entity().all_attributes()
     for attr, value in ifcentity.get_info().items():
         if attr == "type":
@@ -248,21 +258,17 @@ def add_properties(ifcentity, obj, schema=DEFAULT_SCHEMA, links=False):
                 obj.addProperty("App::PropertyEnumeration", attr, "IFC")
                 items = ifcopenshell.util.attribute.get_enum_items(attr_def)
                 setattr(obj, attr, items)
-                setattr(obj, attr, value)
+                if not value in items:
+                    for v in ("UNDEFINED","NOTDEFINED","USERDEFINED"):
+                        if v in items:
+                            value = v
+                            break
+                if value in items:
+                    setattr(obj, attr, value)
             else:
                 obj.addProperty("App::PropertyString", attr, "IFC")
                 if value is not None:
                     setattr(obj, attr, str(value))
-
-
-def set_colors(obj, colors):
-
-    """Sets the given colors to an object"""
-    if FreeCAD.GuiUp and colors:
-        if hasattr(obj.ViewObject,"ShapeColor"):
-            obj.ViewObject.ShapeColor = colors[0][:3]
-        if hasattr(obj.ViewObject,"DiffuseColor"):
-            obj.ViewObject.DiffuseColor = colors
 
 
 def get_ifc_classes(ifcclass, schema="IFC4"):
@@ -272,6 +278,16 @@ def get_ifc_classes(ifcclass, schema="IFC4"):
     schema = ifcopenshell.ifcopenshell_wrapper.schema_by_name(schema)
     declaration = schema.declaration_by_name(ifcclass)
     return [sub.name() for sub in declaration.supertype().subtypes()]
+
+
+def filter_elements(elements):
+
+    """Filter elements list of unwanted types"""
+
+    # Never load feature elements, they can be lazy loaded
+    elements = [e for e in elements if not e.is_a("IfcFeatureElement")]
+    elements = [e for e in elements if not e.is_a("IfcSpace")]
+    return elements
 
 
 def get_shape(geoms, ifcfile):
@@ -294,7 +310,7 @@ def get_shape(geoms, ifcfile):
     iterator = ifcopenshell.geom.iterator(settings, ifcfile, cores, include=geoms)
     is_valid = iterator.initialize()
     if not is_valid:
-        return
+        return None,None
     while True:
         item = iterator.get()
         if item:
@@ -335,7 +351,7 @@ def get_mesh(geoms, ifcfile):
     is_valid = iterator.initialize()
     colors = []
     if not is_valid:
-        return
+        return None,None
     while True:
         item = iterator.get()
         if item:
@@ -365,8 +381,9 @@ def set_attribute(ifcfile, element, attribute, value):
     """Sets the value of an attribute of an IFC element"""
 
     if attribute == "Type":
-        print("Changing class is not yet implemented")
-        return False
+        if value != element.is_a():
+            print("Debug: Changing class is not yet implemented",element,value)
+            return False
     cmd = 'attribute.edit_attributes'
     attribs = {attribute: value}
     if hasattr(element, attribute):
@@ -375,6 +392,17 @@ def set_attribute(ifcfile, element, attribute, value):
             ifcopenshell.api.run(cmd, ifcfile, product=element, attributes=attribs)
             return True
     return False
+
+
+def set_colors(obj, colors):
+
+    """Sets the given colors to an object"""
+
+    if FreeCAD.GuiUp and colors:
+        if hasattr(obj.ViewObject,"ShapeColor"):
+            obj.ViewObject.ShapeColor = colors[0][:3]
+        if hasattr(obj.ViewObject,"DiffuseColor"):
+            obj.ViewObject.DiffuseColor = colors
 
 
 def get_body_context_ids(ifcfile):
