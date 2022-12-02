@@ -184,7 +184,7 @@ for subtype in declaration.supertype().subtypes():
 ### Performance
 
 | File | File size | Import time (shape) | Import time (mesh) | Building structure | Individual elements |
-| ---- | --------- | ----------- | ------------------ | ------------------- |
+| ---- | --------- | ------------------- | ------------------ | ------------------ | ------------------- |
 | [IfcOpenHouse](https://github.com/aothms/IfcOpenHouse) | 0.1Mb | < 1s | < 1s | Yes | Yes |
 | [AC20 FCK Haus](https://www.ifcwiki.org/images/e/e3/AC20-FZK-Haus.ifc) | 2.6Mb | 2s | Untested | Yes | Yes |
 | Schultz residence | 22Mb | 27s | Untested | Untested | Untested |
