@@ -181,6 +181,21 @@ for subtype in declaration.supertype().subtypes():
     print(subtype.name())
 ```
 
+Working with documentation:
+
+```python
+entdoc = ifcopenshell.util.doc.get_entity_doc("IFC4","IfcWall")
+entdoc.keys() # 'description', 'predefined_types', 'spec_url', 'attributes'
+entdoc['attributes']['IsDefinedBy']
+# gives the same result as
+ifcopenshell.util.doc.get_attribute_doc("IFC4","IfcWall","IsDefinedBy")
+# 'Set of relationships to the object type that provides the type definitions 
+# for this object occurrence. The then associated _IfcTypeObject_, or its subtypes,
+# contains the specific information (or type, or style), that is common to all 
+# instances of _IfcObject_, or its subtypes, referring to the same type.'
+
+```
+
 ### Performance
 
 | File | File size | Import time (shape) | Import time (mesh) | Building structure | Individual elements |
