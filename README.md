@@ -197,6 +197,19 @@ ifcopenshell.util.doc.get_attribute_doc("IFC4","IfcWall","IsDefinedBy")
 
 ```
 
+Change class
+
+```python
+>>> f=ifcopenshell.open("IfcOpenHouse.ifc")
+>>> w=f.by_type("IfcWall")[0]
+>>> w
+#40=IfcWallStandardCase('1TGeFqjqb3$xFeUl92Fwvi',#5,'South wall',$,$,#61,#43,$)
+>>> ifcopenshell.util.schema.reassign_class(f,w,"IfcBeam")
+#2746=IfcBeam('1TGeFqjqb3$xFeUl92Fwvi',#5,'South wall',$,$,#61,#43,$)
+>>> f.write("IfcOpenHouse2.ifc")
+```
+
+
 ### Performance
 
 | File | File size | Import time (shape) | Import time (mesh) | Building structure | Individual elements |
