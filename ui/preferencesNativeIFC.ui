@@ -34,6 +34,12 @@
           <property name="toolTip">
            <string>How the IFC file will initially be imported: Only one object, only project structure, or all individual objects.</string>
           </property>
+          <property name="prefEntry" stdset="0">
+           <cstring>InitialImport</cstring>
+          </property>
+          <property name="prefPath" stdset="0">
+           <cstring>Mod/NativeIFC</cstring>
+          </property>
           <item>
            <property name="text">
             <string>Only root object</string>
@@ -60,14 +66,12 @@
         </item>
         <item row="2" column="1">
          <widget class="Gui::PrefComboBox" name="comboBox_2">
+          <property name="toolTip">
+           <string>The type of object created at import. Mesh is faster, but Shapes are more precise. You can convert between the two anytime by right-clicking the object tree</string>
+          </property>
           <item>
            <property name="text">
-            <string>Full shape</string>
-           </property>
-          </item>
-          <item>
-           <property name="text">
-            <string>Shape (no compound)</string>
+            <string>Shape</string>
            </property>
           </item>
           <item>
@@ -80,12 +84,22 @@
        </layout>
       </item>
       <item>
-       <widget class="Gui::PrefCheckBox" name="checkBox">
+       <widget class="Gui::PrefCheckBox" name="checkBox_3">
         <property name="toolTip">
-         <string>If this is checked, these settings will be applied automatically next time. You can chenge this later under menu Edit -&gt; Preferences -&gt; Import/Export -&gt; Native IFC</string>
+         <string>If this is checked, the workbench specified in Start preferences will be loaded after import</string>
         </property>
         <property name="text">
-         <string>Do not ask when importing</string>
+         <string>Switch workbench after import</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="Gui::PrefCheckBox" name="checkBox">
+        <property name="toolTip">
+         <string>If this is checked, a dialgo will be shown at each import</string>
+        </property>
+        <property name="text">
+         <string>Show options dialog when importing</string>
         </property>
        </widget>
       </item>
@@ -102,6 +116,9 @@
        <widget class="Gui::PrefCheckBox" name="checkBox_2">
         <property name="text">
          <string>Do not warn when saving</string>
+        </property>
+        <property name="checked">
+         <bool>true</bool>
         </property>
        </widget>
       </item>

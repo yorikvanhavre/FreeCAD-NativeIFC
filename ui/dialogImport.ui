@@ -54,14 +54,12 @@
      </item>
      <item row="2" column="1">
       <widget class="QComboBox" name="comboBox_2">
+       <property name="toolTip">
+        <string>The type of object created at import. Mesh is faster, but Shapes are more precise. You can convert between the two anytime by right-clicking the object tree</string>
+       </property>
        <item>
         <property name="text">
-         <string>Full shape</string>
-        </property>
-       </item>
-       <item>
-        <property name="text">
-         <string>Shape (no compound)</string>
+         <string>Shape</string>
         </property>
        </item>
        <item>
@@ -74,12 +72,25 @@
     </layout>
    </item>
    <item>
-    <widget class="QCheckBox" name="checkBox">
+    <widget class="QCheckBox" name="checkBox_2">
      <property name="toolTip">
-      <string>If this is checked, these settings will be applied automatically next time. You can chenge this later under menu Edit -&gt; Preferences -&gt; Import/Export -&gt; Native IFC</string>
+      <string>If this is checked, the workbench specified in Start preferences will be loaded after import</string>
      </property>
      <property name="text">
-      <string>Do not ask me next time</string>
+      <string>Switch workbench after import</string>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <widget class="QCheckBox" name="checkBox">
+     <property name="toolTip">
+      <string>If this is unchecked, these settings will be applied automatically next time. You can chenge this later under menu Edit -&gt; Preferences -&gt; Import/Export -&gt; Native IFC</string>
+     </property>
+     <property name="text">
+      <string>Ask me again next time</string>
+     </property>
+     <property name="checked">
+      <bool>true</bool>
      </property>
     </widget>
    </item>
