@@ -69,28 +69,37 @@ class ifc_object:
     def execute (self, obj):
 
         import Part # lazy import
+        import ifc_tools
+        import Mesh
 
-        shapes = [child.Shape for child in obj.Group if child.isDerivedFrom("Part::Feature")]
-        siteshape = getattr(obj,"SiteShape",None)
-        if shapes:
-            if isinstance(siteshape,Part.Shape) and not siteshape.isNull():
-                obj.Shape = siteshape
-            elif obj.HoldShape:
-                obj.Shape = Part.makeCompound(shapes)
-            else:
-                # workaround for group extension bug: add a dummy placeholder shape)
-                obj.Shape = Part.makeBox(1,1,1)
-        else:
-            import Mesh
-            meshes = [child.Mesh for child in obj.Group if child.isDerivedFrom("Mesh::Feature")]
-            if meshes:
-                if isinstance(siteshape,Mesh.Mesh):
-                    obj.Mesh = siteshape
-                else:
+        ifcfile = ifc_tools.get_ifcfile(obj)
+        ifcelement = self.get_ifc_element(obj)
+        if obj.isDerivedFrom("Part::Feature"):
+            shape, colors = ifc_tools.get_shape(ifcelement, ifcfile)
+            if not shape:
+                shapes = [child.Shape for child in obj.Group if child.isDerivedFrom("Part::Feature")]
+                if shapes:
+                    if obj.HoldShape:
+                        shape = Part.makeCompound(shapes)
+                    else:
+                        # workaround for group extension bug: add a dummy placeholder shape)
+                        shape = Part.makeBox(1,1,1)
+            if shape:
+                obj.Shape = shape
+                ifc_tools.set_colors(obj, colors)
+        elif obj.isDerivedFrom("Mesh::Feature"):
+            mesh, colors = ifc_tools.get_mesh(ifcelement, ifcfile)
+            if not mesh:
+                meshes = [child.Mesh for child in obj.Group if child.isDerivedFrom("Mesh::Feature")]
+                if meshes:
                     mesh = Mesh.Mesh()
-                    for m in meshes:
-                        mesh.addMesh(m)
-                    obj.Mesh = mesh
+                    if obj.HoldShape:
+                        for m in meshes:
+                            mesh.addMesh(m)
+            if mesh:
+                obj.Mesh = mesh
+                ifc_tools.set_colors(obj, colors)
+
 
     def get_ifc_element(self, obj):
 

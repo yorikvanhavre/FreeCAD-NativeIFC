@@ -46,9 +46,6 @@ class ifc_vp_object:
             colors = []
             for child in obj.Group:
                 colors.extend(child.ViewObject.DiffuseColor)
-            siteshape = getattr(obj, "SiteShape", None)
-            if siteshape:
-                colors.extend([obj.ViewObject.ShapeColor for f in obj.SiteShape.Faces])
             if colors:
                 obj.ViewObject.DiffuseColor = colors
 
@@ -72,12 +69,19 @@ class ifc_vp_object:
             action1 = QtWidgets.QAction(icon,"Expand children", menu)
             action1.triggered.connect(self.expandChildren)
             menu.addAction(action1)
+            if vobj.Object.isDerivedFrom("Part::Feature"):
+                t = "Change to mesh"
+            else:
+                t = "Change to shape"
+            action2 = QtWidgets.QAction(icon, t, menu)
+            action2.triggered.connect(self.switchObject)
+            menu.addAction(action2)
 
 
     def hasChildren(self, obj):
-        
+
         """Returns True if this IFC object can be decomposed"""
-        
+
         import ifc_tools # lazy import
 
         ifcfile = ifc_tools.get_ifcfile(obj)
@@ -96,4 +100,30 @@ class ifc_vp_object:
         smode = self.Object.isDerivedFrom("Part::Feature")
         if ifcfile:
             ifc_tools.create_children(self.Object, ifcfile, shapemode=smode, holdshape=self.Object.HoldShape)
+        self.Object.Document.recompute()
+
+
+    def switchObject(self):
+
+        """Switch this object between shape and mesh"""
+
+        import ifc_tools # lazy import
+
+        shapemode = self.Object.isDerivedFrom("Mesh::Feature")
+        element = self.Object.Proxy.get_ifc_element(self.Object)
+        document = self.Object.Document
+        ifcfile = ifc_tools.get_ifcfile(self.Object)
+        if element.is_a("IfcProject"):
+            nobj = ifc_tools.create_document(element, document, ifcfile, shapemode=shapemode)
+        else:
+            nobj = ifc_tools.create_object(element, document, ifcfile, shapemode=shapemode)
+        nobj.Group = self.Object.Group
+        for parent in self.Object.InList:
+            if self.Object in getattr(parent,"Group",[]):
+                parent.addObject(nobj)
+        name = self.Object.Name
+        document.removeObject(name)
+        document.recompute()
+
+
 

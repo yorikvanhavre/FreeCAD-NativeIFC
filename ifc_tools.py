@@ -37,45 +37,38 @@ from viewproviders import ifc_vp_document
 from viewproviders import ifc_vp_object
 
 SCALE = 1000.0 # IfcOpenShell works in meters, FreeCAD works in mm
-DEFAULT_SCHEMA = 'IFC4' # The default schema to work with if no other info
-
 
 def create_document(filename, document, shapemode=True, holdshape=False):
 
     """Creates a FreeCAD IFC document object"""
 
-    if shapemode:
-        otype = 'Part::FeaturePython'
-    else:
-        otype = 'Mesh::FeaturePython'
-    obj = document.addObject(otype, 'IfcDocument',
-                             ifc_object.ifc_object(),
-                             ifc_vp_document.ifc_vp_document(), False)
+    obj = add_object(document, shapemode, fctype='document')
     obj.addProperty("App::PropertyFile","FilePath","Base","The path to the linked IFC file")
     obj.addProperty("App::PropertyBool","Modified","Base")
     obj.setPropertyStatus("Modified","Hidden")
     obj.FilePath = filename
     ifcfile = ifcopenshell.open(filename)
-    schema = ifcfile.wrapped_data.schema_name()
     obj.Proxy.ifcfile = ifcfile
     project = ifcfile.by_type("IfcProject")[0]
-    add_properties(project, obj, schema)
+    add_properties(project, obj, ifcfile)
     obj.HoldShape = holdshape
     # Perform initial import
     # Default to all IfcElement (in the future, user can configure this as a custom filter
-    geoms = filter_elements(ifcfile.by_type("IfcElement"))
+    elements = ifcfile.by_type("IfcElement")
     # Add site geometry
-    geoms.extend(ifcfile.by_type("IfcSite"))
-    if shapemode:
-        shape, colors = get_shape(geoms, ifcfile)
-        if shape:
-            obj.Shape = shape
-    else:
-        mesh, colors = get_mesh(geoms, ifcfile)
-        if mesh:
-            obj.Mesh = mesh
-    set_colors(obj, colors)
-    #create_children(obj, ifcfile, recursive=True) # TODO offer different import strategies
+    elements.extend(ifcfile.by_type("IfcSite"))
+    set_geometry(obj, elements, ifcfile, shapemode)
+    return obj
+
+
+def create_object(ifcentity, document, ifcfile, shapemode=True):
+
+    """Creates a FreeCAD object from an IFC entity"""
+
+    obj = add_object(document, shapemode)
+    add_properties(ifcentity, obj, ifcfile)
+    elements = [ifcentity]
+    set_geometry(obj, elements, ifcfile, shapemode)
     return obj
 
 
@@ -84,27 +77,30 @@ def create_children(obj, ifcfile, recursive=False, shapemode=True, holdshape=Fal
     """Creates a hierarchy of objects under an object"""
 
     def create_child(parent, element):
+        subresult = []
         # do not create if a child with same stepid already exists
         if not element.id() in [getattr(c,"StepId",0) for c in getattr(parent,"Group",[])]:
             child = create_object(element, parent.Document, ifcfile, shapemode)
+            subresult.append(child)
             # adjust display # TODO this is just a workaround to the group extension
             if FreeCAD.GuiUp and holdshape:
                 if parent.Type != "IfcSite":
                     parent.ViewObject.hide()
                 for c in parent.Group:
                     c.ViewObject.show()
-
             parent.addObject(child)
             if element.is_a("IfcSite"):
                 # force-create a building too if we just created a site
                 building = [o for o in get_children(child, ifcfile) if o.is_a("IfcBuilding")][0]
-                create_child(child, building)
+                subresult.extend(create_child(child, building))
             if recursive:
-                create_children(child, ifcfile, recursive)
+                subresult.extend(create_children(child, ifcfile, recursive))
+        return subresult
 
+    result = []
     for child in get_children(obj, ifcfile):
-        create_child(obj, child)
-    obj.Document.recompute()
+        result.extend(create_child(obj, child))
+    return result
 
 
 def get_children(obj, ifcfile):
@@ -153,54 +149,28 @@ def get_project(obj):
     return None
 
 
-def create_object(ifcentity, document, ifcfile, shapemode=True):
+def add_object(document, shapemode=True, fctype="object"):
 
-    """Creates a FreeCAD object from an IFC entity"""
+    """adds a new object to a FreeCAD document"""
 
     if shapemode:
         otype = 'Part::FeaturePython'
     else:
         otype = 'Mesh::FeaturePython'
-    schema = ifcfile.wrapped_data.schema_name()
-    obj = document.addObject(otype, 'IfcObject',
-                             ifc_object.ifc_object(),
-                             ifc_vp_object.ifc_vp_object(), False)
-    add_properties(ifcentity, obj, schema)
-    geoms = [ifcentity]
-    if shapemode:
-        shape, colors = get_shape(geoms, ifcfile)
+    ot = ifc_object.ifc_object()
+    if fctype == "document":
+        vp = ifc_vp_document.ifc_vp_document()
     else:
-        mesh, colors = get_mesh(geoms, ifcfile)
-    if ifcentity.is_a("IfcSite"):
-        if shapemode:
-            obj.addProperty("Part::PropertyPartShape", "SiteShape", "Base")
-            if shape:
-                obj.SiteShape = shape
-        else:
-            obj.addProperty("Mesh::PropertyMeshKernel", "SiteShape", "Base")
-            if mesh:
-                obj.SiteShape = mesh
-    else:
-        geoms = (ifcopenshell.util.element.get_decomposition(ifcentity))
-        geoms = filter_elements(geoms)
-        if shapemode:
-            if not shape:
-                shape, colors = get_shape(geoms, ifcfile)
-            if shape:
-                obj.Shape = shape
-        else:
-            if not mesh:
-                mesh, colors = get_mesh(geoms, ifcfile)
-            if mesh:
-                obj.Mesh = mesh
-    set_colors(obj, colors)
+        vp = ifc_vp_object.ifc_vp_object()
+    obj = document.addObject(otype, 'IfcObject', ot, vp, False)
     return obj
 
 
-def add_properties(ifcentity, obj, schema=DEFAULT_SCHEMA, links=False):
+def add_properties(ifcentity, obj, ifcfile, links=False):
 
     """Adds the properties of the given IFC object to a FreeCAD object"""
 
+    schema = ifcfile.wrapped_data.schema_name()
     if getattr(ifcentity, "Name", None):
         obj.Label = ifcentity.Name
     else:
@@ -284,18 +254,29 @@ def filter_elements(elements):
 
     """Filter elements list of unwanted types"""
 
+    # make sure we have a clean list
+    if not isinstance(elements,(list,tuple)):
+        elements = [elements]
     # Never load feature elements, they can be lazy loaded
     elements = [e for e in elements if not e.is_a("IfcFeatureElement")]
+    # do not load spaces for now (TODO handle them correctly)
     elements = [e for e in elements if not e.is_a("IfcSpace")]
+    # skip projects
+    elements = [e for e in elements if not e.is_a("IfcProject")]
+    # skip furniture for now, they can be lazy loaded probably
+    elements = [e for e in elements if not e.is_a("IfcFurnishingElement")]
+    # skip annotations for now
+    elements = [e for e in elements if not e.is_a("IfcAnnotation")]
     return elements
 
 
-def get_shape(geoms, ifcfile):
+def get_shape(elements, ifcfile):
 
     """Returns a Part shape from a list of IFC entities"""
 
+    elements = filter_elements(elements)
     progressbar = Base.ProgressIndicator()
-    total = len(geoms)
+    total = len(elements)
     progressbar.start("Generating "+str(total)+" shapes...",total)
     settings = ifcopenshell.geom.settings()
     settings.set(settings.DISABLE_TRIANGULATION, True)
@@ -307,7 +288,7 @@ def get_shape(geoms, ifcfile):
     shapes = []
     colors = []
     cores = multiprocessing.cpu_count()
-    iterator = ifcopenshell.geom.iterator(settings, ifcfile, cores, include=geoms)
+    iterator = ifcopenshell.geom.iterator(settings, ifcfile, cores, include=elements)
     is_valid = iterator.initialize()
     if not is_valid:
         return None,None
@@ -331,15 +312,20 @@ def get_shape(geoms, ifcfile):
         if not iterator.next():
             break
     progressbar.stop()
-    return Part.makeCompound(shapes), colors
+    if len(shapes) == 1:
+        shape = shapes[0]
+    else:
+        shape = Part.makeCompound(shapes)
+    return shape, colors
 
 
-def get_mesh(geoms, ifcfile):
+def get_mesh(elements, ifcfile):
 
     """Returns a Mesh from a list of IFC entities"""
 
+    elements = filter_elements(elements)
     progressbar = Base.ProgressIndicator()
-    total = len(geoms)
+    total = len(elements)
     progressbar.start("Generating "+str(total)+" shapes...",total)
     settings = ifcopenshell.geom.settings()
     body_contexts = get_body_context_ids(ifcfile)
@@ -347,7 +333,7 @@ def get_mesh(geoms, ifcfile):
         settings.set_context_ids(body_contexts)
     meshes = Mesh.Mesh()
     cores = multiprocessing.cpu_count()
-    iterator = ifcopenshell.geom.iterator(settings, ifcfile, cores, include=geoms)
+    iterator = ifcopenshell.geom.iterator(settings, ifcfile, cores, include=elements)
     is_valid = iterator.initialize()
     colors = []
     if not is_valid:
@@ -360,7 +346,6 @@ def get_mesh(geoms, ifcfile):
             verts = [FreeCAD.Vector(verts[i:i+3]) for i in range(0,len(verts),3)]
             faces = [tuple(faces[i:i+3]) for i in range(0,len(faces),3)]
             mat = get_matrix(item.transformation.matrix.data)
-            mat.scale(SCALE)
             verts = [mat.multVec(v.multiply(SCALE)) for v  in verts]
             mesh = Mesh.Mesh((verts,faces))
             meshes.addMesh(mesh)
@@ -374,6 +359,32 @@ def get_mesh(geoms, ifcfile):
             break
     progressbar.stop()
     return meshes, colors
+
+
+def set_geometry(obj, elements, ifcfile, shapemode=True):
+    
+    """Sets the geometry of the given object"""
+
+    shape = None
+    mesh = None
+    colors = None
+    if shapemode:
+        shape, colors = get_shape(elements, ifcfile)
+    else:
+        mesh, colors = get_mesh(elements, ifcfile)
+    if not shape and not mesh and len(elements) == 1:
+        elements = ifcopenshell.util.element.get_decomposition(elements[0])
+        if shapemode:
+            if not shape:
+                shape, colors = get_shape(elements, ifcfile)
+        else:
+            if not mesh:
+                mesh, colors = get_mesh(elements, ifcfile)
+    if shape:
+        obj.Shape = shape
+    elif mesh:
+        obj.Mesh = mesh
+    set_colors(obj, colors)
 
 
 def set_attribute(ifcfile, element, attribute, value):
