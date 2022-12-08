@@ -68,49 +68,12 @@ class ifc_object:
 
     def execute (self, obj):
 
-        import Part # lazy import
-        import ifc_tools
-        import Mesh
-
-        ifcfile = ifc_tools.get_ifcfile(obj)
-        ifcelement = self.get_ifc_element(obj)
-        if obj.isDerivedFrom("Part::Feature"):
-            shape, colors = ifc_tools.get_shape(ifcelement, ifcfile)
-            if not shape:
-                shapes = [child.Shape for child in obj.Group if child.isDerivedFrom("Part::Feature")]
-                if shapes:
-                    if obj.HoldShape:
-                        shape = Part.makeCompound(shapes)
-                    else:
-                        # workaround for group extension bug: add a dummy placeholder shape)
-                        shape = Part.makeBox(1,1,1)
-            if shape:
-                obj.Shape = shape
-                ifc_tools.set_colors(obj, colors)
-        elif obj.isDerivedFrom("Mesh::Feature"):
-            mesh, colors = ifc_tools.get_mesh(ifcelement, ifcfile)
-            if not mesh:
-                meshes = [child.Mesh for child in obj.Group if child.isDerivedFrom("Mesh::Feature")]
-                if meshes:
-                    mesh = Mesh.Mesh()
-                    if obj.HoldShape:
-                        for m in meshes:
-                            mesh.addMesh(m)
-            if mesh:
-                obj.Mesh = mesh
-                ifc_tools.set_colors(obj, colors)
-
-
-    def get_ifc_element(self, obj):
-
-        """Returns the corresponding IFC element of this object"""
-
         import ifc_tools # lazy import
 
-        ifc_file = ifc_tools.get_ifcfile(obj)
-        if ifc_file and hasattr(obj, "StepId"):
-            return ifc_file.by_id(obj.StepId)
-        return None
+        ifcfile = ifc_tools.get_ifcfile(obj)
+        element = ifc_tools.get_ifc_element(obj)
+        ifc_tools.set_geometry(obj, element, ifcfile)
+
 
     def edit_attribute(self, obj, attribute, value):
 
@@ -119,7 +82,7 @@ class ifc_object:
         import ifc_tools # lazy import
 
         ifcfile = ifc_tools.get_ifcfile(obj)
-        elt = self.get_ifc_element(obj)
+        elt = ifc_tools.get_ifc_element(obj)
         if elt and ifc_tools.set_attribute(ifcfile, elt, attribute, value):
             proj = ifc_tools.get_project(obj)
             proj.Modified = True

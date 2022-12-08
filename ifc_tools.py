@@ -57,7 +57,7 @@ def create_document(filename, document, shapemode=True, holdshape=False):
     elements = ifcfile.by_type("IfcElement")
     # Add site geometry
     elements.extend(ifcfile.by_type("IfcSite"))
-    set_geometry(obj, elements, ifcfile, shapemode)
+    set_geometry(obj, elements, ifcfile, init=True)
     return obj
 
 
@@ -68,7 +68,7 @@ def create_object(ifcentity, document, ifcfile, shapemode=True):
     obj = add_object(document, shapemode)
     add_properties(ifcentity, obj, ifcfile)
     elements = [ifcentity]
-    set_geometry(obj, elements, ifcfile, shapemode)
+    set_geometry(obj, elements, ifcfile, init=True)
     return obj
 
 
@@ -250,6 +250,16 @@ def get_ifc_classes(ifcclass, schema="IFC4"):
     return [sub.name() for sub in declaration.supertype().subtypes()]
 
 
+def get_ifc_element(obj):
+
+    """Returns the corresponding IFC element of an object"""
+
+    ifc_file = get_ifcfile(obj)
+    if ifc_file and hasattr(obj, "StepId"):
+        return ifc_file.by_id(obj.StepId)
+    return None
+
+
 def filter_elements(elements):
 
     """Filter elements list of unwanted types"""
@@ -361,26 +371,50 @@ def get_mesh(elements, ifcfile):
     return meshes, colors
 
 
-def set_geometry(obj, elements, ifcfile, shapemode=True):
-    
+def set_geometry(obj, elements, ifcfile, init=False):
+
     """Sets the geometry of the given object"""
 
     shape = None
     mesh = None
     colors = None
+    shapemode = obj.isDerivedFrom("Part::Feature")
+
+    # check if this element has its own shape
     if shapemode:
         shape, colors = get_shape(elements, ifcfile)
     else:
         mesh, colors = get_mesh(elements, ifcfile)
-    if not shape and not mesh and len(elements) == 1:
-        elements = ifcopenshell.util.element.get_decomposition(elements[0])
+    if not shape and not mesh:
+        # we don't have an own shape
         if shapemode:
-            if not shape:
+            if init:
+                # gather decomposition
+                elements = ifcopenshell.util.element.get_decomposition(elements[0])
                 shape, colors = get_shape(elements, ifcfile)
+            else:
+                # gather child shapes (faster)
+                shapes = [child.Shape for child in obj.Group if child.isDerivedFrom("Part::Feature")]
+                if shapes:
+                    if obj.HoldShape:
+                        shape = Part.makeCompound(shapes)
+                    else:
+                        # workaround for group extension bug: add a dummy placeholder shape)
+                        shape = Part.makeBox(1,1,1)
         else:
-            if not mesh:
+            if init:
+                # gather decomposition
+                elements = ifcopenshell.util.element.get_decomposition(elements[0])
                 mesh, colors = get_mesh(elements, ifcfile)
-    if shape:
+            else:
+                # gather child meshes (faster)
+                meshes = [child.Mesh for child in obj.Group if child.isDerivedFrom("Mesh::Feature")]
+                if meshes:
+                    mesh = Mesh.Mesh()
+                    if obj.HoldShape:
+                        for m in meshes:
+                            mesh.addMesh(m)
+    if shape and shape.Vertexes:
         obj.Shape = shape
     elif mesh:
         obj.Mesh = mesh

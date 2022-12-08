@@ -63,19 +63,19 @@ class ifc_vp_object:
 
         from PySide2 import QtCore, QtGui, QtWidgets # lazy import
 
+        path = os.path.dirname(os.path.dirname(__file__))
+        icon = QtGui.QIcon(os.path.join(path ,"icons", "IFC.svg"))
         if self.hasChildren(vobj.Object):
-            path = os.path.dirname(os.path.dirname(__file__))
-            icon = QtGui.QIcon(os.path.join(path ,"icons", "IFC.svg"))
             action1 = QtWidgets.QAction(icon,"Expand children", menu)
             action1.triggered.connect(self.expandChildren)
             menu.addAction(action1)
-            if vobj.Object.isDerivedFrom("Part::Feature"):
-                t = "Change to mesh"
-            else:
-                t = "Change to shape"
-            action2 = QtWidgets.QAction(icon, t, menu)
-            action2.triggered.connect(self.switchObject)
-            menu.addAction(action2)
+        if vobj.Object.isDerivedFrom("Part::Feature"):
+            t = "Change to mesh"
+        else:
+            t = "Change to shape"
+        action2 = QtWidgets.QAction(icon, t, menu)
+        action2.triggered.connect(self.switchObject)
+        menu.addAction(action2)
 
 
     def hasChildren(self, obj):
