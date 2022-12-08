@@ -41,7 +41,10 @@ This is a preliminary stub to integrate [BlenderBIM](https://blenderbim.org) int
 
 #### 4. Allow editing other types of elements
 
-* [ ] Enable to expand attributes, materials and properties
+* [ ] Define a strategy for expanding non-IfcProduct elements
+* [ ] Expand attributes
+* [ ] Expand materials
+* [ ] Expand properties
 
 ### Installation
 
