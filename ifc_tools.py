@@ -32,6 +32,7 @@ import ifcopenshell
 from ifcopenshell import geom
 from ifcopenshell import api
 from ifcopenshell.util import attribute
+from ifcopenshell.util import schema
 from objects import ifc_object
 from viewproviders import ifc_vp_document
 from viewproviders import ifc_vp_object
@@ -247,7 +248,12 @@ def get_ifc_classes(ifcclass, schema="IFC4"):
 
     schema = ifcopenshell.ifcopenshell_wrapper.schema_by_name(schema)
     declaration = schema.declaration_by_name(ifcclass)
-    return [sub.name() for sub in declaration.supertype().subtypes()]
+    if "StandardCase" in ifcclass:
+        declaration = declaration.supertype()
+    classes = [sub.name() for sub in declaration.supertype().subtypes()]
+    # also include subtypes of the current class (ex, StandardCases)
+    classes.extend([sub.name() for sub in declaration.subtypes()])
+    return classes
 
 
 def get_ifc_element(obj):
@@ -427,8 +433,12 @@ def set_attribute(ifcfile, element, attribute, value):
 
     if attribute == "Type":
         if value != element.is_a():
-            print("Debug: Changing class is not yet implemented",element,value)
-            return False
+            if value and value.startswith("Ifc"):
+                cmd = 'root.reassign_class'
+                FreeCAD.Console.PrintLog("Changing IFC class value: "+element.is_a()+" to "+str(value)+"\n")
+                product = ifcopenshell.api.run(cmd, ifcfile, product=element, ifc_class=value)
+                # TODO fix attributes
+                return product
     cmd = 'attribute.edit_attributes'
     attribs = {attribute: value}
     if hasattr(element, attribute):
@@ -451,6 +461,7 @@ def set_colors(obj, colors):
 
 
 def get_body_context_ids(ifcfile):
+
     # Facetation is to accommodate broken Revit files
     # See https://forums.buildingsmart.org/t/suggestions-on-how-to-improve-clarity-of-representation-context-usage-in-documentation/3663/6?u=moult
     body_contexts = [
@@ -470,6 +481,7 @@ def get_body_context_ids(ifcfile):
 
 
 def get_plan_contexts_ids(ifcfile):
+
     # Annotation is to accommodate broken Revit files
     # See https://github.com/Autodesk/revit-ifc/issues/187
     return [

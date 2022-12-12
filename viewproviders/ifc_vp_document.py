@@ -21,6 +21,7 @@
 #***************************************************************************
 
 import os
+import FreeCAD
 from viewproviders import ifc_vp_object
 
 class ifc_vp_document(ifc_vp_object.ifc_vp_object):
@@ -76,4 +77,5 @@ class ifc_vp_document(ifc_vp_object.ifc_vp_object):
         ifcfile = ifc_tools.get_ifcfile(self.Object)
         ifcfile.write(self.Object.FilePath)
         self.Object.Modified = False
+        FreeCAD.Console.PrintMessage("Saved " + self.Object.FilePath + "\n")
 

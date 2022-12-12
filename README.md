@@ -19,7 +19,7 @@ This is a preliminary stub to integrate [BlenderBIM](https://blenderbim.org) int
 #### 2. Allow basic editing
 
 * [x] Use enums in enum-based properties
-* [ ] Fetch attribute documentation
+* [ ] ~~Fetch attribute documentation~~ canceled for now because it yields too much text
 * [x] Fetch context-dependent IFC types
 * [x] Find a way to not store the whole enum in the file
 * [x] Add progress feedback
@@ -30,7 +30,7 @@ This is a preliminary stub to integrate [BlenderBIM](https://blenderbim.org) int
 * [ ] Write a hook system that allows FreeCAD to save the IFC document
 * [ ] Test (and solve!) what happens when opening a NativeIFC file in vanilla FreeCAD
 * [ ] Add a shape caching system
-* [ ] Allow to change the class of an object
+* [x] Allow to change the class of an object
 
 #### 3. Allow adding new objects
 
@@ -197,7 +197,6 @@ ifcopenshell.util.doc.get_attribute_doc("IFC4","IfcWall","IsDefinedBy")
 # for this object occurrence. The then associated _IfcTypeObject_, or its subtypes,
 # contains the specific information (or type, or style), that is common to all 
 # instances of _IfcObject_, or its subtypes, referring to the same type.'
-
 ```
 
 Change class

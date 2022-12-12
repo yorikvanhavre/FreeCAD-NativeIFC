@@ -36,7 +36,7 @@ class ifc_object:
 
         # edit an IFC attribute
         if obj.getGroupOfProperty(prop) == "IFC":
-            if prop in ["IfcType","StepId"]:
+            if prop in ["StepId"]:
                 pass
             else:
                 self.edit_attribute(obj, prop, obj.getPropertyByName(prop))
@@ -83,6 +83,11 @@ class ifc_object:
 
         ifcfile = ifc_tools.get_ifcfile(obj)
         elt = ifc_tools.get_ifc_element(obj)
-        if elt and ifc_tools.set_attribute(ifcfile, elt, attribute, value):
-            proj = ifc_tools.get_project(obj)
-            proj.Modified = True
+        if elt:
+            result = ifc_tools.set_attribute(ifcfile, elt, attribute, value)
+            if result:
+                proj = ifc_tools.get_project(obj)
+                proj.Modified = True
+                if hasattr(result,"id") and (result.id() != obj.StepId):
+                    obj.StepId = result.id()
+
