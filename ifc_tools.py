@@ -39,7 +39,7 @@ from viewproviders import ifc_vp_object
 
 SCALE = 1000.0 # IfcOpenShell works in meters, FreeCAD works in mm
 
-def create_document(filename, document, shapemode=True, holdshape=False):
+def create_document(filename, document, shapemode=True, strategy=0):
 
     """Creates a FreeCAD IFC document object"""
 
@@ -52,13 +52,19 @@ def create_document(filename, document, shapemode=True, holdshape=False):
     obj.Proxy.ifcfile = ifcfile
     project = ifcfile.by_type("IfcProject")[0]
     add_properties(project, obj, ifcfile)
-    obj.HoldShape = holdshape
+    obj.HoldShape = False # do not hold shapes by default
     # Perform initial import
     # Default to all IfcElement (in the future, user can configure this as a custom filter
     elements = ifcfile.by_type("IfcElement")
     # Add site geometry
     elements.extend(ifcfile.by_type("IfcSite"))
-    set_geometry(obj, elements, ifcfile, init=True)
+    # populate according to strategy
+    if strategy == 0:
+        set_geometry(obj, elements, ifcfile, init=True)
+    elif strategy == 1:
+        create_children(obj, ifcfile, recursive=True, shapemode=shapemode, only_structure=True)
+    elif strategy == 2:
+        create_children(obj, ifcfile, recursive=True, shapemode=shapemode, assemblies=False)
     return obj
 
 
@@ -73,7 +79,7 @@ def create_object(ifcentity, document, ifcfile, shapemode=True):
     return obj
 
 
-def create_children(obj, ifcfile, recursive=False, shapemode=True, holdshape=False):
+def create_children(obj, ifcfile, recursive=False, shapemode=True, only_structure=False, assemblies=True):
 
     """Creates a hierarchy of objects under an object"""
 
@@ -83,41 +89,37 @@ def create_children(obj, ifcfile, recursive=False, shapemode=True, holdshape=Fal
         if not element.id() in [getattr(c,"StepId",0) for c in getattr(parent,"Group",[])]:
             child = create_object(element, parent.Document, ifcfile, shapemode)
             subresult.append(child)
-            # adjust display # TODO this is just a workaround to the group extension
-            if FreeCAD.GuiUp and holdshape:
-                if parent.Type != "IfcSite":
-                    parent.ViewObject.hide()
-                for c in parent.Group:
-                    c.ViewObject.show()
             parent.addObject(child)
             if element.is_a("IfcSite"):
                 # force-create a building too if we just created a site
                 building = [o for o in get_children(child, ifcfile) if o.is_a("IfcBuilding")][0]
                 subresult.extend(create_child(child, building))
             if recursive:
-                subresult.extend(create_children(child, ifcfile, recursive))
+                subresult.extend(create_children(child, ifcfile, recursive, shapemode, only_structure, assemblies))
         return subresult
 
     result = []
-    for child in get_children(obj, ifcfile):
+    for child in get_children(obj, ifcfile, only_structure, assemblies):
         result.extend(create_child(obj, child))
     return result
 
 
-def get_children(obj, ifcfile):
+def get_children(obj, ifcfile, only_structure=False, assemblies=True):
 
     """Returns the direct descendants of an object"""
 
     ifcentity = ifcfile[obj.StepId]
     children = []
-    for rel in getattr(ifcentity, "IsDecomposedBy", []):
-        children.extend(rel.RelatedObjects)
-    for rel in getattr(ifcentity, "ContainsElements", []):
-        children.extend(rel.RelatedElements)
-    for rel in getattr(ifcentity, "HasOpenings", []):
-        children.extend([rel.RelatedOpeningElement])
-    for rel in getattr(ifcentity, "HasFillings", []):
-        children.extend([rel.RelatedBuildingElement])
+    if assemblies or not ifcentity.is_a("IfcElement"):
+        for rel in getattr(ifcentity, "IsDecomposedBy", []):
+            children.extend(rel.RelatedObjects)
+    if not only_structure:
+        for rel in getattr(ifcentity, "ContainsElements", []):
+            children.extend(rel.RelatedElements)
+        for rel in getattr(ifcentity, "HasOpenings", []):
+            children.extend([rel.RelatedOpeningElement])
+        for rel in getattr(ifcentity, "HasFillings", []):
+            children.extend([rel.RelatedBuildingElement])
     return filter_elements(children)
 
 
@@ -148,6 +150,18 @@ def get_project(obj):
         if getattr(parent, "Type", None) in proj_types:
             return parent
     return None
+
+
+def can_expand(obj, ifcfile):
+
+    """Returns True if this object can have any more child extracted"""
+
+    children = get_children(obj, ifcfile)
+    group = [o.StepId for o in obj.Group]
+    for child in children:
+        if child.id() not in group:
+            return True
+    return False
 
 
 def add_object(document, shapemode=True, fctype="object"):

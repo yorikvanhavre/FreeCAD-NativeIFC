@@ -25,9 +25,7 @@ import time
 import FreeCAD
 import ifc_tools
 
-SWITCH_WB = False # switch WB after import
-SHAPE_MODE = True # True for shape, False for mesh
-HOLD_SHAPE = False # True container objects will have an own shape, False not
+
 
 def open(filename):
 
@@ -44,13 +42,49 @@ def insert(filename, docname):
 
     """Inserts an IFC document in a FreeCAD document"""
 
+    strategy, shapemode, switchwb = get_options()
+    if strategy is None:
+        print("Aborted.")
+        return
     stime = time.time()
     document = FreeCAD.getDocument(docname)
-    ifc_tools.create_document(filename, document, SHAPE_MODE, HOLD_SHAPE)
+    ifc_tools.create_document(filename, document, shapemode, strategy)
     document.recompute()
     endtime = "%02d:%02d" % (divmod(round(time.time() - stime, 1), 60))
     fsize = round(os.path.getsize(filename)/1048576, 2)
     print ("Imported", os.path.basename(filename), "in", fsize, "Mb in", endtime)
-    if FreeCAD.GuiUp and SWITCH_WB:
+    if FreeCAD.GuiUp and switchwb:
         from StartPage import StartPage
         StartPage.postStart()
+
+
+def get_options():
+
+    """Shows a dialog to get import options"""
+
+    params = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Mod/NativeIFC")
+    strategy = params.GetInt("ImportStrategy",0)
+    shapemode = params.GetInt("ShapeMode",0)
+    switchwb = params.GetBool("SwitchWB",True)
+    ask = params.GetBool("AskAgain",True)
+    if ask and FreeCAD.GuiUp:
+        import FreeCADGui
+        from PySide import QtGui
+        dlg = FreeCADGui.PySideUic.loadUi(os.path.join(os.path.dirname(__file__),"ui","dialogImport.ui"))
+        dlg.comboStrategy.setCurrentIndex(strategy)
+        dlg.comboShapeMode.setCurrentIndex(shapemode)
+        dlg.checkSwitchWB.setChecked(switchwb)
+        dlg.checkAskAgain.setChecked(ask)
+        result = dlg.exec_()
+        if not result:
+            return None, None, None
+        strategy = dlg.comboStrategy.currentIndex()
+        shapemode = dlg.comboShapeMode.currentIndex()
+        switchwb = dlg.checkSwitchWB.isChecked()
+        ask = dlg.checkAskAgain.isChecked()
+        params.SetInt("ImportStrategy",strategy)
+        params.SetInt("ShapeMode",shapemode)
+        params.SetBool("SwitchWB",switchwb)
+        params.SetBool("AskAgain",ask)
+    shapemode = not shapemode # 0 -> True and 1 -> False
+    return strategy, shapemode, switchwb

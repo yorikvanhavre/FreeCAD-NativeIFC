@@ -56,7 +56,12 @@ class ifc_vp_object:
         return None
 
     def getIcon(self):
-        return os.path.join(os.path.dirname(os.path.dirname(__file__)),"icons","IFC_object.svg")
+        path = os.path.dirname(os.path.dirname(__file__))
+        if self.Object.isDerivedFrom("Part::Feature"):
+            i = "IFC_object.svg"
+        else:
+            i = "IFC_mesh.svg"
+        return os.path.join(path,"icons",i)
 
 
     def setupContextMenu(self, vobj, menu):
@@ -86,7 +91,7 @@ class ifc_vp_object:
 
         ifcfile = ifc_tools.get_ifcfile(obj)
         if ifcfile:
-            return bool(ifc_tools.get_children(obj, ifcfile))
+            return ifc_tools.can_expand(obj, ifcfile)
         return False
 
 
@@ -99,7 +104,7 @@ class ifc_vp_object:
         ifcfile = ifc_tools.get_ifcfile(self.Object)
         smode = self.Object.isDerivedFrom("Part::Feature")
         if ifcfile:
-            ifc_tools.create_children(self.Object, ifcfile, shapemode=smode, holdshape=self.Object.HoldShape)
+            ifc_tools.create_children(self.Object, ifcfile, shapemode=smode)
         self.Object.Document.recompute()
 
 
@@ -110,7 +115,7 @@ class ifc_vp_object:
         import ifc_tools # lazy import
 
         shapemode = self.Object.isDerivedFrom("Mesh::Feature")
-        element = self.Object.Proxy.get_ifc_element(self.Object)
+        element = ifc_tools.get_ifc_element(self.Object)
         document = self.Object.Document
         ifcfile = ifc_tools.get_ifcfile(self.Object)
         if element.is_a("IfcProject"):
@@ -122,7 +127,9 @@ class ifc_vp_object:
             if self.Object in getattr(parent,"Group",[]):
                 parent.addObject(nobj)
         name = self.Object.Name
+        label = self.Object.Label
         document.removeObject(name)
+        nobj.Label = label
         document.recompute()
 
 

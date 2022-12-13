@@ -34,17 +34,18 @@ This is a preliminary stub to integrate [BlenderBIM](https://blenderbim.org) int
 
 #### 3. Allow adding new objects
 
-* [ ] Allow different import strategies (full model, only building structure...)
+* [x] Allow different import strategies (full model, only building structure...)
 * [ ] Allow to create an IFC document without an existing IFC file
 * [ ] Allow to add building structure (building, storey...)
 * [ ] Allow to add a simple generic IFC product
 
-#### 4. Allow editing other types of elements
+#### 4. Allow advanced editing
 
 * [ ] Define a strategy for expanding non-IfcProduct elements
 * [ ] Expand attributes
 * [ ] Expand materials
 * [ ] Expand properties
+* [ ] Allow to regroup elements
 
 ### Installation
 
@@ -76,6 +77,10 @@ The workflow below allows to test what works already (refer to the above list to
 * Select the Native IFC importer
 
 ![](doc/images/workflow01.jpg)
+
+* Set the desired options
+
+![](doc/images/workflow08.jpg)
 
 * A FreeCAD document is created
 * An object is created representing the IFC root document + project
@@ -155,7 +160,6 @@ while True:
 compound = Part.makeCompound(shapes)
 ```
 
-
 Change a parameter of an object
 
 ```python
@@ -211,13 +215,13 @@ Change class
 >>> f.write("IfcOpenHouse2.ifc")
 ```
 
-
 ### Performance
 
-| File | File size | Import time (shape) | Import time (mesh) | Building structure | Individual elements |
-| ---- | --------- | ------------------- | ------------------ | ------------------ | ------------------- |
-| [IfcOpenHouse](https://github.com/aothms/IfcOpenHouse) | 0.1Mb | < 1s | < 1s | Yes | Yes |
-| [AC20 FCK Haus](https://www.ifcwiki.org/images/e/e3/AC20-FZK-Haus.ifc) | 2.6Mb | 2s | 1s | Yes | Yes |
-| [Schultz residence](https://github.com/OpeningDesign/Schultz_Residence/tree/master/Model) | 22Mb | 27s | 5s | Untested | Untested |
-| [King Street](http://www.simaud.org/datasets/) | 26Mb | 77s | 51s | Untested | Untested |
-| [Schependomlaan](https://github.com/buildingSMART/Sample-Test-Files/blob/master/IFC%202x3/Schependomlaan/Design%20model%20IFC/IFC%20Schependomlaan.ifc) | 49Mb | 21s | 15s | Untested | Untested |
+| File                                                                                                                                                    | File size | Import time (shape) | Import time (mesh) | Import time (all elements) | BlenderBIM |
+| ------------------------------------------------------------------------------------------------------------------------------------------------------- | --------- | ------------------- | ------------------ | -------------------------- | ---------- |
+| [IfcOpenHouse](https://github.com/aothms/IfcOpenHouse)                                                                                                  | 0.1Mb     | < 1s                | < 1s               | 2s                         | < 1s       |
+| [AC20 FCK Haus](https://www.ifcwiki.org/images/e/e3/AC20-FZK-Haus.ifc)                                                                                  | 2.6Mb     | 2s                  | 1s                 | 20s                        | 1s         |
+| [Schultz residence](https://github.com/OpeningDesign/Schultz_Residence/tree/master/Model)                                                               | 22Mb      | 27s                 | 5s                 | Untested                   | 5s         |
+| [King Street simplified](http://www.simaud.org/datasets/)                                                                                               | 26Mb      | 1m17s               | 51s                | Untested                   | 14s        |
+| [Schependomlaan](https://github.com/buildingSMART/Sample-Test-Files/blob/master/IFC%202x3/Schependomlaan/Design%20model%20IFC/IFC%20Schependomlaan.ifc) | 49Mb      | 21s                 | 15s                | Untested                   | 5s         |
+| [King Street full](http://www.simaud.org/datasets/)                                                                                                     | 155b      | Fails               | 14m20s             | Untested                   | Fails      |

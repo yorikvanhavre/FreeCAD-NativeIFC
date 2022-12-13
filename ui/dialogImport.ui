@@ -11,13 +11,13 @@
    </rect>
   </property>
   <property name="windowTitle">
-   <string>Dialog</string>
+   <string>IFC import options</string>
   </property>
   <layout class="QVBoxLayout" name="verticalLayout">
    <item>
     <layout class="QGridLayout" name="gridLayout">
      <item row="1" column="1">
-      <widget class="QComboBox" name="comboBox">
+      <widget class="QComboBox" name="comboStrategy">
        <property name="toolTip">
         <string>How the IFC file will initially be imported: Only one object, only project structure, or all individual objects.</string>
        </property>
@@ -53,7 +53,7 @@
       </widget>
      </item>
      <item row="2" column="1">
-      <widget class="QComboBox" name="comboBox_2">
+      <widget class="QComboBox" name="comboShapeMode">
        <property name="toolTip">
         <string>The type of object created at import. Mesh is faster, but Shapes are more precise. You can convert between the two anytime by right-clicking the object tree</string>
        </property>
@@ -72,7 +72,7 @@
     </layout>
    </item>
    <item>
-    <widget class="QCheckBox" name="checkBox_2">
+    <widget class="QCheckBox" name="checkSwitchWB">
      <property name="toolTip">
       <string>If this is checked, the workbench specified in Start preferences will be loaded after import</string>
      </property>
@@ -82,7 +82,7 @@
     </widget>
    </item>
    <item>
-    <widget class="QCheckBox" name="checkBox">
+    <widget class="QCheckBox" name="checkAskAgain">
      <property name="toolTip">
       <string>If this is unchecked, these settings will be applied automatically next time. You can chenge this later under menu Edit -&gt; Preferences -&gt; Import/Export -&gt; Native IFC</string>
      </property>
