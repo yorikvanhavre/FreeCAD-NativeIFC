@@ -67,6 +67,11 @@
          <string>Mesh</string>
         </property>
        </item>
+       <item>
+        <property name="text">
+         <string>Coin</string>
+        </property>
+       </item>
       </widget>
      </item>
     </layout>

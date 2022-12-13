@@ -86,5 +86,4 @@ def get_options():
         params.SetInt("ShapeMode",shapemode)
         params.SetBool("SwitchWB",switchwb)
         params.SetBool("AskAgain",ask)
-    shapemode = not shapemode # 0 -> True and 1 -> False
     return strategy, shapemode, switchwb

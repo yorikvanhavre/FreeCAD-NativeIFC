@@ -26,7 +26,7 @@ This is a preliminary stub to integrate [BlenderBIM](https://blenderbim.org) int
 * [x] Allow to change an attibute of an object
 * [x] Allow to manually save the linked IFC file
 * [x] Implement mesh mode
-* [ ] Allow different storage strategies (the shape is transient or not, coin representation only, etc..)
+* [x] Allow different storage strategies (shape, mesh or coin)
 * [ ] Write a hook system that allows FreeCAD to save the IFC document
 * [ ] Test (and solve!) what happens when opening a NativeIFC file in vanilla FreeCAD
 * [ ] Add a shape caching system
@@ -225,3 +225,5 @@ Change class
 | [King Street simplified](http://www.simaud.org/datasets/)                                                                                               | 26Mb      | 1m17s               | 51s                | Untested                   | 14s        |
 | [Schependomlaan](https://github.com/buildingSMART/Sample-Test-Files/blob/master/IFC%202x3/Schependomlaan/Design%20model%20IFC/IFC%20Schependomlaan.ifc) | 49Mb      | 21s                 | 15s                | Untested                   | 5s         |
 | [King Street full](http://www.simaud.org/datasets/)                                                                                                     | 155b      | Fails               | 14m20s             | Untested                   | Fails      |
+
+Coin mode gives same values as Mesh mode, and is therefore not interesting at this point...

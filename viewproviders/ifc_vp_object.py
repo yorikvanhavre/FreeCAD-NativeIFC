@@ -41,7 +41,15 @@ class ifc_vp_object:
     def onChanged(self, vobj, prop):
         return
 
+    def __getstate__(self):
+        return None
+
+    def __setstate__(self, state):
+        return None
+
+
     def updateData(self, obj, prop):
+
         if prop == "Shape" and getattr(obj, "Group", None):
             colors = []
             for child in obj.Group:
@@ -49,13 +57,9 @@ class ifc_vp_object:
             if colors:
                 obj.ViewObject.DiffuseColor = colors
 
-    def __getstate__(self):
-        return None
-
-    def __setstate__(self, state):
-        return None
 
     def getIcon(self):
+
         path = os.path.dirname(os.path.dirname(__file__))
         if self.Object.isDerivedFrom("Part::Feature"):
             i = "IFC_object.svg"

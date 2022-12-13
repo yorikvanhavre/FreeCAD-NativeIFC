@@ -27,6 +27,7 @@ import FreeCAD
 from FreeCAD import Base
 import Part
 import Mesh
+from pivy import coin
 
 import ifcopenshell
 from ifcopenshell import geom
@@ -39,7 +40,7 @@ from viewproviders import ifc_vp_object
 
 SCALE = 1000.0 # IfcOpenShell works in meters, FreeCAD works in mm
 
-def create_document(filename, document, shapemode=True, strategy=0):
+def create_document(filename, document, shapemode=0, strategy=0):
 
     """Creates a FreeCAD IFC document object"""
 
@@ -68,7 +69,7 @@ def create_document(filename, document, shapemode=True, strategy=0):
     return obj
 
 
-def create_object(ifcentity, document, ifcfile, shapemode=True):
+def create_object(ifcentity, document, ifcfile, shapemode=0):
 
     """Creates a FreeCAD object from an IFC entity"""
 
@@ -79,7 +80,7 @@ def create_object(ifcentity, document, ifcfile, shapemode=True):
     return obj
 
 
-def create_children(obj, ifcfile, recursive=False, shapemode=True, only_structure=False, assemblies=True):
+def create_children(obj, ifcfile, recursive=False, shapemode=0, only_structure=False, assemblies=True):
 
     """Creates a hierarchy of objects under an object"""
 
@@ -164,14 +165,16 @@ def can_expand(obj, ifcfile):
     return False
 
 
-def add_object(document, shapemode=True, fctype="object"):
+def add_object(document, shapemode=0, fctype="object"):
 
     """adds a new object to a FreeCAD document"""
 
-    if shapemode:
-        otype = 'Part::FeaturePython'
-    else:
+    if shapemode == 2:
+        otype = 'App::FeaturePython'
+    elif shapemode == 1:
         otype = 'Mesh::FeaturePython'
+    else:
+        otype = 'Part::FeaturePython'
     ot = ifc_object.ifc_object()
     if fctype == "document":
         vp = ifc_vp_document.ifc_vp_document()
@@ -391,6 +394,16 @@ def get_mesh(elements, ifcfile):
     return meshes, colors
 
 
+def get_coin(mesh):
+
+    """Returns a coin node from a mesh"""
+
+    buf = coin.SoInput()
+    buf.setBuffer(mesh.writeInventor())
+    node = coin.SoDB.readAll(buf)
+    return node
+
+
 def set_geometry(obj, elements, ifcfile, init=False):
 
     """Sets the geometry of the given object"""
@@ -398,16 +411,15 @@ def set_geometry(obj, elements, ifcfile, init=False):
     shape = None
     mesh = None
     colors = None
-    shapemode = obj.isDerivedFrom("Part::Feature")
 
     # check if this element has its own shape
-    if shapemode:
+    if obj.isDerivedFrom("Part::Feature"):
         shape, colors = get_shape(elements, ifcfile)
     else:
         mesh, colors = get_mesh(elements, ifcfile)
     if not shape and not mesh:
         # we don't have an own shape
-        if shapemode:
+        if obj.isDerivedFrom("Part::Feature"):
             if init:
                 # gather decomposition
                 elements = ifcopenshell.util.element.get_decomposition(elements[0])
@@ -437,7 +449,11 @@ def set_geometry(obj, elements, ifcfile, init=False):
     if shape and shape.Vertexes:
         obj.Shape = shape
     elif mesh:
-        obj.Mesh = mesh
+        if obj.isDerivedFrom("Mesh::Feature"):
+            obj.Mesh = mesh
+        elif FreeCAD.GuiUp:
+            node = get_coin(mesh)
+            obj.ViewObject.RootNode.addChild(node)
     set_colors(obj, colors)
 
 
