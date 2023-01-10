@@ -311,14 +311,8 @@ def get_shape(elements, ifcfile):
     progressbar = Base.ProgressIndicator()
     total = len(elements)
     progressbar.start("Generating "+str(total)+" shapes...",total)
-    settings = ifcopenshell.geom.settings()
-    settings.set(settings.DISABLE_TRIANGULATION, True)
-    settings.set(settings.USE_BREP_DATA,True)
-    settings.set(settings.SEW_SHELLS,True)
-    body_contexts = get_body_context_ids(ifcfile)
-    if body_contexts:
-        settings.set_context_ids(body_contexts)
-    shapes = []
+    settings = get_settings(ifcfile, brep=True)
+    shapes, elements = get_cache(elements)
     colors = []
     cores = multiprocessing.cpu_count()
     iterator = ifcopenshell.geom.iterator(settings, ifcfile, cores, include=elements)
@@ -360,11 +354,8 @@ def get_mesh(elements, ifcfile):
     progressbar = Base.ProgressIndicator()
     total = len(elements)
     progressbar.start("Generating "+str(total)+" shapes...",total)
-    settings = ifcopenshell.geom.settings()
-    body_contexts = get_body_context_ids(ifcfile)
-    if body_contexts:
-        settings.set_context_ids(body_contexts)
-    meshes = Mesh.Mesh()
+    settings = get_settings(ifcfile)
+    meshes, elements = get_cache(elements, mesh=True)
     cores = multiprocessing.cpu_count()
     iterator = ifcopenshell.geom.iterator(settings, ifcfile, cores, include=elements)
     is_valid = iterator.initialize()
@@ -402,6 +393,32 @@ def get_coin(mesh):
     buf.setBuffer(mesh.writeInventor())
     node = coin.SoDB.readAll(buf)
     return node
+
+
+def get_cache(elements, mesh=False):
+
+    """Retrieves elements from a shape cache"""
+
+    if mesh:
+        geom = Mesh.Mesh()
+    else:
+        geom = []
+    return geom, elements
+
+
+def get_settings(ifcfile, brep=False):
+
+    """Returns ifcopenshell settings"""
+
+    settings = ifcopenshell.geom.settings()
+    if brep:
+        settings.set(settings.DISABLE_TRIANGULATION, True)
+        settings.set(settings.USE_BREP_DATA,True)
+        settings.set(settings.SEW_SHELLS,True)
+    body_contexts = get_body_context_ids(ifcfile)
+    if body_contexts:
+        settings.set_context_ids(body_contexts)
+    return settings
 
 
 def set_geometry(obj, elements, ifcfile, init=False):
@@ -533,3 +550,15 @@ def get_matrix(ios_matrix):
         line[-1] *= SCALE
         m_l.extend(line)
     return FreeCAD.Matrix(*m_l)
+
+
+def save_ifc(obj):
+
+    """Saves the linked IFC file of an object"""
+
+    if hasattr(obj,"FilePath") and obj.FilePath:
+        ifcfile = ifc_tools.get_ifcfile(obj)
+        ifcfile.write(obj.FilePath)
+        obj.Modified = False
+        FreeCAD.Console.PrintMessage("Saved " + obj.FilePath + "\n")
+

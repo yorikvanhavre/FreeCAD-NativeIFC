@@ -73,9 +73,4 @@ class ifc_vp_document(ifc_vp_object.ifc_vp_object):
         """Saves the associated IFC file"""
 
         import ifc_tools
-
-        ifcfile = ifc_tools.get_ifcfile(self.Object)
-        ifcfile.write(self.Object.FilePath)
-        self.Object.Modified = False
-        FreeCAD.Console.PrintMessage("Saved " + self.Object.FilePath + "\n")
-
+        ifc_tools.save_ifc(self.Object)
