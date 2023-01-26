@@ -39,48 +39,49 @@ from viewproviders import ifc_vp_document
 from viewproviders import ifc_vp_object
 
 SCALE = 1000.0 # IfcOpenShell works in meters, FreeCAD works in mm
+CACHE = {"Shape":{},"Color":{},"Coin":{}} # A cache for shapes and coin reps
 
 def create_document(filename, document, shapemode=0, strategy=0):
 
-    """Creates a FreeCAD IFC document object"""
+    """Creates a FreeCAD IFC document object.
+    shapemode: 0 = full shape
+               1 = coin only
+    strategy:  0 = only root object
+               1 = only bbuilding structure, 
+               2 = all children
+    """
 
-    obj = add_object(document, shapemode, fctype='document')
-    obj.addProperty("App::PropertyFile","FilePath","Base","The path to the linked IFC file")
+    obj = add_object(document, fctype='document')
+    d = "The path to the linked IFC file"
+    obj.addProperty("App::PropertyFile","FilePath","Base",d)
     obj.addProperty("App::PropertyBool","Modified","Base")
     obj.setPropertyStatus("Modified","Hidden")
     obj.FilePath = filename
     ifcfile = ifcopenshell.open(filename)
     obj.Proxy.ifcfile = ifcfile
     project = ifcfile.by_type("IfcProject")[0]
-    add_properties(project, obj, ifcfile)
-    obj.HoldShape = False # do not hold shapes by default
-    # Perform initial import
-    # Default to all IfcElement (in the future, user can configure this as a custom filter
-    elements = ifcfile.by_type("IfcElement")
-    # Add site geometry
-    elements.extend(ifcfile.by_type("IfcSite"))
+    add_properties(project, obj, ifcfile, holdshape=not(bool(shapemode)))
     # populate according to strategy
     if strategy == 0:
-        set_geometry(obj, elements, ifcfile, init=True)
+        pass
     elif strategy == 1:
-        create_children(obj, ifcfile, recursive=True, shapemode=shapemode, only_structure=True)
+        create_children(obj, ifcfile, recursive=True, only_structure=True)
     elif strategy == 2:
-        create_children(obj, ifcfile, recursive=True, shapemode=shapemode, assemblies=False)
+        create_children(obj, ifcfile, recursive=True, assemblies=False)
     return obj
 
 
-def create_object(ifcentity, document, ifcfile, shapemode=0):
+def create_object(ifcentity, document, ifcfile, holdshape=False):
 
     """Creates a FreeCAD object from an IFC entity"""
 
-    obj = add_object(document, shapemode)
-    add_properties(ifcentity, obj, ifcfile)
+    obj = add_object(document)
+    add_properties(ifcentity, obj, ifcfile, holdshape=holdshape)
     elements = [ifcentity]
-    set_geometry(obj, elements, ifcfile, init=True)
     return obj
 
 
-def create_children(obj, ifcfile, recursive=False, shapemode=0, only_structure=False, assemblies=True):
+def create_children(obj, ifcfile, recursive=False, only_structure=False, assemblies=True):
 
     """Creates a hierarchy of objects under an object"""
 
@@ -88,15 +89,16 @@ def create_children(obj, ifcfile, recursive=False, shapemode=0, only_structure=F
         subresult = []
         # do not create if a child with same stepid already exists
         if not element.id() in [getattr(c,"StepId",0) for c in getattr(parent,"Group",[])]:
-            child = create_object(element, parent.Document, ifcfile, shapemode)
+            child = create_object(element, parent.Document, ifcfile, parent.HoldShape)
             subresult.append(child)
             parent.addObject(child)
             if element.is_a("IfcSite"):
-                # force-create a building too if we just created a site
-                building = [o for o in get_children(child, ifcfile) if o.is_a("IfcBuilding")][0]
-                subresult.extend(create_child(child, building))
+                # force-create contained buildings too if we just created a site
+                buildings = [o for o in get_children(child, ifcfile) if o.is_a("IfcBuilding")]
+                for building in buildings:
+                    subresult.extend(create_child(child, building))
             if recursive:
-                subresult.extend(create_children(child, ifcfile, recursive, shapemode, only_structure, assemblies))
+                subresult.extend(create_children(child, ifcfile, recursive, only_structure, assemblies))
         return subresult
 
     result = []
@@ -121,7 +123,7 @@ def get_children(obj, ifcfile, only_structure=False, assemblies=True):
             children.extend([rel.RelatedOpeningElement])
         for rel in getattr(ifcentity, "HasFillings", []):
             children.extend([rel.RelatedBuildingElement])
-    return filter_elements(children)
+    return filter_elements(children, ifcfile, expand=False)
 
 
 def get_ifcfile(obj):
@@ -165,16 +167,11 @@ def can_expand(obj, ifcfile):
     return False
 
 
-def add_object(document, shapemode=0, fctype="object"):
+def add_object(document, fctype="object"):
 
     """adds a new object to a FreeCAD document"""
 
-    if shapemode == 2:
-        otype = 'App::FeaturePython'
-    elif shapemode == 1:
-        otype = 'Mesh::FeaturePython'
-    else:
-        otype = 'Part::FeaturePython'
+    otype = 'Part::FeaturePython'
     ot = ifc_object.ifc_object()
     if fctype == "document":
         vp = ifc_vp_document.ifc_vp_document()
@@ -184,7 +181,7 @@ def add_object(document, shapemode=0, fctype="object"):
     return obj
 
 
-def add_properties(ifcentity, obj, ifcfile, links=False):
+def add_properties(ifcentity, obj, ifcfile, links=False, holdshape=False):
 
     """Adds the properties of the given IFC object to a FreeCAD object"""
 
@@ -197,6 +194,7 @@ def add_properties(ifcentity, obj, ifcfile, links=False):
     if FreeCAD.GuiUp:
         obj.ViewObject.addExtension("Gui::ViewProviderGroupExtensionPython")
     obj.addProperty("App::PropertyBool", "HoldShape", "Base")
+    obj.HoldShape = holdshape
     attr_defs = ifcentity.wrapped_data.declaration().as_entity().all_attributes()
     for attr, value in ifcentity.get_info().items():
         if attr == "type":
@@ -283,13 +281,30 @@ def get_ifc_element(obj):
     return None
 
 
-def filter_elements(elements):
+def has_representation(element):
+    
+    """Tells if an elements has an own representation"""
+
+    if hasattr(element,"Representation") and element.Representation:
+        return True
+    return False
+
+
+def filter_elements(elements, ifcfile, expand=True):
 
     """Filter elements list of unwanted types"""
 
     # make sure we have a clean list
     if not isinstance(elements,(list,tuple)):
         elements = [elements]
+    # gather decomposition if needed
+    if expand and (len(elements) == 1):
+        if not has_representation(elements[0]):
+            if elements[0].is_a("IfcProject"):
+                elements = ifcfile.by_type("IfcElement")
+                elements.extend(ifcfile.by_type("IfcSite"))
+            else:
+                elements = ifcopenshell.util.element.get_decomposition(elements[0])
     # Never load feature elements, they can be lazy loaded
     elements = [e for e in elements if not e.is_a("IfcFeatureElement")]
     # do not load spaces for now (TODO handle them correctly)
@@ -303,22 +318,41 @@ def filter_elements(elements):
     return elements
 
 
-def get_shape(elements, ifcfile):
+def get_shape(elements, ifcfile, cached=False):
 
     """Returns a Part shape from a list of IFC entities"""
 
-    elements = filter_elements(elements)
+    global CACHE
+    elements = filter_elements(elements, ifcfile)
+    shapes = []
+    colors = []
+    # process cached elements
+    if cached:
+        rest = []
+        for e in elements:
+            if e.id in CACHE["Shape"]:
+                s = CACHE["Shape"][e.id]
+                shapes.append(s.copy())
+                if e.id in CACHE["Color"]:
+                    c = CACHE["Color"][e.id]
+                else:
+                    c = (0.8,0.8,0.8)
+                for f in s.Faces:
+                    colors.append(c)
+            else:
+                rest.append(e)
+        elements = rest
+    if not elements:
+        return shapes, colors
     progressbar = Base.ProgressIndicator()
     total = len(elements)
     progressbar.start("Generating "+str(total)+" shapes...",total)
-    settings = get_settings(ifcfile, brep=True)
-    shapes, elements = get_cache(elements)
-    colors = []
+    settings = get_settings(ifcfile)
     cores = multiprocessing.cpu_count()
     iterator = ifcopenshell.geom.iterator(settings, ifcfile, cores, include=elements)
     is_valid = iterator.initialize()
     if not is_valid:
-        return None,None
+        return None, None
     while True:
         item = iterator.get()
         if item:
@@ -333,8 +367,10 @@ def get_shape(elements, ifcfile):
             #color = (color[0], color[1], color[2], 1.0 - color[3])
             # TODO temp workaround for tranparency bug
             color = (color[0], color[1], color[2], 0.0)
-            for i in range(len(shape.Faces)):
+            for f in shape.Faces:
                 colors.append(color)
+            CACHE["Shape"][item.id]=shape
+            CACHE["Color"][item.id]=color
             progressbar.next(True)
         if not iterator.next():
             break
@@ -346,67 +382,77 @@ def get_shape(elements, ifcfile):
     return shape, colors
 
 
-def get_mesh(elements, ifcfile):
+def get_coin(elements, ifcfile, cached=False):
 
-    """Returns a Mesh from a list of IFC entities"""
+    """Returns a Coin node from a list of IFC entities"""
 
-    elements = filter_elements(elements)
+    global CACHE
+    elements = filter_elements(elements, ifcfile)
+    nodes = coin.SoSeparator()
+    # process cached elements
+    if cached:
+        rest = []
+        for e in elements:
+            if e.id() in CACHE["Coin"]:
+                nodes.addChild(CACHE["Coin"][e.id()].copy())
+            else:
+                rest.append(e)
+        elements = rest
+    elements = [e for e in elements if has_representation(e)]
+    if not elements:
+        return nodes, None
+    if nodes.getNumChildren():
+        print("DEBUG: The following elements are excluded because they make coin crash (need to investigate):")
+        print("DEBUG: If you wish to test, comment out line 488 (return nodes, None) in ifc_tools.py")
+        [print("   ", e) for e in elements]
+        return nodes, None
     progressbar = Base.ProgressIndicator()
     total = len(elements)
     progressbar.start("Generating "+str(total)+" shapes...",total)
-    settings = get_settings(ifcfile)
-    meshes, elements = get_cache(elements, mesh=True)
+    settings = get_settings(ifcfile, brep=False)
     cores = multiprocessing.cpu_count()
     iterator = ifcopenshell.geom.iterator(settings, ifcfile, cores, include=elements)
     is_valid = iterator.initialize()
-    colors = []
     if not is_valid:
-        return None,None
+        print("DEBUG: ifc_tools.get_coin: Invalid iterator")
+        return None, None
     while True:
         item = iterator.get()
         if item:
+            node = coin.SoSeparator()
+            # colors
+            if item.geometry.materials:
+                color = item.geometry.materials[0].diffuse
+                color = (color[0], color[1], color[2], 0.0)
+                mat = coin.SoMaterial()
+                mat.diffuseColor.setValue(color[:3])
+                # TODO treat transparency
+                #mat.transparency.setValue(0.8)
+                node.addChild(mat)
+            # verts
+            matrix = get_matrix(item.transformation.matrix.data)
             verts = item.geometry.verts
-            faces = item.geometry.faces
             verts = [FreeCAD.Vector(verts[i:i+3]) for i in range(0,len(verts),3)]
-            faces = [tuple(faces[i:i+3]) for i in range(0,len(faces),3)]
-            mat = get_matrix(item.transformation.matrix.data)
-            verts = [mat.multVec(v.multiply(SCALE)) for v  in verts]
-            mesh = Mesh.Mesh((verts,faces))
-            meshes.addMesh(mesh)
-            # TODO buggy
-            #color = item.geometry.surface_styles
-            #color = (color[0], color[1], color[2], 0.0)
-            #for i in range(len(faces)):
-            #    colors.append(color)
+            verts = [tuple(matrix.multVec(v.multiply(SCALE))) for v  in verts]
+            coords = coin.SoCoordinate3()
+            coords.point.setValues(verts)
+            node.addChild(coords)
+            # faces
+            faces = list(item.geometry.faces)
+            faces = [f for i in range(0,len(faces),3) for f in faces[i:i+3]+[-1]]
+            faceset = coin.SoIndexedFaceSet()
+            faceset.coordIndex.setValues(faces)
+            node.addChild(faceset)
+            nodes.addChild(node)
+            CACHE["Coin"][item.id] = node
             progressbar.next(True)
         if not iterator.next():
             break
     progressbar.stop()
-    return meshes, colors
+    return nodes, None
 
 
-def get_coin(mesh):
-
-    """Returns a coin node from a mesh"""
-
-    buf = coin.SoInput()
-    buf.setBuffer(mesh.writeInventor())
-    node = coin.SoDB.readAll(buf)
-    return node
-
-
-def get_cache(elements, mesh=False):
-
-    """Retrieves elements from a shape cache"""
-
-    if mesh:
-        geom = Mesh.Mesh()
-    else:
-        geom = []
-    return geom, elements
-
-
-def get_settings(ifcfile, brep=False):
+def get_settings(ifcfile, brep=True):
 
     """Returns ifcopenshell settings"""
 
@@ -421,56 +467,40 @@ def get_settings(ifcfile, brep=False):
     return settings
 
 
-def set_geometry(obj, elements, ifcfile, init=False):
+def set_geometry(obj, elements, ifcfile, cached=False):
 
     """Sets the geometry of the given object"""
 
-    shape = None
-    mesh = None
+    basenode = None
     colors = None
-
-    # check if this element has its own shape
-    if obj.isDerivedFrom("Part::Feature"):
-        shape, colors = get_shape(elements, ifcfile)
-    else:
-        mesh, colors = get_mesh(elements, ifcfile)
-    if not shape and not mesh:
-        # we don't have an own shape
-        if obj.isDerivedFrom("Part::Feature"):
-            if init:
-                # gather decomposition
-                elements = ifcopenshell.util.element.get_decomposition(elements[0])
-                shape, colors = get_shape(elements, ifcfile)
-            else:
-                # gather child shapes (faster)
-                shapes = [child.Shape for child in obj.Group if child.isDerivedFrom("Part::Feature")]
-                if shapes:
-                    if obj.HoldShape:
-                        shape = Part.makeCompound(shapes)
-                    else:
-                        # workaround for group extension bug: add a dummy placeholder shape)
-                        shape = Part.makeBox(1,1,1)
-        else:
-            if init:
-                # gather decomposition
-                elements = ifcopenshell.util.element.get_decomposition(elements[0])
-                mesh, colors = get_mesh(elements, ifcfile)
-            else:
-                # gather child meshes (faster)
-                meshes = [child.Mesh for child in obj.Group if child.isDerivedFrom("Mesh::Feature")]
-                if meshes:
-                    mesh = Mesh.Mesh()
-                    if obj.HoldShape:
-                        for m in meshes:
-                            mesh.addMesh(m)
-    if shape and shape.Vertexes:
+    if obj.ViewObject:
+        # getChild(2) is master on/off switch,
+        # getChild(0) is flatlines display mode (1 = shaded, 2 = wireframe, 3 = points)
+        basenode = obj.ViewObject.RootNode.getChild(2).getChild(0)
+        if basenode.getNumChildren() == 5:
+            # Part VP has 4 nodes, we have added 1 more
+            basenode.removeChild(4)
+    if obj.Group and not(has_representation(get_ifc_element(obj))):
+        # workaround for group extension bug: add a dummy placeholder shape)
+        # otherwise a shape is force-created from the child shapes
+        # and we don't want that otherwise we can't select children
+        obj.Shape = Part.makeBox(1,1,1)
+        colors = None
+    elif obj.HoldShape:
+        # set object shape
+        shape, colors = get_shape(elements, ifcfile, cached)
+        placement = shape.Placement
         obj.Shape = shape
-    elif mesh:
-        if obj.isDerivedFrom("Mesh::Feature"):
-            obj.Mesh = mesh
-        elif FreeCAD.GuiUp:
-            node = get_coin(mesh)
-            obj.ViewObject.RootNode.addChild(node)
+        obj.Placement = placement
+    elif basenode:
+        if obj.Group:
+            # this is for objects that have own coin representation,
+            # but shapes among their children and not taken by first if
+            # case above. TODO do this more elegantly
+            obj.Shape = Part.makeBox(1,1,1)
+        # set coin representation
+        node, colors = get_coin(elements, ifcfile, cached)
+        basenode.addChild(node)
     set_colors(obj, colors)
 
 

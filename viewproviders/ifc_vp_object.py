@@ -75,16 +75,16 @@ class ifc_vp_object:
         path = os.path.dirname(os.path.dirname(__file__))
         icon = QtGui.QIcon(os.path.join(path ,"icons", "IFC.svg"))
         if self.hasChildren(vobj.Object):
-            action1 = QtWidgets.QAction(icon,"Expand children", menu)
-            action1.triggered.connect(self.expandChildren)
-            menu.addAction(action1)
-        if vobj.Object.isDerivedFrom("Part::Feature"):
-            t = "Change to mesh"
+            action_expand = QtWidgets.QAction(icon,"Expand children", menu)
+            action_expand.triggered.connect(self.expandChildren)
+            menu.addAction(action_expand)
+        if vobj.Object.HoldShape:
+            t = "Remove shape"
         else:
-            t = "Change to shape"
-        action2 = QtWidgets.QAction(icon, t, menu)
-        action2.triggered.connect(self.switchObject)
-        menu.addAction(action2)
+            t = "Load shape"
+        action_shape = QtWidgets.QAction(icon, t, menu)
+        action_shape.triggered.connect(self.switchObject)
+        menu.addAction(action_shape)
 
 
     def hasChildren(self, obj):
@@ -106,35 +106,18 @@ class ifc_vp_object:
         import ifc_tools # lazy import
 
         ifcfile = ifc_tools.get_ifcfile(self.Object)
-        smode = self.Object.isDerivedFrom("Part::Feature")
         if ifcfile:
-            ifc_tools.create_children(self.Object, ifcfile, shapemode=smode)
+            ifc_tools.create_children(self.Object, ifcfile)
         self.Object.Document.recompute()
 
 
     def switchObject(self):
 
-        """Switch this object between shape and mesh"""
+        """Switch this object between shape and coin"""
 
-        import ifc_tools # lazy import
-
-        shapemode = self.Object.isDerivedFrom("Mesh::Feature")
-        element = ifc_tools.get_ifc_element(self.Object)
-        document = self.Object.Document
-        ifcfile = ifc_tools.get_ifcfile(self.Object)
-        if element.is_a("IfcProject"):
-            nobj = ifc_tools.create_document(element, document, ifcfile, shapemode=shapemode)
-        else:
-            nobj = ifc_tools.create_object(element, document, ifcfile, shapemode=shapemode)
-        nobj.Group = self.Object.Group
-        for parent in self.Object.InList:
-            if self.Object in getattr(parent,"Group",[]):
-                parent.addObject(nobj)
-        name = self.Object.Name
-        label = self.Object.Label
-        document.removeObject(name)
-        nobj.Label = label
-        document.recompute()
+        self.Object.HoldShape = not self.Object.HoldShape
+        self.Object.Document.recompute()
+        self.Object.ViewObject.DiffuseColor = self.Object.ViewObject.DiffuseColor 
 
 
 

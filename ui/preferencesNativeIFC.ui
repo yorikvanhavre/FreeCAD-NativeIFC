@@ -67,7 +67,10 @@
         <item row="2" column="1">
          <widget class="Gui::PrefComboBox" name="comboBox_2">
           <property name="toolTip">
-           <string>The type of object created at import. Mesh is faster, but Shapes are more precise. You can convert between the two anytime by right-clicking the object tree</string>
+           <string>The type of object created at import. Coin only is much faster, but you don't get the full shape information. You can convert between the two anytime by right-clicking the object tree</string>
+          </property>
+          <property name="currentIndex">
+           <number>1</number>
           </property>
           <property name="prefEntry" stdset="0">
            <cstring>ShapeMode</cstring>
@@ -77,17 +80,12 @@
           </property>
           <item>
            <property name="text">
-            <string>Shape</string>
+            <string>Full shape</string>
            </property>
           </item>
           <item>
            <property name="text">
-            <string>Mesh</string>
-           </property>
-          </item>
-          <item>
-           <property name="text">
-            <string>Coin</string>
+            <string>Coin representation only</string>
            </property>
           </item>
          </widget>

@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>292</width>
-    <height>198</height>
+    <width>334</width>
+    <height>204</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -57,19 +57,17 @@
        <property name="toolTip">
         <string>The type of object created at import. Mesh is faster, but Shapes are more precise. You can convert between the two anytime by right-clicking the object tree</string>
        </property>
+       <property name="currentIndex">
+        <number>1</number>
+       </property>
        <item>
         <property name="text">
-         <string>Shape</string>
+         <string>Full shape</string>
         </property>
        </item>
        <item>
         <property name="text">
-         <string>Mesh</string>
-        </property>
-       </item>
-       <item>
-        <property name="text">
-         <string>Coin</string>
+         <string>Coin representation only</string>
         </property>
        </item>
       </widget>

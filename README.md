@@ -26,10 +26,10 @@ This is a preliminary stub to integrate [BlenderBIM](https://blenderbim.org) int
 * [x] Allow to change an attibute of an object
 * [x] Allow to manually save the linked IFC file
 * [x] Implement mesh mode
-* [x] Allow different storage strategies (shape, mesh or coin)
+* [x] Allow different storage strategies (full shape or only coin representation)
 * [ ] Write a hook system that allows FreeCAD to save the IFC document
 * [ ] Test (and solve!) what happens when opening a NativeIFC file in vanilla FreeCAD
-* [ ] Add a shape caching system
+* [x] Add a shape caching system
 * [x] Allow to change the class of an object
 
 #### 3. Allow adding new objects
@@ -217,13 +217,14 @@ Change class
 
 ### Performance
 
-| File                                                                                                                                                    | File size | Import time (shape) | Import time (mesh) | Import time (all elements) | BlenderBIM |
-| ------------------------------------------------------------------------------------------------------------------------------------------------------- | --------- | ------------------- | ------------------ | -------------------------- | ---------- |
-| [IfcOpenHouse](https://github.com/aothms/IfcOpenHouse)                                                                                                  | 0.1Mb     | < 1s                | < 1s               | 2s                         | < 1s       |
-| [AC20 FCK Haus](https://www.ifcwiki.org/images/e/e3/AC20-FZK-Haus.ifc)                                                                                  | 2.6Mb     | 2s                  | 1s                 | 20s                        | 1s         |
-| [Schultz residence](https://github.com/OpeningDesign/Schultz_Residence/tree/master/Model)                                                               | 22Mb      | 27s                 | 5s                 | Untested                   | 5s         |
-| [King Street simplified](http://www.simaud.org/datasets/)                                                                                               | 26Mb      | 1m17s               | 51s                | Untested                   | 14s        |
-| [Schependomlaan](https://github.com/buildingSMART/Sample-Test-Files/blob/master/IFC%202x3/Schependomlaan/Design%20model%20IFC/IFC%20Schependomlaan.ifc) | 49Mb      | 21s                 | 15s                | Untested                   | 5s         |
-| [King Street full](http://www.simaud.org/datasets/)                                                                                                     | 155b      | Fails               | 14m20s             | Untested                   | Fails      |
+| File                                                                                                                                                    | File size | Import time (shape) | Import time (coin) | BlenderBIM |
+| ------------------------------------------------------------------------------------------------------------------------------------------------------- | --------- | ------------------- | ------------------ | ---------- |
+| [IfcOpenHouse](https://github.com/aothms/IfcOpenHouse)                                                                                                  | 0.1Mb     | < 1s                | < 1s               | < 1s       |
+| [AC20 FCK Haus](https://www.ifcwiki.org/images/e/e3/AC20-FZK-Haus.ifc)                                                                                  | 2.6Mb     | 2s                  | 1s                 | 1s         |
+| [Schultz residence](https://github.com/OpeningDesign/Schultz_Residence/tree/master/Model)                                                               | 22Mb      | 27s                 | 6s                 | 5s         |
+| [King Street simplified](http://www.simaud.org/datasets/)                                                                                               | 26Mb      | 1m17s               | 34s                | 14s        |
+| [Schependomlaan](https://github.com/buildingSMART/Sample-Test-Files/blob/master/IFC%202x3/Schependomlaan/Design%20model%20IFC/IFC%20Schependomlaan.ifc) | 49Mb      | 21s                 | 6s                 | 5s         |
+| [King Street full](http://www.simaud.org/datasets/)                                                                                                     | 155b      | Fails               | 46s                | 36s        |
+| [Nineteen plots](https://forum.freecadweb.org/viewtopic.php?style=1&p=646935&sid=464a4dcd0f99a5903c749df51f3e73b0#p646935)                              | 4.3Mb     | Untested            | 10s                | 4s         | 
 
 Coin mode gives same values as Mesh mode, and is therefore not interesting at this point...

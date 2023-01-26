@@ -24,6 +24,10 @@ class ifc_object:
 
     """Base class for all IFC-based objects"""
 
+    def __init__(self):
+        
+        self.init = True # this marks that the object is freshly created and its shape should be taken from cache
+
     def onChanged(self, obj, prop):
 
         # link Type property to its hidder IfcType counterpart
@@ -70,9 +74,10 @@ class ifc_object:
 
         import ifc_tools # lazy import
 
+        cached = getattr(self,"init",False)
         ifcfile = ifc_tools.get_ifcfile(obj)
         element = ifc_tools.get_ifc_element(obj)
-        ifc_tools.set_geometry(obj, element, ifcfile)
+        ifc_tools.set_geometry(obj, element, ifcfile, cached=cached)
 
 
     def edit_attribute(self, obj, attribute, value):
