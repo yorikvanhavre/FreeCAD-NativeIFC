@@ -81,7 +81,7 @@ The workflow below allows to test what works already (refer to the above list to
 
 ![](doc/images/workflow01.jpg)
 
-* Set the desired options
+* Set the desired options. For large files, creating one root object only and no shapes (coin representatipon only) is the fastest way. Objects can have their children and shapes expanded later, as needed.
 
 ![](doc/images/workflow08.jpg)
 
@@ -90,7 +90,7 @@ The workflow below allows to test what works already (refer to the above list to
 
 ![](doc/images/workflow02.jpg)
 
-* Right-click the IFC root document object and select **Expand**
+* Right-click the IFC root document object and select **Expand children**
 
 ![](doc/images/workflow03.jpg)
 
