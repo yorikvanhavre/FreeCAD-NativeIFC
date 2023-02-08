@@ -238,6 +238,10 @@ Change class
 | [King Street simplified](http://www.simaud.org/datasets/)                                                                                               | 26Mb      | 1m17s               | 34s                | 14s        |
 | [Schependomlaan](https://github.com/buildingSMART/Sample-Test-Files/blob/master/IFC%202x3/Schependomlaan/Design%20model%20IFC/IFC%20Schependomlaan.ifc) | 49Mb      | 21s                 | 6s                 | 5s         |
 | [King Street full](http://www.simaud.org/datasets/)                                                                                                     | 155Mb     | Fails               | 46s                | 36s        |
-| [Nineteen plots](https://forum.freecadweb.org/viewtopic.php?style=1&p=646935&sid=464a4dcd0f99a5903c749df51f3e73b0#p646935)                              | 4.3Mb     | Untested            | 10s                | 4s         | 
+| [Nineteen plots](https://forum.freecadweb.org/viewtopic.php?style=1&p=646935&sid=464a4dcd0f99a5903c749df51f3e73b0#p646935)                              | 4.3Mb     | Untested            | 10s                | 4s         |
 
-Coin mode gives same values as Mesh mode, and is therefore not interesting at this point...
+### Sponsors
+
+This project is sponsored by:
+
+[![](doc/images/otfn-logo.png)](https://opentoolchain-foundation.org/)
