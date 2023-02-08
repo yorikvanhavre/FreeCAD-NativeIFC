@@ -50,6 +50,16 @@ This is a preliminary stub to integrate [BlenderBIM](https://blenderbim.org) int
 * [ ] Allow to regroup elements
 * [ ] Handle drag/drop
 
+#### 5. Tie NativeIFC and BIM Workbenches
+
+* [ ] Support walls
+* [ ] Suport structures
+* [ ] Support windows
+* [ ] Support 2D entitties
+* [ ] Support dimensions
+* [ ] Support Part extrusions
+* [ ] Support Part booleans
+
 ### Installation
 
 #### Auto install
