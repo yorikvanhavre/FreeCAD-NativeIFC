@@ -30,7 +30,7 @@ This is a preliminary stub to integrate [BlenderBIM](https://blenderbim.org) int
 * [ ] Write a hook system that allows FreeCAD to save the IFC document
 * [ ] Test (and solve!) what happens when opening a NativeIFC file in vanilla FreeCAD
 * [x] Add a shape caching system
-* [ ] Tie the shape caching to the corresponding IFC document
+* [x] Tie the shape caching to the corresponding IFC document
 * [x] Allow to change the class of an object
 
 #### 3. Allow adding and removing objects

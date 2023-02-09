@@ -39,7 +39,7 @@ from viewproviders import ifc_vp_document
 from viewproviders import ifc_vp_object
 
 SCALE = 1000.0 # IfcOpenShell works in meters, FreeCAD works in mm
-CACHE = {"Shape":{},"Color":{},"Coin":{}} # A cache for shapes and coin reps
+CACHE = {} # Shapes cache in the form: {id: {data}, ... }
 
 def create_document(filename, document, shapemode=0, strategy=0):
 
@@ -47,7 +47,7 @@ def create_document(filename, document, shapemode=0, strategy=0):
     shapemode: 0 = full shape
                1 = coin only
     strategy:  0 = only root object
-               1 = only bbuilding structure, 
+               1 = only bbuilding structure,
                2 = all children
     """
 
@@ -282,7 +282,7 @@ def get_ifc_element(obj):
 
 
 def has_representation(element):
-    
+
     """Tells if an elements has an own representation"""
 
     if hasattr(element,"Representation") and element.Representation:
@@ -318,23 +318,48 @@ def filter_elements(elements, ifcfile, expand=True):
     return elements
 
 
+def get_cache(ifcfile):
+
+    """Returns the shape cache dictionnary associated with this ifc file"""
+
+    for d in FreeCAD.listDocuments().values():
+        for o in d.Objects:
+            if hasattr(o,"Proxy") and hasattr(o.Proxy,"ifcfile"):
+                if o.Proxy.ifcfile == ifcfile:
+                    if hasattr(o.Proxy,"ifccache") and o.Proxy.ifccache:
+                        return o.Proxy.ifccache
+    return {"Shape":{},"Color":{},"Coin":{}}
+
+
+def set_cache(ifcfile, cache):
+
+    """Sets the given dictionary as shape cache for the given ifc file"""
+
+    for d in FreeCAD.listDocuments().values():
+        for o in d.Objects:
+            if hasattr(o,"Proxy") and hasattr(o.Proxy,"ifcfile"):
+                if o.Proxy.ifcfile == ifcfile:
+                    o.Proxy.ifccache = cache
+                    return
+
+
 def get_shape(elements, ifcfile, cached=False):
 
     """Returns a Part shape from a list of IFC entities"""
 
-    global CACHE
     elements = filter_elements(elements, ifcfile)
     shapes = []
     colors = []
     # process cached elements
+    cache = get_cache(ifcfile)
     if cached:
         rest = []
         for e in elements:
-            if e.id in CACHE["Shape"]:
-                s = CACHE["Shape"][e.id]
+            if e.id in cache["Shape"]:
+                s = cache["Shape"][e.id]
                 shapes.append(s.copy())
-                if e.id in CACHE["Color"]:
-                    c = CACHE["Color"][e.id]
+                if e.id in cache["Color"]:
+                    c = cache["Color"][e.id]
                 else:
                     c = (0.8,0.8,0.8)
                 for f in s.Faces:
@@ -369,16 +394,17 @@ def get_shape(elements, ifcfile, cached=False):
             color = (color[0], color[1], color[2], 0.0)
             for f in shape.Faces:
                 colors.append(color)
-            CACHE["Shape"][item.id]=shape
-            CACHE["Color"][item.id]=color
+            cache["Shape"][item.id]=shape
+            cache["Color"][item.id]=color
             progressbar.next(True)
         if not iterator.next():
             break
-    progressbar.stop()
+    set_cache(ifcfile, cache)
     if len(shapes) == 1:
         shape = shapes[0]
     else:
         shape = Part.makeCompound(shapes)
+    progressbar.stop()
     return shape, colors
 
 
@@ -386,15 +412,15 @@ def get_coin(elements, ifcfile, cached=False):
 
     """Returns a Coin node from a list of IFC entities"""
 
-    global CACHE
     elements = filter_elements(elements, ifcfile)
     nodes = coin.SoSeparator()
     # process cached elements
+    cache = get_cache(ifcfile)
     if cached:
         rest = []
         for e in elements:
-            if e.id() in CACHE["Coin"]:
-                nodes.addChild(CACHE["Coin"][e.id()].copy())
+            if e.id() in cache["Coin"]:
+                nodes.addChild(cache["Coin"][e.id()].copy())
             else:
                 rest.append(e)
         elements = rest
@@ -444,10 +470,11 @@ def get_coin(elements, ifcfile, cached=False):
             faceset.coordIndex.setValues(faces)
             node.addChild(faceset)
             nodes.addChild(node)
-            CACHE["Coin"][item.id] = node
+            cache["Coin"][item.id] = node
             progressbar.next(True)
         if not iterator.next():
             break
+    set_cache(ifcfile, cache)
     progressbar.stop()
     return nodes, None
 
