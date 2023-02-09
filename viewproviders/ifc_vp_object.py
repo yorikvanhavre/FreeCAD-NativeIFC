@@ -61,7 +61,7 @@ class ifc_vp_object:
     def getIcon(self):
 
         path = os.path.dirname(os.path.dirname(__file__))
-        if self.Object.isDerivedFrom("Part::Feature"):
+        if self.Object.HoldShape:
             i = "IFC_object.svg"
         else:
             i = "IFC_mesh.svg"
@@ -118,6 +118,7 @@ class ifc_vp_object:
         self.Object.HoldShape = not self.Object.HoldShape
         self.Object.Document.recompute()
         self.Object.ViewObject.DiffuseColor = self.Object.ViewObject.DiffuseColor 
+        self.Object.ViewObject.signalChangeIcon()
 
 
 
