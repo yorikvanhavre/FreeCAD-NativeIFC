@@ -34,12 +34,11 @@ from ifcopenshell import geom
 from ifcopenshell import api
 from ifcopenshell.util import attribute
 from ifcopenshell.util import schema
-from objects import ifc_object
-from viewproviders import ifc_vp_document
-from viewproviders import ifc_vp_object
+
+import ifc_objects
+import ifc_viewproviders
 
 SCALE = 1000.0 # IfcOpenShell works in meters, FreeCAD works in mm
-CACHE = {} # Shapes cache in the form: {id: {data}, ... }
 
 def create_document(filename, document, shapemode=0, strategy=0):
 
@@ -131,14 +130,15 @@ def get_ifcfile(obj):
     """Returns the ifcfile that handles this object"""
 
     project = get_project(obj)
-    if hasattr(project,"Proxy"):
-        if hasattr(project.Proxy,"ifcfile"):
-            return project.Proxy.ifcfile
-        else:
-            if project.FilePath:
-                ifcfile = ifcopenshell.open(project.FilePath)
+    if project:
+        if hasattr(project,"Proxy"):
+            if hasattr(project.Proxy,"ifcfile"):
+                return project.Proxy.ifcfile
+        if project.FilePath:
+            ifcfile = ifcopenshell.open(project.FilePath)
+            if hasattr(project,"Proxy"):
                 project.Proxy.ifcfile = ifcfile
-                return ifcfile
+            return ifcfile
     return None
 
 
@@ -149,9 +149,10 @@ def get_project(obj):
     proj_types = ("IfcProject","IfcProjectLibrary")
     if getattr(obj, "Type", None) in proj_types:
         return obj
-    for parent in obj.InListRecursive:
-        if getattr(parent, "Type", None) in proj_types:
-            return parent
+    if hasattr(obj,"InListRecursive"):
+        for parent in obj.InListRecursive:
+            if getattr(parent, "Type", None) in proj_types:
+                return parent
     return None
 
 
@@ -172,11 +173,11 @@ def add_object(document, fctype="object"):
     """adds a new object to a FreeCAD document"""
 
     otype = 'Part::FeaturePython'
-    ot = ifc_object.ifc_object()
+    ot = ifc_objects.ifc_object()
     if fctype == "document":
-        vp = ifc_vp_document.ifc_vp_document()
+        vp = ifc_viewproviders.ifc_vp_document()
     else:
-        vp = ifc_vp_object.ifc_vp_object()
+        vp = ifc_viewproviders.ifc_vp_object()
     obj = document.addObject(otype, 'IfcObject', ot, vp, False)
     return obj
 
@@ -185,7 +186,6 @@ def add_properties(ifcentity, obj, ifcfile, links=False, holdshape=False):
 
     """Adds the properties of the given IFC object to a FreeCAD object"""
 
-    schema = ifcfile.wrapped_data.schema_name()
     if getattr(ifcentity, "Name", None):
         obj.Label = ifcentity.Name
     else:
@@ -210,7 +210,7 @@ def add_properties(ifcentity, obj, ifcfile, links=False, holdshape=False):
                 # main enum property, not saved to file
                 obj.addProperty("App::PropertyEnumeration", attr, "IFC")
                 obj.setPropertyStatus(attr,"Transient")
-                setattr(obj, attr, get_ifc_classes(value, schema))
+                setattr(obj, attr, get_ifc_classes(obj, value))
                 setattr(obj, attr, value)
                 # companion hidden propertym that gets saved to file
                 obj.addProperty("App::PropertyString", "IfcType", "IFC")
@@ -257,17 +257,25 @@ def add_properties(ifcentity, obj, ifcfile, links=False, holdshape=False):
                     setattr(obj, attr, str(value))
 
 
-def get_ifc_classes(ifcclass, schema="IFC4"):
+def get_ifc_classes(obj, baseclass):
 
-    """Returns a list of sibling classes from a given IFC class"""
+    """Returns a list of sibling classes from a given FreeCAD object"""
 
+    if baseclass in ("IfcProject","IfcProjectLibrary"):
+        return ("IfcProject","IfcProjectLibrary")
+    ifcfile = get_ifcfile(obj)
+    if not ifcfile:
+        return [baseclass]
+    schema = ifcfile.wrapped_data.schema_name()
     schema = ifcopenshell.ifcopenshell_wrapper.schema_by_name(schema)
-    declaration = schema.declaration_by_name(ifcclass)
-    if "StandardCase" in ifcclass:
+    declaration = schema.declaration_by_name(baseclass)
+    if "StandardCase" in baseclass:
         declaration = declaration.supertype()
     classes = [sub.name() for sub in declaration.supertype().subtypes()]
     # also include subtypes of the current class (ex, StandardCases)
     classes.extend([sub.name() for sub in declaration.subtypes()])
+    if not baseclass in classes:
+        classes.append(baseclass)
     return classes
 
 
@@ -498,6 +506,8 @@ def set_geometry(obj, elements, ifcfile, cached=False):
 
     """Sets the geometry of the given object"""
 
+    if not obj or not elements or not ifcfile:
+        return
     basenode = None
     colors = None
     if obj.ViewObject:

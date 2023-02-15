@@ -25,8 +25,8 @@ class ifc_object:
     """Base class for all IFC-based objects"""
 
     def __init__(self):
-        
-        self.init = True # this marks that the object is freshly created and its shape should be taken from cache
+
+        self.cached = True # this marks that the object is freshly created and its shape should be taken from cache
 
     def onChanged(self, obj, prop):
 
@@ -51,6 +51,14 @@ class ifc_object:
     def onDocumentRestored(self, obj):
 
         self.rebuild_classlist(obj)
+        if hasattr(obj,"FilePath"):
+            # once we have loaded the project, recalculate child coin nodes
+            for child in obj.OutListRecursive:
+                if not getattr(child,"HoldShape",True):
+                    child.Proxy.cached = True
+                    child.touch()
+            obj.Document.recompute()
+
 
     def rebuild_classlist(self, obj):
 
@@ -58,26 +66,30 @@ class ifc_object:
 
         import ifc_tools # lazy import
 
-        ifcclass = obj.IfcType
-        ifcfile = ifc_tools.get_ifcfile(obj)
-        schema = ifcfile.wrapped_data.schema_name()
-        obj.Type = ifc_tools.get_ifc_classes(ifcclass, schema)
-        obj.Type = ifcclass
+        obj.Type = ifc_tools.get_ifc_classes(obj, obj.IfcType)
+        obj.Type = obj.IfcType
+
 
     def __getstate__(self):
+
         return None
 
+
     def __setstate__(self, state):
+
         return None
+
 
     def execute (self, obj):
 
         import ifc_tools # lazy import
 
-        cached = getattr(self,"init",False)
+        cached = getattr(self,"cached",False)
         ifcfile = ifc_tools.get_ifcfile(obj)
         element = ifc_tools.get_ifc_element(obj)
         ifc_tools.set_geometry(obj, element, ifcfile, cached=cached)
+        self.cached = False
+        self.rebuild_classlist(obj)
 
 
     def edit_attribute(self, obj, attribute, value):
