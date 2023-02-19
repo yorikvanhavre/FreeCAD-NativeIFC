@@ -328,7 +328,7 @@ def filter_elements(elements, ifcfile, expand=True):
 
 def get_cache(ifcfile):
 
-    """Returns the shape cache dictionnary associated with this ifc file"""
+    """Returns the shape cache dictionary associated with this ifc file"""
 
     for d in FreeCAD.listDocuments().values():
         for o in d.Objects:

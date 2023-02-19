@@ -111,7 +111,7 @@
       <item>
        <widget class="Gui::PrefCheckBox" name="checkBox">
         <property name="toolTip">
-         <string>If this is checked, a dialgo will be shown at each import</string>
+         <string>If this is checked, a dialog will be shown at each import</string>
         </property>
         <property name="text">
          <string>Show options dialog when importing</string>
