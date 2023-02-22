@@ -25,7 +25,7 @@ Check for updates on this project at https://yorik.uncreated.net/blog/nativeifc
 * [x] Fetch context-dependent IFC types
 * [x] Find a way to not store the whole enum in the file
 * [x] Add progress feedback
-* [x] Allow to change an attibute of an object
+* [x] Allow to change an attribute of an object
 * [x] Allow to manually save the linked IFC file
 * [x] Implement mesh mode
 * [x] Allow different storage strategies (full shape or only coin representation)
@@ -55,7 +55,7 @@ Check for updates on this project at https://yorik.uncreated.net/blog/nativeifc
 #### 5. Tie NativeIFC and BIM Workbenches
 
 * [ ] Support walls
-* [ ] Suport structures
+* [ ] Support structures
 * [ ] Support windows
 * [ ] Support 2D entitties
 * [ ] Support dimensions
@@ -110,7 +110,7 @@ The workflow below allows to test what works already (refer to the above list to
 
 ![](doc/images/workflow04.jpg)
 
-* Try changing one parameter, for ex the **Label** properry of an object
+* Try changing one parameter, for ex the **Label** property of an object
 
 ![](doc/images/workflow05.jpg)
 
