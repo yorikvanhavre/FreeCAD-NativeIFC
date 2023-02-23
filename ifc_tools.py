@@ -624,7 +624,7 @@ def save_ifc(obj):
     """Saves the linked IFC file of an object"""
 
     if hasattr(obj,"FilePath") and obj.FilePath:
-        ifcfile = ifc_tools.get_ifcfile(obj)
+        ifcfile = get_ifcfile(obj)
         ifcfile.write(obj.FilePath)
         obj.Modified = False
         FreeCAD.Console.PrintMessage("Saved " + obj.FilePath + "\n")
