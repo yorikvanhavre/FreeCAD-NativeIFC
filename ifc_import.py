@@ -36,13 +36,14 @@ def open(filename):
     doc.Label = name
     FreeCAD.setActiveDocument(doc.Name)
     insert(filename,doc.Name)
+    return doc
 
 
-def insert(filename, docname):
+def insert(filename, docname, strategy=None, shapemode=None, switchwb=None, silent=False):
 
     """Inserts an IFC document in a FreeCAD document"""
 
-    strategy, shapemode, switchwb = get_options()
+    strategy, shapemode, switchwb = get_options(strategy, shapemode, switchwb, silent)
     if strategy is None:
         print("Aborted.")
         return
@@ -56,16 +57,29 @@ def insert(filename, docname):
     if FreeCAD.GuiUp and switchwb:
         from StartPage import StartPage
         StartPage.postStart()
+    return document
 
 
-def get_options():
+def get_options(strategy=None, shapemode=None, switchwb=None, silent=False):
 
-    """Shows a dialog to get import options"""
+    """Shows a dialog to get import options
+
+    shapemode: 0 = full shape
+               1 = coin only
+    strategy:  0 = only root object
+               1 = only bbuilding structure,
+               2 = all children
+    """
 
     params = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Mod/NativeIFC")
-    strategy = params.GetInt("ImportStrategy",0)
-    shapemode = params.GetInt("ShapeMode",0)
-    switchwb = params.GetBool("SwitchWB",True)
+    if strategy is None:
+        strategy = params.GetInt("ImportStrategy",0)
+    if shapemode is None:
+        shapemode = params.GetInt("ShapeMode",0)
+    if switchwb is None:
+        switchwb = params.GetBool("SwitchWB",True)
+    if silent:
+        return strategy, shapemode, switchwb
     ask = params.GetBool("AskAgain",True)
     if ask and FreeCAD.GuiUp:
         import FreeCADGui

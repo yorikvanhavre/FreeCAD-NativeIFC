@@ -22,3 +22,6 @@
 
 # add import/export types
 FreeCAD.addImportType("Industry Foundation Classes - Native (*.ifc)","ifc_import")
+
+# add unit tests
+FreeCAD.__unit_test__ += ["ifc_selftest"]
