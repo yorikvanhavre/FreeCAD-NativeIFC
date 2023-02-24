@@ -54,7 +54,7 @@ def insert(filename, docname, strategy=None, shapemode=None, switchwb=None, sile
     prj_obj = ifc_tools.create_document(filename, document, shapemode, strategy)
     document.recompute()
     if FreeCAD.GuiUp:
-        FreeCADGui.doCommand("ifcfile = FreeCAD.ActiveDocument.{}.Proxy.ifcfile".format(prj_obj.Name))
+        FreeCADGui.doCommand("ifcfile = FreeCAD.ActiveDocument.{}.Proxy.ifcfile #warning: make sure you know what you are doing when using this!".format(prj_obj.Name))
     endtime = "%02d:%02d" % (divmod(round(time.time() - stime, 1), 60))
     fsize = round(os.path.getsize(filename)/1048576, 2)
     print ("Imported", os.path.basename(filename), "(", fsize, "Mb ) in", endtime)
