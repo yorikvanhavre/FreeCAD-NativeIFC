@@ -35,6 +35,13 @@ IFC_FILE_PATH = None # downloaded IFC file path
 FCSTD_FILE_PATH = None # saved FreeCAD file
 
 
+"""
+unit tests for the NativeIFC functionality. To run the tests, either:
+- in terminal mode: FreeCAD -t ifc_selftest
+- in the FreeCAD UI: Switch to Test Framework workbench, press "Self test" and choose ifc_selftest in the list
+"""
+
+
 def getIfcFilePath():
 
     global IFC_FILE_PATH
