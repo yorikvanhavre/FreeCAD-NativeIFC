@@ -25,6 +25,8 @@ import time
 import FreeCAD
 import ifc_tools
 
+if FreeCAD.GuiUp:
+    import FreeCADGui
 
 
 def open(filename):
@@ -49,8 +51,10 @@ def insert(filename, docname, strategy=None, shapemode=None, switchwb=None, sile
         return
     stime = time.time()
     document = FreeCAD.getDocument(docname)
-    ifc_tools.create_document(filename, document, shapemode, strategy)
+    prj_obj = ifc_tools.create_document(filename, document, shapemode, strategy)
     document.recompute()
+    if FreeCAD.GuiUp:
+        FreeCADGui.doCommand("ifcfile = FreeCAD.ActiveDocument.{}.Proxy.ifcfile".format(prj_obj.Name))
     endtime = "%02d:%02d" % (divmod(round(time.time() - stime, 1), 60))
     fsize = round(os.path.getsize(filename)/1048576, 2)
     print ("Imported", os.path.basename(filename), "(", fsize, "Mb ) in", endtime)
