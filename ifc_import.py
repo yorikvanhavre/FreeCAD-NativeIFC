@@ -20,8 +20,10 @@
 #*                                                                         *
 #***************************************************************************
 
+import importlib
 import os
 import time
+
 import FreeCAD
 import ifc_tools
 
@@ -45,6 +47,7 @@ def insert(filename, docname, strategy=None, shapemode=None, switchwb=None, sile
 
     """Inserts an IFC document in a FreeCAD document"""
 
+    importlib.reload(ifc_tools)  # useful as long as we are in early dev times
     strategy, shapemode, switchwb = get_options(strategy, shapemode, switchwb, silent)
     if strategy is None:
         print("Aborted.")
