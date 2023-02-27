@@ -74,6 +74,7 @@ def create_object(ifcentity, document, ifcfile, holdshape=False):
 
     """Creates a FreeCAD object from an IFC entity"""
 
+    print("#{}: {}, '{}'".format(ifcentity.id(), ifcentity.is_a(), ifcentity.Name))
     obj = add_object(document)
     add_properties(ifcentity, obj, ifcfile, holdshape=holdshape)
     elements = [ifcentity]
