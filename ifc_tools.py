@@ -358,6 +358,8 @@ def get_shape(elements, ifcfile, cached=False):
     """Returns a Part shape from a list of IFC entities"""
 
     elements = filter_elements(elements, ifcfile)
+    if len(elements) == 0:
+        return None, None  # happens on empty storeys
     shapes = []
     colors = []
     # process cached elements
@@ -528,9 +530,15 @@ def set_geometry(obj, elements, ifcfile, cached=False):
     elif obj.HoldShape:
         # set object shape
         shape, colors = get_shape(elements, ifcfile, cached)
-        placement = shape.Placement
-        obj.Shape = shape
-        obj.Placement = placement
+        if shape is None:
+            print(
+                "Debug: No Shape returned for FC-IfcObject: {}, {}, {}"
+                .format(obj.StepId, obj.IfcType, obj.Label)
+            )
+        else:
+            placement = shape.Placement
+            obj.Shape = shape
+            obj.Placement = placement
     elif basenode:
         if obj.Group:
             # this is for objects that have own coin representation,
