@@ -74,6 +74,7 @@ def create_object(ifcentity, document, ifcfile, holdshape=False):
 
     """Creates a FreeCAD object from an IFC entity"""
 
+    print("#{}: {}, '{}'".format(ifcentity.id(), ifcentity.is_a(), ifcentity.Name))
     obj = add_object(document)
     add_properties(ifcentity, obj, ifcfile, holdshape=holdshape)
     elements = [ifcentity]
@@ -196,7 +197,8 @@ def add_properties(ifcentity, obj, ifcfile, links=False, holdshape=False):
     obj.addProperty("App::PropertyBool", "HoldShape", "Base")
     obj.HoldShape = holdshape
     attr_defs = ifcentity.wrapped_data.declaration().as_entity().all_attributes()
-    for attr, value in ifcentity.get_info().items():
+    info_ifcentity = get_elem_attribs(ifcentity)
+    for attr, value in info_ifcentity.items():
         if attr == "type":
             attr = "Type"
         elif attr == "id":
@@ -356,6 +358,8 @@ def get_shape(elements, ifcfile, cached=False):
     """Returns a Part shape from a list of IFC entities"""
 
     elements = filter_elements(elements, ifcfile)
+    if len(elements) == 0:
+        return None, None  # happens on empty storeys
     shapes = []
     colors = []
     # process cached elements
@@ -526,9 +530,15 @@ def set_geometry(obj, elements, ifcfile, cached=False):
     elif obj.HoldShape:
         # set object shape
         shape, colors = get_shape(elements, ifcfile, cached)
-        placement = shape.Placement
-        obj.Shape = shape
-        obj.Placement = placement
+        if shape is None:
+            print(
+                "Debug: No Shape returned for FC-IfcObject: {}, {}, {}"
+                .format(obj.StepId, obj.IfcType, obj.Label)
+            )
+        else:
+            placement = shape.Placement
+            obj.Shape = shape
+            obj.Placement = placement
     elif basenode:
         if obj.Group:
             # this is for objects that have own coin representation,
@@ -629,3 +639,41 @@ def save_ifc(obj):
         obj.Modified = False
         FreeCAD.Console.PrintMessage("Saved " + obj.FilePath + "\n")
 
+
+def get_elem_attribs(ifcentity):
+
+    # usually info_ifcentity = ifcentity.get_info() would de the trick
+    # the above could raise an unhandled excption on corrupted ifc files in IfcOpenShell
+    # see https://github.com/IfcOpenShell/IfcOpenShell/issues/2811
+    # thus workaround
+
+    info_ifcentity = {
+        "id": ifcentity.id(),
+        "type": ifcentity.is_a()
+    }
+
+    # get attrib keys
+    attribs = []
+    for anumber in range(20):
+        try:
+            attr = ifcentity.attribute_name(anumber)
+        except Exception:
+            break
+        # print(attr)
+        attribs.append(attr)
+
+    # get attrib values
+    for attr in attribs:
+        try:
+            value = getattr(ifcentity, attr)
+        except Exception as e:
+            # print(e)
+            value = "Error: {}".format(e)
+            print(
+                "DEBUG: The entity #{} has a problem on attribut {}: {}"
+                .format(ifcentity.id(), attr, e)
+            )
+        # print(value)
+        info_ifcentity[attr] = value
+
+    return info_ifcentity
