@@ -304,9 +304,6 @@ def filter_elements(elements, ifcfile, expand=True):
 
     """Filter elements list of unwanted types"""
 
-    # make sure we have a clean list
-    if not isinstance(elements,(list,tuple)):
-        elements = [elements]
     # gather decomposition if needed
     if expand and (len(elements) == 1):
         if not has_representation(elements[0]):
@@ -511,11 +508,15 @@ def get_geom_iterator(ifcfile, elements, brep):
     return iterator
 
 
-def set_geometry(obj, elements, ifcfile, cached=False):
+def set_geometry(obj, elem, ifcfile, cached=False):
 
-    """Sets the geometry of the given object"""
+    """Sets the geometry of the given object
+    obj: FreeCAD document object
+    elem: IfcOpenShell ifc entity instance
+    ifcfile: IfcOpenShell ifc file instance
+    """
 
-    if not obj or not elements or not ifcfile:
+    if not obj or not elem or not ifcfile:
         return
     basenode = None
     colors = None
@@ -534,7 +535,7 @@ def set_geometry(obj, elements, ifcfile, cached=False):
         colors = None
     elif obj.HoldShape:
         # set object shape
-        shape, colors = get_shape(elements, ifcfile, cached)
+        shape, colors = get_shape([elem], ifcfile, cached)
         if shape is None:
             print(
                 "Debug: No Shape returned for FC-IfcObject: {}, {}, {}"
@@ -551,7 +552,7 @@ def set_geometry(obj, elements, ifcfile, cached=False):
             # case above. TODO do this more elegantly
             obj.Shape = Part.makeBox(1,1,1)
         # set coin representation
-        node, colors = get_coin(elements, ifcfile, cached)
+        node, colors = get_coin([elem], ifcfile, cached)
         basenode.addChild(node)
     set_colors(obj, colors)
 
