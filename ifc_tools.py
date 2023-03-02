@@ -306,12 +306,25 @@ def filter_elements(elements, ifcfile, expand=True):
 
     # gather decomposition if needed
     if expand and (len(elements) == 1):
-        if not has_representation(elements[0]):
-            if elements[0].is_a("IfcProject"):
+        elem = elements[0]
+        if not has_representation(elem):
+            if elem.is_a("IfcProject"):
                 elements = ifcfile.by_type("IfcElement")
                 elements.extend(ifcfile.by_type("IfcSite"))
             else:
-                elements = ifcopenshell.util.element.get_decomposition(elements[0])
+                elements = ifcopenshell.util.element.get_decomposition(elem)
+        else:
+            if elem.Representation.Representations:
+                rep = elem.Representation.Representations[0]
+                if (
+                    rep.Items and rep.Items[0].is_a() == "IfcPolyline"
+                    and elem.IsDecomposedBy
+                ):
+                    # only use the decomposition and not the polyline
+                    # happens for multilayered walls exported by VectorWorks
+                    # the Polyline is the wall axis
+                    # see https://github.com/yorikvanhavre/FreeCAD-NativeIFC/issues/28
+                    elements = ifcopenshell.util.element.get_decomposition(elem)
     # Never load feature elements, they can be lazy loaded
     elements = [e for e in elements if not e.is_a("IfcFeatureElement")]
     # do not load spaces for now (TODO handle them correctly)
