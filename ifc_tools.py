@@ -384,11 +384,8 @@ def get_shape(elements, ifcfile, cached=False):
     progressbar = Base.ProgressIndicator()
     total = len(elements)
     progressbar.start("Generating "+str(total)+" shapes...",total)
-    settings = get_settings(ifcfile)
-    cores = multiprocessing.cpu_count()
-    iterator = ifcopenshell.geom.iterator(settings, ifcfile, cores, include=elements)
-    is_valid = iterator.initialize()
-    if not is_valid:
+    iterator = get_geom_iterator(ifcfile, elements, brep=True)
+    if iterator is None:
         return None, None
     while True:
         item = iterator.get()
@@ -447,12 +444,8 @@ def get_coin(elements, ifcfile, cached=False):
     progressbar = Base.ProgressIndicator()
     total = len(elements)
     progressbar.start("Generating "+str(total)+" shapes...",total)
-    settings = get_settings(ifcfile, brep=False)
-    cores = multiprocessing.cpu_count()
-    iterator = ifcopenshell.geom.iterator(settings, ifcfile, cores, include=elements)
-    is_valid = iterator.initialize()
-    if not is_valid:
-        print("DEBUG: ifc_tools.get_coin: Invalid iterator")
+    iterator = get_geom_iterator(ifcfile, elements, brep=False)
+    if iterator is None:
         return None, None
     while True:
         item = iterator.get()
@@ -504,6 +497,18 @@ def get_settings(ifcfile, brep=True):
     if body_contexts:
         settings.set_context_ids(body_contexts)
     return settings
+
+
+def get_geom_iterator(ifcfile, elements, brep):
+
+    settings = get_settings(ifcfile, brep)
+    cores = multiprocessing.cpu_count()
+    iterator = ifcopenshell.geom.iterator(settings, ifcfile, cores, include=elements)
+    if not iterator.initialize():
+        print("  DEBUG: ifc_tools.get_geom_iterator: Invalid iterator")
+        return None
+
+    return iterator
 
 
 def set_geometry(obj, elements, ifcfile, cached=False):
