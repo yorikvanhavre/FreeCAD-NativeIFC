@@ -629,15 +629,17 @@ def get_matrix(ios_matrix):
     return FreeCAD.Matrix(*m_l)
 
 
-def save_ifc(obj):
+def save_ifc(obj, filepath=None):
 
     """Saves the linked IFC file of an object"""
 
-    if hasattr(obj,"FilePath") and obj.FilePath:
+    if not filepath:
+        if hasattr(obj,"FilePath") and obj.FilePath:
+            filepath = obj.FilePath
+    if filepath:
         ifcfile = get_ifcfile(obj)
-        ifcfile.write(obj.FilePath)
-        obj.Modified = False
-        FreeCAD.Console.PrintMessage("Saved " + obj.FilePath + "\n")
+        ifcfile.write(filepath)
+        FreeCAD.Console.PrintMessage("Saved " + filepath + "\n")
 
 
 def get_elem_attribs(ifcentity):

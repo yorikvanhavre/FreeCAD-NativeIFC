@@ -169,6 +169,9 @@ class ifc_vp_document(ifc_vp_object):
             action_save = QtWidgets.QAction(icon,"Save IFC file", menu)
             action_save.triggered.connect(self.save)
             menu.addAction(action_save)
+            action_saveas = QtWidgets.QAction(icon,"Save IFC file as...", menu)
+            action_saveas.triggered.connect(self.saveas)
+            menu.addAction(action_saveas)
 
 
     def save(self):
@@ -178,5 +181,28 @@ class ifc_vp_document(ifc_vp_object):
         import ifc_tools # lazy import
 
         ifc_tools.save_ifc(self.Object)
+        self.Object.Modified = False
 
+
+    def saveas(self):
+
+        """Saves the associated IFC file to another file"""
+
+        import ifc_tools # lazy import
+        from PySide2 import QtCore, QtGui, QtWidgets # lazy import
+
+        sf = QtWidgets.QFileDialog.getSaveFileName(None,
+                                               "Save an IFC file",
+                                               self.Object.FilePath,
+                                               "Industry Foundation Classes (*.ifc)",)
+        if sf and sf[0]:
+            ifc_tools.save_ifc(self.Object, sf[0])
+            dlg = QtWidgets.QMessageBox.question(None,
+                                               "Replace IFC file path?",
+                                               "Replace the stored IFC file path in object "+self.Object.Label+" with the one you just saved?",
+                                               QtWidgets.QMessageBox.Yes | QtWidgets.QMessageBox.No,
+                                               QtWidgets.QMessageBox.No)
+            if dlg == QtWidgets.QMessageBox.Yes:
+                self.Object.FilePath = sf[0]
+                self.Object.Modified = False
 
