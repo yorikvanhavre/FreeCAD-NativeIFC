@@ -197,9 +197,11 @@ class ifc_vp_document(ifc_vp_object):
                                                "Industry Foundation Classes (*.ifc)",)
         if sf and sf[0]:
             ifc_tools.save_ifc(self.Object, sf[0])
+            msg = "Replace the stored IFC file path in object "
+            msg += self.Object.Label + " with the one you just saved?"
             dlg = QtWidgets.QMessageBox.question(None,
                                                "Replace IFC file path?",
-                                               "Replace the stored IFC file path in object "+self.Object.Label+" with the one you just saved?",
+                                               msg,
                                                QtWidgets.QMessageBox.Yes | QtWidgets.QMessageBox.No,
                                                QtWidgets.QMessageBox.No)
             if dlg == QtWidgets.QMessageBox.Yes:
