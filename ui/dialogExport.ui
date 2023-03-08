@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>325</width>
-    <height>182</height>
+    <width>331</width>
+    <height>188</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -25,9 +25,12 @@
     </widget>
    </item>
    <item>
-    <widget class="QCheckBox" name="checkBox">
+    <widget class="QCheckBox" name="checkAskBeforeSaving">
      <property name="text">
-      <string>Do not ask me next time</string>
+      <string>Ask me again next time</string>
+     </property>
+     <property name="checked">
+      <bool>true</bool>
      </property>
     </widget>
    </item>

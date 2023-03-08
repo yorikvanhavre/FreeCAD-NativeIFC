@@ -29,7 +29,7 @@ Check for updates on this project at https://yorik.uncreated.net/blog/nativeifc
 * [x] Allow to manually save the linked IFC file
 * [x] Implement mesh mode
 * [x] Allow different storage strategies (full shape or only coin representation)
-* [ ] Write a hook system that allows FreeCAD to save the IFC document
+* [x] Write a hook system that allows FreeCAD to save the IFC document
 * [x] Test (and solve!) what happens when opening a NativeIFC file in vanilla FreeCAD
 * [x] Add a shape caching system
 * [x] Tie the shape caching to the corresponding IFC document

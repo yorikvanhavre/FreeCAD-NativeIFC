@@ -139,10 +139,13 @@
       <item>
        <widget class="Gui::PrefCheckBox" name="checkBox_2">
         <property name="text">
-         <string>Do not warn when saving</string>
+         <string>Show warning when saving</string>
         </property>
         <property name="checked">
          <bool>true</bool>
+        </property>
+        <property name="prefEntry" stdset="0">
+         <cstring>AskBeforeSaving</cstring>
         </property>
         <property name="prefPath" stdset="0">
          <cstring>Mod/NativeIFC</cstring>
