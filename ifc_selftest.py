@@ -140,7 +140,6 @@ class ArchTest(unittest.TestCase):
         obj = doc.Objects[-1]
         proj = ifc_tools.get_project(obj)
         ifcfile = ifc_tools.get_ifcfile(proj)
-        print(ifcfile)
         self.failUnless(ifcfile, "ImportFreeCAD failed")
 
 

@@ -40,6 +40,7 @@ import ifc_viewproviders
 
 SCALE = 1000.0 # IfcOpenShell works in meters, FreeCAD works in mm
 
+
 def create_document(filename, document, shapemode=0, strategy=0):
 
     """Creates a FreeCAD IFC document object.
@@ -51,7 +52,7 @@ def create_document(filename, document, shapemode=0, strategy=0):
                2 = all children
     """
 
-    obj = add_object(document, fctype='document')
+    obj = add_object(document, project=True)
     d = "The path to the linked IFC file"
     obj.addProperty("App::PropertyFile","FilePath","Base",d)
     obj.addProperty("App::PropertyBool","Modified","Base")
@@ -75,7 +76,7 @@ def create_object(ifcentity, document, ifcfile, shapemode=0):
 
     """Creates a FreeCAD object from an IFC entity"""
 
-    print("#{}: {}, '{}'".format(ifcentity.id(), ifcentity.is_a(), ifcentity.Name))
+    FreeCAD.Console.PrintLog("Created #{}: {}, '{}'\n".format(ifcentity.id(), ifcentity.is_a(), ifcentity.Name))
     obj = add_object(document)
     add_properties(ifcentity, obj, ifcfile, shapemode=shapemode)
     elements = [ifcentity]
@@ -170,17 +171,16 @@ def can_expand(obj, ifcfile):
     return False
 
 
-def add_object(document, fctype="object"):
+def add_object(document, project=False):
 
     """adds a new object to a FreeCAD document"""
 
-    otype = 'Part::FeaturePython'
-    ot = ifc_objects.ifc_object()
-    if fctype == "document":
+    proxy = ifc_objects.ifc_object()
+    if project:
         vp = ifc_viewproviders.ifc_vp_document()
     else:
         vp = ifc_viewproviders.ifc_vp_object()
-    obj = document.addObject(otype, 'IfcObject', ot, vp, False)
+    obj = document.addObject('Part::FeaturePython', 'IfcObject', proxy, vp, False)
     return obj
 
 
