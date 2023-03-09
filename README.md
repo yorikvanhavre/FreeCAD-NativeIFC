@@ -186,7 +186,7 @@ Change a parameter of an object
 
 ```python
 cmd = 'attribute.edit_attributes'
-prod = ifcfile.by_type["IfcWall"][0]
+prod = ifcfile.by_type("IfcWall")[0]
 attribs = {"Name": "Foo"}
 ifcopenshell.api.run(cmd, ifcfile, product=prod, attributes=attribs)
 ```

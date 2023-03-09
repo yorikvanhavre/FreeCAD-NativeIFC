@@ -309,17 +309,27 @@ def filter_elements(elements, ifcfile, expand=True):
 
     """Filter elements list of unwanted types"""
 
-    # make sure we have a clean list
-    if not isinstance(elements,(list,tuple)):
-        elements = [elements]
     # gather decomposition if needed
     if expand and (len(elements) == 1):
-        if not has_representation(elements[0]):
-            if elements[0].is_a("IfcProject"):
+        elem = elements[0]
+        if not has_representation(elem):
+            if elem.is_a("IfcProject"):
                 elements = ifcfile.by_type("IfcElement")
                 elements.extend(ifcfile.by_type("IfcSite"))
             else:
-                elements = ifcopenshell.util.element.get_decomposition(elements[0])
+                elements = ifcopenshell.util.element.get_decomposition(elem)
+        else:
+            if elem.Representation.Representations:
+                rep = elem.Representation.Representations[0]
+                if (
+                    rep.Items and rep.Items[0].is_a() == "IfcPolyline"
+                    and elem.IsDecomposedBy
+                ):
+                    # only use the decomposition and not the polyline
+                    # happens for multilayered walls exported by VectorWorks
+                    # the Polyline is the wall axis
+                    # see https://github.com/yorikvanhavre/FreeCAD-NativeIFC/issues/28
+                    elements = ifcopenshell.util.element.get_decomposition(elem)
     # Never load feature elements, they can be lazy loaded
     elements = [e for e in elements if not e.is_a("IfcFeatureElement")]
     # do not load spaces for now (TODO handle them correctly)
@@ -389,11 +399,8 @@ def get_shape(elements, ifcfile, cached=False):
     progressbar = Base.ProgressIndicator()
     total = len(elements)
     progressbar.start("Generating "+str(total)+" shapes...",total)
-    settings = get_settings(ifcfile)
-    cores = multiprocessing.cpu_count()
-    iterator = ifcopenshell.geom.iterator(settings, ifcfile, cores, include=elements)
-    is_valid = iterator.initialize()
-    if not is_valid:
+    iterator = get_geom_iterator(ifcfile, elements, brep=True)
+    if iterator is None:
         return None, None
     while True:
         item = iterator.get()
@@ -452,12 +459,8 @@ def get_coin(elements, ifcfile, cached=False):
     progressbar = Base.ProgressIndicator()
     total = len(elements)
     progressbar.start("Generating "+str(total)+" shapes...",total)
-    settings = get_settings(ifcfile, brep=False)
-    cores = multiprocessing.cpu_count()
-    iterator = ifcopenshell.geom.iterator(settings, ifcfile, cores, include=elements)
-    is_valid = iterator.initialize()
-    if not is_valid:
-        print("DEBUG: ifc_tools.get_coin: Invalid iterator")
+    iterator = get_geom_iterator(ifcfile, elements, brep=False)
+    if iterator is None:
         return None, None
     while True:
         item = iterator.get()
@@ -511,11 +514,27 @@ def get_settings(ifcfile, brep=True):
     return settings
 
 
-def set_geometry(obj, elements, ifcfile, cached=False):
+def get_geom_iterator(ifcfile, elements, brep):
 
-    """Sets the geometry of the given object"""
+    settings = get_settings(ifcfile, brep)
+    cores = multiprocessing.cpu_count()
+    iterator = ifcopenshell.geom.iterator(settings, ifcfile, cores, include=elements)
+    if not iterator.initialize():
+        print("  DEBUG: ifc_tools.get_geom_iterator: Invalid iterator")
+        return None
 
-    if not obj or not elements or not ifcfile:
+    return iterator
+
+
+def set_geometry(obj, elem, ifcfile, cached=False):
+
+    """Sets the geometry of the given object
+    obj: FreeCAD document object
+    elem: IfcOpenShell ifc entity instance
+    ifcfile: IfcOpenShell ifc file instance
+    """
+
+    if not obj or not elem or not ifcfile:
         return
     basenode = None
     colors = None
@@ -534,7 +553,7 @@ def set_geometry(obj, elements, ifcfile, cached=False):
         colors = None
     elif obj.ShapeMode == "Shape":
         # set object shape
-        shape, colors = get_shape(elements, ifcfile, cached)
+        shape, colors = get_shape([elem], ifcfile, cached)
         if shape is None:
             print(
                 "Debug: No Shape returned for FC-IfcObject: {}, {}, {}"
@@ -551,7 +570,7 @@ def set_geometry(obj, elements, ifcfile, cached=False):
             # case above. TODO do this more elegantly
             obj.Shape = Part.makeBox(1,1,1)
         # set coin representation
-        node, colors = get_coin(elements, ifcfile, cached)
+        node, colors = get_coin([elem], ifcfile, cached)
         basenode.addChild(node)
     set_colors(obj, colors)
 
