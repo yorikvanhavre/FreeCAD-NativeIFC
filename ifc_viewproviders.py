@@ -61,7 +61,7 @@ class ifc_vp_object:
     def getIcon(self):
 
         path = os.path.dirname(os.path.dirname(__file__))
-        if self.Object.HoldShape:
+        if self.Object.ShapeMode == "Shape":
             i = "IFC_object.svg"
         else:
             i = "IFC_mesh.svg"
@@ -78,13 +78,17 @@ class ifc_vp_object:
             action_expand = QtWidgets.QAction(icon,"Expand children", menu)
             action_expand.triggered.connect(self.expandChildren)
             menu.addAction(action_expand)
-        if vobj.Object.HoldShape:
+        if vobj.Object.ShapeMode == "Shape":
             t = "Remove shape"
         else:
             t = "Load shape"
         action_shape = QtWidgets.QAction(icon, t, menu)
-        action_shape.triggered.connect(self.switchObject)
+        action_shape.triggered.connect(self.switchShape)
         menu.addAction(action_shape)
+        if vobj.Object.ShapeMode == "None":
+            action_coin = QtWidgets.QAction(icon, "Load representation", menu)
+            action_coin.triggered.connect(self.switchCoin)
+            menu.addAction(action_coin)
 
 
     def hasChildren(self, obj):
@@ -111,16 +115,37 @@ class ifc_vp_object:
         self.Object.Document.recompute()
 
 
-    def switchObject(self):
+    def switchShape(self):
 
         """Switch this object between shape and coin"""
 
-        self.Object.HoldShape = not self.Object.HoldShape
+        if self.Object.ShapeMode == "Shape":
+            self.Object.ShapeMode = "Coin"
+            import Part # lazy loading
+            self.Object.Shape = Part.Shape()
+        elif self.Object.ShapeMode == "Coin":
+            self.Object.ShapeMode = "Shape"
         self.Object.Document.recompute()
         self.Object.ViewObject.DiffuseColor = self.Object.ViewObject.DiffuseColor
         self.Object.ViewObject.signalChangeIcon()
 
 
+    def switchCoin(self):
+
+        """Switch this object between coin and no representation"""
+
+        changed = []
+        if self.Object.ShapeMode == "None":
+            self.Object.ShapeMode = "Coin"
+            changed.append(self.Object.ViewObject)
+        # reveal children
+        for child in self.Object.OutListRecursive:
+            if getattr(child,"ShapeMode",0) == 2:
+                child.ShapeMode = 1
+                changed.append(child.ViewObject)
+        self.Object.Document.recompute()
+        for vobj in changed:
+            vobj.DiffuseColor = vobj.DiffuseColor
 
 
 

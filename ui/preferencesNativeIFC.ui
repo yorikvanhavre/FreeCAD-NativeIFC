@@ -70,7 +70,7 @@
            <string>The type of object created at import. Coin only is much faster, but you don't get the full shape information. You can convert between the two anytime by right-clicking the object tree</string>
           </property>
           <property name="currentIndex">
-           <number>1</number>
+           <number>0</number>
           </property>
           <property name="prefEntry" stdset="0">
            <cstring>ShapeMode</cstring>
@@ -86,6 +86,11 @@
           <item>
            <property name="text">
             <string>Coin representation only</string>
+           </property>
+          </item>
+          <item>
+           <property name="text">
+            <string>No 3D representation</string>
            </property>
           </item>
          </widget>

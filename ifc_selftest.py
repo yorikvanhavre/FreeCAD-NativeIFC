@@ -153,7 +153,7 @@ class ArchTest(unittest.TestCase):
         proj.FilePath = proj.FilePath + "modified.ifc"
         ifc_tools.save_ifc(proj)
         ifc_diff = compare(IFC_FILE_PATH, proj.FilePath)
-        obj.HoldShape = True
+        obj.ShapeMode = 0
         obj.Proxy.execute(obj)
         self.failUnless(obj.Shape.Volume > 2 and len(ifc_diff) == 3, "ModifyObjects failed")
 

@@ -73,6 +73,7 @@ def get_options(strategy=None, shapemode=None, switchwb=None, silent=False):
 
     shapemode: 0 = full shape
                1 = coin only
+               2 = no representation
     strategy:  0 = only root object
                1 = only bbuilding structure,
                2 = all children

@@ -54,7 +54,7 @@ class ifc_object:
         if hasattr(obj,"FilePath"):
             # once we have loaded the project, recalculate child coin nodes
             for child in obj.OutListRecursive:
-                if not getattr(child,"HoldShape",True):
+                if child.ShapeMode == "Coin":
                     child.Proxy.cached = True
                     child.touch()
             obj.Document.recompute()

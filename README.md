@@ -34,7 +34,7 @@ Check for updates on this project at https://yorik.uncreated.net/blog/nativeifc
 * [x] Add a shape caching system
 * [x] Tie the shape caching to the corresponding IFC document
 * [x] Allow to change the class of an object
-* [ ] Allow late loading/rebuilding of coin representation
+* [x] Allow late loading/rebuilding of coin representation
 
 #### 3. Allow adding and removing objects
 

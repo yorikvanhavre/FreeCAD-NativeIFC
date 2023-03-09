@@ -45,6 +45,7 @@ def create_document(filename, document, shapemode=0, strategy=0):
     """Creates a FreeCAD IFC document object.
     shapemode: 0 = full shape
                1 = coin only
+               2 = no representation
     strategy:  0 = only root object
                1 = only bbuilding structure,
                2 = all children
@@ -59,7 +60,7 @@ def create_document(filename, document, shapemode=0, strategy=0):
     ifcfile = ifcopenshell.open(filename)
     obj.Proxy.ifcfile = ifcfile
     project = ifcfile.by_type("IfcProject")[0]
-    add_properties(project, obj, ifcfile, holdshape=not(bool(shapemode)))
+    add_properties(project, obj, ifcfile, shapemode=shapemode)
     # populate according to strategy
     if strategy == 0:
         pass
@@ -70,13 +71,13 @@ def create_document(filename, document, shapemode=0, strategy=0):
     return obj
 
 
-def create_object(ifcentity, document, ifcfile, holdshape=False):
+def create_object(ifcentity, document, ifcfile, shapemode=0):
 
     """Creates a FreeCAD object from an IFC entity"""
 
     print("#{}: {}, '{}'".format(ifcentity.id(), ifcentity.is_a(), ifcentity.Name))
     obj = add_object(document)
-    add_properties(ifcentity, obj, ifcfile, holdshape=holdshape)
+    add_properties(ifcentity, obj, ifcfile, shapemode=shapemode)
     elements = [ifcentity]
     return obj
 
@@ -89,7 +90,7 @@ def create_children(obj, ifcfile, recursive=False, only_structure=False, assembl
         subresult = []
         # do not create if a child with same stepid already exists
         if not element.id() in [getattr(c,"StepId",0) for c in getattr(parent,"Group",[])]:
-            child = create_object(element, parent.Document, ifcfile, parent.HoldShape)
+            child = create_object(element, parent.Document, ifcfile, parent.ShapeMode)
             subresult.append(child)
             parent.addObject(child)
             if element.is_a("IfcSite"):
@@ -183,7 +184,7 @@ def add_object(document, fctype="object"):
     return obj
 
 
-def add_properties(ifcentity, obj, ifcfile, links=False, holdshape=False):
+def add_properties(ifcentity, obj, ifcfile, links=False, shapemode=0):
 
     """Adds the properties of the given IFC object to a FreeCAD object"""
 
@@ -194,8 +195,12 @@ def add_properties(ifcentity, obj, ifcfile, links=False, holdshape=False):
     obj.addExtension('App::GroupExtensionPython')
     if FreeCAD.GuiUp:
         obj.ViewObject.addExtension("Gui::ViewProviderGroupExtensionPython")
-    obj.addProperty("App::PropertyBool", "HoldShape", "Base")
-    obj.HoldShape = holdshape
+    obj.addProperty("App::PropertyEnumeration", "ShapeMode", "Base")
+    shapemodes = ["Shape","Coin","None"] # possible shape modes for all IFC objects
+    if isinstance(shapemode,int):
+        shapemode = shapemodes[shapemode]
+    obj.ShapeMode = shapemodes
+    obj.ShapeMode = shapemode
     attr_defs = ifcentity.wrapped_data.declaration().as_entity().all_attributes()
     info_ifcentity = get_elem_attribs(ifcentity)
     for attr, value in info_ifcentity.items():
@@ -527,7 +532,7 @@ def set_geometry(obj, elements, ifcfile, cached=False):
         # and we don't want that otherwise we can't select children
         obj.Shape = Part.makeBox(1,1,1)
         colors = None
-    elif obj.HoldShape:
+    elif obj.ShapeMode == "Shape":
         # set object shape
         shape, colors = get_shape(elements, ifcfile, cached)
         if shape is None:
@@ -539,7 +544,7 @@ def set_geometry(obj, elements, ifcfile, cached=False):
             placement = shape.Placement
             obj.Shape = shape
             obj.Placement = placement
-    elif basenode:
+    elif basenode and obj.ShapeMode == "Coin":
         if obj.Group:
             # this is for objects that have own coin representation,
             # but shapes among their children and not taken by first if

@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>334</width>
+    <width>353</width>
     <height>204</height>
    </rect>
   </property>
@@ -58,7 +58,7 @@
         <string>The type of object created at import. Mesh is faster, but Shapes are more precise. You can convert between the two anytime by right-clicking the object tree</string>
        </property>
        <property name="currentIndex">
-        <number>1</number>
+        <number>0</number>
        </property>
        <item>
         <property name="text">
@@ -68,6 +68,11 @@
        <item>
         <property name="text">
          <string>Coin representation only</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>No 3D representation</string>
         </property>
        </item>
       </widget>
