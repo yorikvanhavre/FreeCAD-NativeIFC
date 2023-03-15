@@ -192,9 +192,31 @@ doc = FreeCAD.ActiveDocument
 ifc_tools.create_document(doc)
 ```
     
+* [x] **Modifying the IFC type of an object**:
+    * From the UI: Change the type directly from the object's properties
+    * From Python:
+
+```python
+myObject.Type = "IfcWall"
+```
+
 * [ ] Add a new model structure
 * [ ] Add a new object
 * [ ] Modify the shape of an element
+* [x] **Create 2D drawings (plans, sections) from an IFC file:**
+    * From the UI:
+        * Make sure all the objects you need to see have their shape loaded
+        * Select all the objects to be cut or viewed
+        * Create a [section plane](https://wiki.freecad.org/Arch_SectionPlane)
+        * Optionally, rotate the section plane into desired position, using the [Rotate](https://wiki.freecad.org/Draft_Rotate) tool or double-clicking the section plane in the tree and using the available calibration tools
+        * Optionally, move the section plane into desired position using the [Move](https://wiki.freecad.org/Draft_Move) tool
+        * Create a [Shape view](https://wiki.freecad.org/Draft_Shape2DView) of the section plane. Move it into desired position
+        * Optionally, to show cut lines, create a second Shape view, set its projection mode to **Cut Lines**, set its line width a bit higher, and move it to the same position as the first one
+        * This view can now be annotated using Draft tools
+        * This view and its annotations can be exported to DXF/DWG using File -> Export
+        * This view and its annotations can be added to a printable page using the [TechDraw Workbench](https://wiki.freecad.org/TechDraw_Workbench)
+* [ ] Extracting quantities from an IFC file
+* [ ] Creating renderings of an IFC file
 
 #### Documentation
 
