@@ -33,10 +33,10 @@ class ifc_object:
         # link Type property to its hidder IfcType counterpart
         if prop == "IfcType" and hasattr(obj,"Type") and obj.Type != obj.IfcType:
             obj.Type = obj.IfcType
-            self.rebuild_classlist(obj)
+            self.rebuild_classlist(obj, setprops=True)
         elif prop == "Type" and hasattr(obj,"IfcType") and obj.Type != obj.IfcType:
             obj.IfcType = obj.Type
-            self.rebuild_classlist(obj)
+            self.rebuild_classlist(obj, setprops=True)
 
         # edit an IFC attribute
         if obj.getGroupOfProperty(prop) == "IFC":
@@ -60,7 +60,7 @@ class ifc_object:
             obj.Document.recompute()
 
 
-    def rebuild_classlist(self, obj):
+    def rebuild_classlist(self, obj, setprops=False):
 
         """rebuilds the list of Type property according to current class"""
 
@@ -68,6 +68,9 @@ class ifc_object:
 
         obj.Type = ifc_tools.get_ifc_classes(obj, obj.IfcType)
         obj.Type = obj.IfcType
+        if setprops:
+            ifc_tools.remove_unused_properties(obj)
+            ifc_tools.add_properties(obj)
 
 
     def __getstate__(self):

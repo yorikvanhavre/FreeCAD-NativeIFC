@@ -67,7 +67,7 @@ def create_document(document, filename=None, shapemode=0, strategy=0):
         ifcfile = ifcopenshell.template.create()
         project = ifcfile.createIfcProject()
     obj.Proxy.ifcfile = ifcfile
-    add_properties(project, obj, ifcfile, shapemode=shapemode)
+    add_properties(obj, ifcfile, project, shapemode=shapemode)
     # populate according to strategy
     if strategy == 0:
         pass
@@ -84,7 +84,7 @@ def create_object(ifcentity, document, ifcfile, shapemode=0):
 
     FreeCAD.Console.PrintLog("Created #{}: {}, '{}'\n".format(ifcentity.id(), ifcentity.is_a(), ifcentity.Name))
     obj = add_object(document)
-    add_properties(ifcentity, obj, ifcfile, shapemode=shapemode)
+    add_properties(obj, ifcfile, ifcentity, shapemode=shapemode)
     elements = [ifcentity]
     return obj
 
@@ -192,23 +192,29 @@ def add_object(document, project=False):
     return obj
 
 
-def add_properties(ifcentity, obj, ifcfile, links=False, shapemode=0):
+def add_properties(obj, ifcfile=None ,ifcentity=None, links=False, shapemode=0):
 
     """Adds the properties of the given IFC object to a FreeCAD object"""
 
+    if not ifcfile:
+        ifcfile = get_ifcfile(obj)
+    if not ifcentity:
+        ifcentity = get_ifc_element(obj)
     if getattr(ifcentity, "Name", None):
         obj.Label = ifcentity.Name
     else:
         obj.Label = ifcentity.is_a()
-    obj.addExtension('App::GroupExtensionPython')
+    if not obj.hasExtension("App::GroupExtensionPython"):
+        obj.addExtension('App::GroupExtensionPython')
     if FreeCAD.GuiUp:
         obj.ViewObject.addExtension("Gui::ViewProviderGroupExtensionPython")
-    obj.addProperty("App::PropertyEnumeration", "ShapeMode", "Base")
-    shapemodes = ["Shape","Coin","None"] # possible shape modes for all IFC objects
-    if isinstance(shapemode,int):
-        shapemode = shapemodes[shapemode]
-    obj.ShapeMode = shapemodes
-    obj.ShapeMode = shapemode
+    if "ShapeMode" not in obj.PropertiesList:
+        obj.addProperty("App::PropertyEnumeration", "ShapeMode", "Base")
+        shapemodes = ["Shape","Coin","None"] # possible shape modes for all IFC objects
+        if isinstance(shapemode,int):
+            shapemode = shapemodes[shapemode]
+        obj.ShapeMode = shapemodes
+        obj.ShapeMode = shapemode
     attr_defs = ifcentity.wrapped_data.declaration().as_entity().all_attributes()
     info_ifcentity = get_elem_attribs(ifcentity)
     for attr, value in info_ifcentity.items():
@@ -220,56 +226,77 @@ def add_properties(ifcentity, obj, ifcfile, links=False, shapemode=0):
             continue
         attr_def = next((a for a in attr_defs if a.name() == attr), None)
         data_type = ifcopenshell.util.attribute.get_primitive_type(attr_def) if attr_def else None
-        if attr not in obj.PropertiesList:
-            if attr == "Type":
-                # main enum property, not saved to file
+        if attr == "Type":
+            # main enum property, not saved to file
+            if attr not in obj.PropertiesList:
                 obj.addProperty("App::PropertyEnumeration", attr, "IFC")
                 obj.setPropertyStatus(attr,"Transient")
-                setattr(obj, attr, get_ifc_classes(obj, value))
-                setattr(obj, attr, value)
-                # companion hidden propertym that gets saved to file
-                obj.addProperty("App::PropertyString", "IfcType", "IFC")
-                obj.setPropertyStatus("IfcType","Hidden")
-                setattr(obj, "IfcType", value)
-            elif isinstance(value, int):
+            setattr(obj, attr, get_ifc_classes(obj, value))
+            setattr(obj, attr, value)
+            # companion hidden propertym that gets saved to file
+            obj.addProperty("App::PropertyString", "IfcType", "IFC")
+            obj.setPropertyStatus("IfcType","Hidden")
+            setattr(obj, "IfcType", value)
+        elif isinstance(value, int):
+            if attr not in obj.PropertiesList:
                 obj.addProperty("App::PropertyInteger", attr, "IFC")
-                setattr(obj, attr, value)
                 if attr == "StepId":
                     obj.setPropertyStatus(attr,"ReadOnly")
-            elif isinstance(value, float):
+            setattr(obj, attr, value)
+        elif isinstance(value, float):
+            if attr not in obj.PropertiesList:
                 obj.addProperty("App::PropertyFloat", attr, "IFC")
-                setattr(obj, attr, value)
-            elif data_type == "boolean":
+            setattr(obj, attr, value)
+        elif data_type == "boolean":
+            if attr not in obj.PropertiesList:
                 obj.addProperty("App::PropertyBool", attr, "IFC")
-                setattr(obj, attr, value) #will trigger error. TODO: Fix this
-            elif isinstance(value, ifcopenshell.entity_instance):
-                if links:
+            setattr(obj, attr, value) #will trigger error. TODO: Fix this
+        elif isinstance(value, ifcopenshell.entity_instance):
+            if links:
+                if attr not in obj.PropertiesList:
                     #value = create_object(value, obj.Document)
                     obj.addProperty("App::PropertyLink", attr, "IFC")
-                    #setattr(obj, attr, value)
-            elif isinstance(value, (list, tuple)) and value:
-                if isinstance(value[0], ifcopenshell.entity_instance):
-                    if links:
+                #setattr(obj, attr, value)
+        elif isinstance(value, (list, tuple)) and value:
+            if isinstance(value[0], ifcopenshell.entity_instance):
+                if links:
+                    if attr not in obj.PropertiesList:
                         #nvalue = []
                         #for elt in value:
                         #    nvalue.append(create_object(elt, obj.Document))
                         obj.addProperty("App::PropertyLinkList", attr, "IFC")
-                        #setattr(obj, attr, nvalue)
-            elif data_type == "enum":
+                    #setattr(obj, attr, nvalue)
+        elif data_type == "enum":
+            if attr not in obj.PropertiesList:
                 obj.addProperty("App::PropertyEnumeration", attr, "IFC")
-                items = ifcopenshell.util.attribute.get_enum_items(attr_def)
-                setattr(obj, attr, items)
-                if not value in items:
-                    for v in ("UNDEFINED","NOTDEFINED","USERDEFINED"):
-                        if v in items:
-                            value = v
-                            break
-                if value in items:
-                    setattr(obj, attr, value)
-            else:
+            items = ifcopenshell.util.attribute.get_enum_items(attr_def)
+            setattr(obj, attr, items)
+            if not value in items:
+                for v in ("UNDEFINED","NOTDEFINED","USERDEFINED"):
+                    if v in items:
+                        value = v
+                        break
+            if value in items:
+                setattr(obj, attr, value)
+        else:
+            if attr not in obj.PropertiesList:
                 obj.addProperty("App::PropertyString", attr, "IFC")
-                if value is not None:
-                    setattr(obj, attr, str(value))
+            if value is not None:
+                setattr(obj, attr, str(value))
+
+
+def remove_unused_properties(obj):
+
+    """Remove IFC properties if they are not part of the current IFC class"""
+
+    elt = get_ifc_element(obj)
+    props = list(elt.get_info().keys())
+    props[props.index("id")] = "StepId"
+    props[props.index("type")] = "Type"
+    for prop in obj.PropertiesList:
+        if obj.getGroupOfProperty(prop) == "IFC":
+            if prop not in props:
+                obj.removeProperty(prop)
 
 
 def get_ifc_classes(obj, baseclass):
@@ -674,10 +701,10 @@ def save_ifc(obj, filepath=None):
         FreeCAD.Console.PrintMessage("Saved " + filepath + "\n")
 
 
-def save(obj, filepath=None)
+def save(obj, filepath=None):
 
     """Saves the linked IFC file of a project and set its saved status"""
-    
+
     save_ifc(obj, filepath)
     obj.Modified = False
 
