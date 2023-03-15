@@ -220,7 +220,7 @@ myObject.Type = "IfcWall"
         * This view and its annotations can be exported to DXF/DWG using File -> Export
         * This view and its annotations can be added to a printable page using the [TechDraw Workbench](https://wiki.freecad.org/TechDraw_Workbench)
         
-![](doc/images/workflow10.jpg)
+![](doc/images/workflow09.jpg)
         
 * [ ] Extracting quantities from an IFC file
 * [ ] Creating renderings of an IFC file
