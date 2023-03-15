@@ -45,7 +45,7 @@ class ifc_observer:
         """Save all IFC documents in this doc"""
 
         from PySide2 import QtCore # lazy loading
-        self.doc = doc
+        self.docname = doc.Name
         # delay execution to not get caught under the wait sursor
         # that occurs when the saveAs file dialog is shown
         # TODO find a more solid way
@@ -54,10 +54,13 @@ class ifc_observer:
 
     def save(self):
 
-        if not hasattr(self, "doc"):
+        if not hasattr(self, "docname"):
             return
+        if not self.docname in FreeCAD.listDocuments():
+            return
+        doc = FreeCAD.getDocument(self.docname)
         objs = []
-        for obj in self.doc.findObjects(Type="Part::FeaturePython"):
+        for obj in doc.findObjects(Type="Part::FeaturePython"):
             if hasattr(obj,"FilePath") and hasattr(obj,"Modified"):
                 if obj.Modified:
                     objs.append(obj)

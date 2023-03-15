@@ -32,6 +32,7 @@ from pivy import coin
 import ifcopenshell
 from ifcopenshell import geom
 from ifcopenshell import api
+from ifcopenshell import template
 from ifcopenshell.util import attribute
 from ifcopenshell.util import schema
 
@@ -41,9 +42,10 @@ import ifc_viewproviders
 SCALE = 1000.0 # IfcOpenShell works in meters, FreeCAD works in mm
 
 
-def create_document(filename, document, shapemode=0, strategy=0):
+def create_document(document, filename=None, shapemode=0, strategy=0):
 
     """Creates a FreeCAD IFC document object.
+    filename:  If not given, a blank IFC document is created
     shapemode: 0 = full shape
                1 = coin only
                2 = no representation
@@ -57,10 +59,14 @@ def create_document(filename, document, shapemode=0, strategy=0):
     obj.addProperty("App::PropertyFile","FilePath","Base",d)
     obj.addProperty("App::PropertyBool","Modified","Base")
     obj.setPropertyStatus("Modified","Hidden")
-    obj.FilePath = filename
-    ifcfile = ifcopenshell.open(filename)
+    if filename:
+        obj.FilePath = filename
+        ifcfile = ifcopenshell.open(filename)
+        project = ifcfile.by_type("IfcProject")[0]
+    else:
+        ifcfile = ifcopenshell.template.create()
+        project = ifcfile.createIfcProject()
     obj.Proxy.ifcfile = ifcfile
-    project = ifcfile.by_type("IfcProject")[0]
     add_properties(project, obj, ifcfile, shapemode=shapemode)
     # populate according to strategy
     if strategy == 0:

@@ -125,7 +125,7 @@ class ArchTest(unittest.TestCase):
 
     def test04_ImportShapeFull(self):
 
-        FreeCAD.Console.PrintMessage("NativeIFC import: Full model, coin mode...")
+        FreeCAD.Console.PrintMessage("NativeIFC import: Full model, shape mode...")
         clearObjects()
         fp = getIfcFilePath()
         d = ifc_import.insert(fp, "IfcTest", strategy=2, shapemode=0, switchwb=0, silent=True)
@@ -145,6 +145,7 @@ class ArchTest(unittest.TestCase):
 
     def test06_ModifyObjects(self):
 
+        FreeCAD.Console.PrintMessage("Modifying IFC document...\n")
         doc = FreeCAD.open(FCSTD_FILE_PATH)
         obj = doc.Objects[-1]
         obj.Label = obj.Label + "Modified"
@@ -155,4 +156,11 @@ class ArchTest(unittest.TestCase):
         obj.ShapeMode = 0
         obj.Proxy.execute(obj)
         self.failUnless(obj.Shape.Volume > 2 and len(ifc_diff) == 3, "ModifyObjects failed")
+
+    def test07_CreateObject(self):
+
+        FreeCAD.Console.PrintMessage("Creating new IFC objects...\n")
+        doc = FreeCAD.ActiveDocument
+        ifc_tools.create_document(doc)
+        self.failUnless(len(FreeCAD.getDocument("IfcTest").Objects) == 1, "CreateObject failed")
 

@@ -191,9 +191,10 @@ class ifc_vp_document(ifc_vp_object):
         if vobj.Object.Modified:
             path = os.path.dirname(os.path.dirname(__file__))
             icon = QtGui.QIcon(os.path.join(path ,"icons", "IFC.svg"))
-            action_save = QtWidgets.QAction(icon,"Save IFC file", menu)
-            action_save.triggered.connect(self.save)
-            menu.addAction(action_save)
+            if vobj.Object.FilePath:
+                action_save = QtWidgets.QAction(icon,"Save IFC file", menu)
+                action_save.triggered.connect(self.save)
+                menu.addAction(action_save)
             action_saveas = QtWidgets.QAction(icon,"Save IFC file as...", menu)
             action_saveas.triggered.connect(self.saveas)
             menu.addAction(action_saveas)
