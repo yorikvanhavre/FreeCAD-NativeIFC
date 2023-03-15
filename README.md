@@ -67,7 +67,9 @@ Check for updates on this project at https://yorik.uncreated.net/blog/nativeifc
 #### Additionals
 
 * [ ] Add this to the addons manager
-* [ ] Add to BIM WB dependencies
+* [ ] Add to BIM WB dependencies/ reorganize addon
+* [ ] Verify and adapt 2D view generation workflow
+* [ ] Verify and adapt quantifying workflow
 * [ ] Document
 
 ### Installation
