@@ -89,7 +89,7 @@ def create_object(ifcentity, document, ifcfile, shapemode=0):
     return obj
 
 
-def create_children(obj, ifcfile, recursive=False, only_structure=False, assemblies=True):
+def create_children(obj, ifcfile=None, recursive=False, only_structure=False, assemblies=True):
 
     """Creates a hierarchy of objects under an object"""
 
@@ -109,6 +109,8 @@ def create_children(obj, ifcfile, recursive=False, only_structure=False, assembl
                 subresult.extend(create_children(child, ifcfile, recursive, only_structure, assemblies))
         return subresult
 
+    if not ifcfile:
+        ifcfile = get_ifcfile(obj)
     result = []
     for child in get_children(obj, ifcfile, only_structure, assemblies):
         result.extend(create_child(obj, child))
@@ -661,7 +663,7 @@ def get_matrix(ios_matrix):
 
 def save_ifc(obj, filepath=None):
 
-    """Saves the linked IFC file of an object"""
+    """Saves the linked IFC file of a project, but does not mark it as saved"""
 
     if not filepath:
         if hasattr(obj,"FilePath") and obj.FilePath:
@@ -670,6 +672,14 @@ def save_ifc(obj, filepath=None):
         ifcfile = get_ifcfile(obj)
         ifcfile.write(filepath)
         FreeCAD.Console.PrintMessage("Saved " + filepath + "\n")
+
+
+def save(obj, filepath=None)
+
+    """Saves the linked IFC file of a project and set its saved status"""
+    
+    save_ifc(obj, filepath)
+    obj.Modified = False
 
 
 def get_elem_attribs(ifcentity):

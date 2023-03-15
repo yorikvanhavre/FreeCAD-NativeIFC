@@ -132,6 +132,70 @@ The workflow below allows to test what works already (refer to the above list to
 
 ### Notes
 
+#### Available workflow and commands (to become the NativeIFC documentation later)
+
+* [x] **Import an IFC file**
+  * From the UI:
+    * From menu File->Open or File->Insert: choose an IFC file, choose the "NativeIFC" importer
+    * From the start page: set "ifc_import" as a [default importer for IFC files](https://wiki.freecad.org/Fine-tuning#Specific_Workbenches), then just click an IFC file
+  * From Python:
+    
+```python
+import ifc_import
+ifc_import.open(filepath)
+```
+
+* [x] **Expand sub-objects of an IFC object**: 
+    * From the UI: Right-click the object in the tree -> expand children
+    * From Python:
+        
+```python
+import ifc_tools
+ifc_tools.create_children(myObject,[recursive=True/False])
+```
+        
+* [x] **Load the shape of an IFC object**: 
+    * From  theUI: Right-click the object in the tree -> load shape
+    * From Python:
+    
+```python
+myObject.ShapeMode = "Shape"
+myObject.Document.recompute()
+```
+    
+* [x] **Change IFC attributes**: 
+    * From the UI: Change values like name, description... directly from the object's properties
+    * From Python:
+    
+```python
+myObject.Label = "My New Name"
+myObject.Description = "A very nice object"
+```
+    
+* [x] **Saving the modified IFC file**: 
+    * From the UI:
+        * Manually: Right-click the project object in the tree -> Save or Save as
+        * Automatically: Save the FreeCAD document
+    * From Python:
+    
+```python
+import ifc_tools
+ifc_tools.save(myProject,[filepath=/path/to/somefile.ifc])
+```
+    
+* [x] **Add a new IFC document**:
+    * From Python:
+    
+```python
+import ifc_tools
+doc = FreeCAD.ActiveDocument
+ifc_tools.create_document(doc)
+```
+    
+* [ ] Add a new model structure
+* [ ] Add a new object
+* [ ] Modify the shape of an element
+
 #### Documentation
 
 * [IfcOpenShell github](https://github.com/IfcOpenShell/IfcOpenShell)
