@@ -92,106 +92,110 @@ Check for updates on this project at https://yorik.uncreated.net/blog/nativeifc
 
 ### Usage
 
-The workflow below allows to test what works already (refer to the above list to know what has been implemented):
+The workflow below allows to test what works already. This will become the NativeIFC documentation later:
 
-* Install the addon as described above
-* Restart FreeCAD
-* `File` → `Open` or `File` → `Insert`, select an IFC file
-* Select the Native IFC importer
+* [x] **Enabling NativeIFC**
+
+    * Install the addon as described above
+    * Restart FreeCAD
+
+* [x] **Import an IFC file**
+
+    * From the UI:
+        * From menu `File` → `Open` or `File` → `Insert`: choose an IFC file, choose the **NativeIFC** importer
+        * From the start page: set "ifc_import" as a [default importer for IFC files](https://wiki.freecad.org/Fine-tuning#Specific_Workbenches), then just click an IFC file
 
 ![](doc/images/workflow01.jpg)
 
-* Set the desired options. For large files, creating one root object only and no shapes (coin representatipon only) is the fastest way. Objects can have their children and shapes expanded later, as needed.
+        * Set the desired options. For large files, creating one root object only and no shapes (coin representatipon only) is the fastest way. Objects can have their children and shapes expanded later, as needed.
 
 ![](doc/images/workflow08.jpg)
 
-* A FreeCAD document is created
-* An object is created representing the IFC root document + project
+        * A FreeCAD document is created
+        * An object is created representing the IFC root document + project
 
 ![](doc/images/workflow02.jpg)
 
-* Right-click the IFC root document object and select **Expand children**
-
-![](doc/images/workflow03.jpg)
-
-* A site object, or any other child object is created. You can further expand those children
-
-![](doc/images/workflow04.jpg)
-
-* Try changing one parameter, for ex the **Label** property of an object
-
-![](doc/images/workflow05.jpg)
-
-* When any attribute of the linked IFC file has changed, the icon of the IFC document object shows a red dot, and a **save** option becomes available when right-clicking it
-
-![](doc/images/workflow06.jpg)
-
-* After saving, only the changed parameters have changed in the linked IFC file
-
-![](doc/images/workflow07.jpg)
-
-### Notes
-
-#### Available workflow and commands (to become the NativeIFC documentation later)
-
-* [x] **Import an IFC file**
-  * From the UI:
-    * From menu File->Open or File->Insert: choose an IFC file, choose the "NativeIFC" importer
-    * From the start page: set "ifc_import" as a [default importer for IFC files](https://wiki.freecad.org/Fine-tuning#Specific_Workbenches), then just click an IFC file
   * From Python:
-    
+
 ```python
 import ifc_import
 ifc_import.open(filepath)
 ```
 
-* [x] **Expand sub-objects of an IFC object**: 
-    * From the UI: Right-click the object in the tree -> expand children
+* [x] **Expand sub-objects of an IFC object**:
+
+    * From the UI: 
+        * Right-click any IFC object on the tree and select **Expand children**
+
+![](doc/images/workflow03.jpg)
+
+        * A site object, or any other child object is created. You can further expand those children
+
+![](doc/images/workflow04.jpg)
+    
+    
     * From Python:
-        
+
 ```python
 import ifc_tools
 ifc_tools.create_children(myObject,[recursive=True/False])
 ```
-        
-* [x] **Load the shape of an IFC object**: 
+
+* [x] **Load the shape of an IFC object**:
+
     * From  theUI: Right-click the object in the tree -> load shape
     * From Python:
-    
+
 ```python
 myObject.ShapeMode = "Shape"
 myObject.Document.recompute()
 ```
-    
-* [x] **Change IFC attributes**: 
-    * From the UI: Change values like name, description... directly from the object's properties
+
+* [x] **Change IFC attributes**:
+
+    * From the UI: 
+        * Change values like name, description... directly from the object's properties
+
+![](doc/images/workflow05.jpg)
+
     * From Python:
-    
+
 ```python
 myObject.Label = "My New Name"
 myObject.Description = "A very nice object"
 ```
-    
-* [x] **Saving the modified IFC file**: 
+
+* [x] **Saving the modified IFC file**:
+
     * From the UI:
+        * When any attribute of an object in an IFC document has changed, the icon of the IFC document object shows a red dot, and a **save** option becomes available when right-clicking it
         * Manually: Right-click the project object in the tree -> Save or Save as
+
+    ![](doc/images/workflow06.jpg)
+
+        * After saving, only the changed parameters have changed in the linked IFC file
+
+    ![](doc/images/workflow07.jpg)
+        
         * Automatically: Save the FreeCAD document
+
     * From Python:
-    
+
 ```python
 import ifc_tools
 ifc_tools.save(myProject,[filepath=/path/to/somefile.ifc])
 ```
-    
+
 * [x] **Add a new IFC document**:
     * From Python:
-    
+
 ```python
 import ifc_tools
 doc = FreeCAD.ActiveDocument
 ifc_tools.create_document(doc)
 ```
-    
+
 * [x] **Modifying the IFC type of an object**:
     * From the UI: Change the type directly from the object's properties
     * From Python:
@@ -217,6 +221,9 @@ myObject.Type = "IfcWall"
         * This view and its annotations can be added to a printable page using the [TechDraw Workbench](https://wiki.freecad.org/TechDraw_Workbench)
 * [ ] Extracting quantities from an IFC file
 * [ ] Creating renderings of an IFC file
+
+
+### Notes
 
 #### Documentation
 
@@ -306,9 +313,9 @@ entdoc.keys() # 'description', 'predefined_types', 'spec_url', 'attributes'
 entdoc['attributes']['IsDefinedBy']
 # gives the same result as
 ifcopenshell.util.doc.get_attribute_doc("IFC4","IfcWall","IsDefinedBy")
-# 'Set of relationships to the object type that provides the type definitions 
+# 'Set of relationships to the object type that provides the type definitions
 # for this object occurrence. The then associated _IfcTypeObject_, or its subtypes,
-# contains the specific information (or type, or style), that is common to all 
+# contains the specific information (or type, or style), that is common to all
 # instances of _IfcObject_, or its subtypes, referring to the same type.'
 ```
 
