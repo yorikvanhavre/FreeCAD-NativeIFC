@@ -106,34 +106,26 @@ The workflow below allows to test what works already. This will become the Nativ
     * From the UI:
         * From menu `File` → `Open` or `File` → `Insert`: choose an IFC file, choose the **NativeIFC** importer
         * From the start page: set "ifc_import" as a [default importer for IFC files](https://wiki.freecad.org/Fine-tuning#Specific_Workbenches), then just click an IFC file
-
 ![](doc/images/workflow01.jpg)
-
-        * Set the desired options. For large files, creating one root object only and no shapes (coin representatipon only) is the fastest way. Objects can have their children and shapes expanded later, as needed.
-
+        * Set the desired options. For large files, creating one root object only and no shapes (coin representatipon only) is the fastest way. Objects can have their children and shapes expanded later, as needed. A "no representation" mode is also available, which will load the IFC file structure in the tree, but no 3D representation is created
 ![](doc/images/workflow08.jpg)
-
         * A FreeCAD document is created
         * An object is created representing the IFC root document + project
-
 ![](doc/images/workflow02.jpg)
 
   * From Python:
 
 ```python
 import ifc_import
-ifc_import.open(filepath)
+ifc_import.open(filepath) # or ifc_import.insert(fileapth,document)
 ```
 
 * [x] **Expand sub-objects of an IFC object**:
 
     * From the UI: 
         * Right-click any IFC object on the tree and select **Expand children**
-
 ![](doc/images/workflow03.jpg)
-
-        * A site object, or any other child object is created. You can further expand those children
-
+        * A site object, or any other child object is created. You can further expand those children, until there is no more child
 ![](doc/images/workflow04.jpg)
     
     
@@ -146,7 +138,7 @@ ifc_tools.create_children(myObject,[recursive=True/False])
 
 * [x] **Load the shape of an IFC object**:
 
-    * From  theUI: Right-click the object in the tree -> load shape
+    * From  the UI: Right-click the object in the tree -> load shape
     * From Python:
 
 ```python
@@ -158,7 +150,6 @@ myObject.Document.recompute()
 
     * From the UI: 
         * Change values like name, description... directly from the object's properties
-
 ![](doc/images/workflow05.jpg)
 
     * From Python:
@@ -173,13 +164,9 @@ myObject.Description = "A very nice object"
     * From the UI:
         * When any attribute of an object in an IFC document has changed, the icon of the IFC document object shows a red dot, and a **save** option becomes available when right-clicking it
         * Manually: Right-click the project object in the tree -> Save or Save as
-
     ![](doc/images/workflow06.jpg)
-
         * After saving, only the changed parameters have changed in the linked IFC file
-
     ![](doc/images/workflow07.jpg)
-        
         * Automatically: Save the FreeCAD document
 
     * From Python:
@@ -190,6 +177,7 @@ ifc_tools.save(myProject,[filepath=/path/to/somefile.ifc])
 ```
 
 * [x] **Add a new IFC document**:
+    * From the UI: Use the **Project** tool from the BIM workbench
     * From Python:
 
 ```python
@@ -221,7 +209,6 @@ myObject.Type = "IfcWall"
         * This view can now be annotated using Draft tools
         * This view and its annotations can be exported to DXF/DWG using File -> Export
         * This view and its annotations can be added to a printable page using the [TechDraw Workbench](https://wiki.freecad.org/TechDraw_Workbench)
-        
 ![](doc/images/workflow09.jpg)
         
 * [ ] Extracting quantities from an IFC file
