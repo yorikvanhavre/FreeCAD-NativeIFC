@@ -37,9 +37,11 @@ class ifc_object:
         elif prop == "Type" and hasattr(obj,"IfcType") and obj.Type != obj.IfcType:
             obj.IfcType = obj.Type
             self.rebuild_classlist(obj, setprops=True)
-
+        
         # edit an IFC attribute
-        if obj.getGroupOfProperty(prop) == "IFC":
+        if prop == "Schema":
+            self.set_schema(obj, obj.Schema)
+        elif obj.getGroupOfProperty(prop) == "IFC":
             if prop in ["StepId"]:
                 pass
             else:
@@ -111,3 +113,19 @@ class ifc_object:
                 if hasattr(result,"id") and (result.id() != obj.StepId):
                     obj.StepId = result.id()
 
+    def set_schema(self, obj, schema):
+        
+        """Changes the schema of an IFC document"""
+
+        import ifc_tools # lazy import
+
+        ifcfile = ifc_tools.get_ifcfile(obj)
+        infile = obj.FilePath
+        if infile:
+            outfile = infile[:-4] + "_" + schema + ".ifc"
+            ifcfile = ifc_tools.migrate_schema(ifcfile, outfile, schema)
+            if obj.ViewObject:
+                if obj.ViewObject.Proxy.replace_file(obj, outfile):
+                    self.ifcfile = ifcfile
+                    # TODO rebuild all objects?
+        

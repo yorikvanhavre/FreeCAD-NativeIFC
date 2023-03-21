@@ -57,8 +57,8 @@ def create_document(document, filename=None, shapemode=0, strategy=0):
 
     obj = add_object(document, project=True)
     d = "The path to the linked IFC file"
-    obj.addProperty("App::PropertyFile","FilePath","Base",d)
-    obj.addProperty("App::PropertyBool","Modified","Base")
+    obj.addProperty("App::PropertyFile", "FilePath", "Base", d)
+    obj.addProperty("App::PropertyBool", "Modified", "Base")
     obj.setPropertyStatus("Modified","Hidden")
     if filename:
         obj.FilePath = filename
@@ -68,6 +68,9 @@ def create_document(document, filename=None, shapemode=0, strategy=0):
     project = ifcfile.by_type("IfcProject")[0]
     obj.Proxy.ifcfile = ifcfile
     add_properties(obj, ifcfile, project, shapemode=shapemode)
+    obj.addProperty("App::PropertyEnumeration", "Schema", "Base")
+    obj.Schema = ifcopenshell.ifcopenshell_wrapper.schema_names()
+    obj.Schema = ifcfile.wrapped_data.schema_name()
     # populate according to strategy
     if strategy == 0:
         pass
@@ -876,3 +879,14 @@ def get_elem_attribs(ifcentity):
         info_ifcentity[attr] = value
 
     return info_ifcentity
+
+
+def migrate_schema(ifcfile, outfile, schema):
+    
+    """migrates a file to a new schema"""
+
+    newfile = ifcopenshell.file() # TODO need to specify a schema
+    migrator = ifcopenshell.util.schema.Migrator()
+    for entity in ifcfile:
+        migrator.migrate(entity,newfile)
+    return newfile
