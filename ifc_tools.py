@@ -44,7 +44,8 @@ SCALE = 1000.0 # IfcOpenShell works in meters, FreeCAD works in mm
 
 def create_document(document, filename=None, shapemode=0, strategy=0):
 
-    """Creates a FreeCAD IFC document object.
+    """Creates a IFC document object in the given FreeCAD document.
+
     filename:  If not given, a blank IFC document is created
     shapemode: 0 = full shape
                1 = coin only
@@ -62,10 +63,9 @@ def create_document(document, filename=None, shapemode=0, strategy=0):
     if filename:
         obj.FilePath = filename
         ifcfile = ifcopenshell.open(filename)
-        project = ifcfile.by_type("IfcProject")[0]
     else:
-        ifcfile = ifcopenshell.template.create()
-        project = ifcfile.createIfcProject()
+        ifcfile = create_ifcfile()
+    project = ifcfile.by_type("IfcProject")[0]
     obj.Proxy.ifcfile = ifcfile
     add_properties(obj, ifcfile, project, shapemode=shapemode)
     # populate according to strategy
@@ -76,6 +76,30 @@ def create_document(document, filename=None, shapemode=0, strategy=0):
     elif strategy == 2:
         create_children(obj, ifcfile, recursive=True, assemblies=False)
     return obj
+
+
+def create_ifcfile():
+
+    """Creates a new, empty IFC document"""
+
+    ifcfile = ifcopenshell.template.create()
+    param = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Document")
+    user = param.GetString("prefAuthor","")
+    user = user.split("<")[0]
+    if user:
+        person = ifcfile.by_type("IfcPerson")[0]
+        set_attribute(ifcfile, person, "FamilyName", user)
+    org = param.GetString("prefCompany","")
+    if org:
+        comp = ifcfile.by_type("IfcCompany")[0]
+        set_attribute(ifcfile, comp, "Name", user)
+    application = "FreeCAD"
+    version = FreeCAD.Version()
+    version = ".".join([str(v) for v in version[0:3]])
+    app = ifcfile.by_type("IfcApplication")[0]
+    set_attribute(ifcfile, app, "ApplicationFullName", application)
+    set_attribute(ifcfile, app, "Version", version)
+    return ifcfile
 
 
 def create_object(ifcentity, document, ifcfile, shapemode=0):
@@ -216,7 +240,7 @@ def add_properties(obj, ifcfile=None ,ifcentity=None, links=False, shapemode=0):
         obj.ShapeMode = shapemodes
         obj.ShapeMode = shapemode
     attr_defs = ifcentity.wrapped_data.declaration().as_entity().all_attributes()
-    info_ifcentity = get_elem_attribs(ifcentity)
+    info_ifcentity = get_elem_attribs(ifcentity) # TODO this is slow. Ideally get_info() should be used but it can raise errors
     for attr, value in info_ifcentity.items():
         if attr == "type":
             attr = "Type"

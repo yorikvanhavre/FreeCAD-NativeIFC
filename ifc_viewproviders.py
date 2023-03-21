@@ -188,16 +188,16 @@ class ifc_vp_document(ifc_vp_object):
 
         from PySide2 import QtCore, QtGui, QtWidgets # lazy import
 
+        path = os.path.dirname(os.path.dirname(__file__))
+        icon = QtGui.QIcon(os.path.join(path ,"icons", "IFC.svg"))
         if vobj.Object.Modified:
-            path = os.path.dirname(os.path.dirname(__file__))
-            icon = QtGui.QIcon(os.path.join(path ,"icons", "IFC.svg"))
             if vobj.Object.FilePath:
                 action_save = QtWidgets.QAction(icon,"Save IFC file", menu)
                 action_save.triggered.connect(self.save)
                 menu.addAction(action_save)
-            action_saveas = QtWidgets.QAction(icon,"Save IFC file as...", menu)
-            action_saveas.triggered.connect(self.saveas)
-            menu.addAction(action_saveas)
+        action_saveas = QtWidgets.QAction(icon,"Save IFC file as...", menu)
+        action_saveas.triggered.connect(self.saveas)
+        menu.addAction(action_saveas)
 
 
     def save(self):
