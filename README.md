@@ -197,7 +197,28 @@ myObject.Type = "IfcWall"
 
 * [ ] Add a new model structure
 * [ ] Add a new object
+    * From Python:
+
+```python
+# create an object with any other workbench
+import Arch
+wall = Arch.makeWall(220,400,20)
+# get an existing IFC document object by its name
+project = FreeCAD.ActiveDocument.getObject("IfcObject")
+
+import ifc_tools
+ifc_tools.ifcize(wall, project)
+```
+
 * [ ] Modify the shape of an element
+* [x] Changing the schema of an IFC document
+    * From the UI: Change the 'Schema' property of the object
+    * From Python:
+    
+```python
+myProject.Schema = "IFC4"
+```
+
 * [x] **Create 2D drawings (plans, sections) from an IFC file:**
     * From the UI:
         * Make sure all the objects you need to see have their shape loaded
