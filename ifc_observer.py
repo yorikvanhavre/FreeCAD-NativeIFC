@@ -82,5 +82,7 @@ class ifc_observer:
                 params.SetBool("AskBeforeSaving",ask)
 
             for obj in objs:
-                ifc_tools.save_ifc(obj)
-                obj.Modified = False
+                if obj.FilePath and getattr(obj.Proxy,"ifcfile",None):
+                    obj.ViewObject.Proxy.save()
+                else:
+                    obj.ViewObject.Proxy.save_as()

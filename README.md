@@ -41,7 +41,7 @@ Check for updates on this project at https://yorik.uncreated.net/blog/nativeifc
 * [x] Allow different import strategies (full model, only building structure...)
 * [x] Allow to create an IFC document without an existing IFC file
 * [ ] Allow to add building structure (building, storey...)
-* [ ] Allow to add a simple generic IFC product
+* [x] Allow to add a simple generic IFC product
 * [ ] Allow to delete objects
 * [ ] Tie all of the above to BIM commands
 

@@ -85,13 +85,13 @@ def create_ifcfile():
     ifcfile = ifcopenshell.template.create()
     param = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Document")
     user = param.GetString("prefAuthor","")
-    user = user.split("<")[0]
+    user = user.split("<")[0].strip()
     if user:
         person = ifcfile.by_type("IfcPerson")[0]
         set_attribute(ifcfile, person, "FamilyName", user)
     org = param.GetString("prefCompany","")
     if org:
-        comp = ifcfile.by_type("IfcCompany")[0]
+        comp = ifcfile.by_type("IfcOrganization")[0]
         set_attribute(ifcfile, comp, "Name", user)
     application = "FreeCAD"
     version = FreeCAD.Version()
@@ -106,7 +106,8 @@ def create_object(ifcentity, document, ifcfile, shapemode=0):
 
     """Creates a FreeCAD object from an IFC entity"""
 
-    FreeCAD.Console.PrintLog("Created #{}: {}, '{}'\n".format(ifcentity.id(), ifcentity.is_a(), ifcentity.Name))
+    s = "Created #{}: {}, '{}'\n".format(ifcentity.id(), ifcentity.is_a(), ifcentity.Name)
+    FreeCAD.Console.PrintLog(s)
     obj = add_object(document)
     add_properties(obj, ifcfile, ifcentity, shapemode=shapemode)
     elements = [ifcentity]
@@ -216,7 +217,7 @@ def add_object(document, project=False):
     return obj
 
 
-def add_properties(obj, ifcfile=None ,ifcentity=None, links=False, shapemode=0):
+def add_properties(obj, ifcfile=None ,ifcentity=None, links=False, shapemode=0, short=True):
 
     """Adds the properties of the given IFC object to a FreeCAD object"""
 
@@ -240,13 +241,19 @@ def add_properties(obj, ifcfile=None ,ifcentity=None, links=False, shapemode=0):
         obj.ShapeMode = shapemodes
         obj.ShapeMode = shapemode
     attr_defs = ifcentity.wrapped_data.declaration().as_entity().all_attributes()
-    info_ifcentity = get_elem_attribs(ifcentity) # TODO this is slow. Ideally get_info() should be used but it can raise errors
+    try:
+        info_ifcentity = ifcentity.get_info()
+    except:
+        # slower but no errors
+        info_ifcentity = get_elem_attribs(ifcentity)
     for attr, value in info_ifcentity.items():
         if attr == "type":
             attr = "Type"
         elif attr == "id":
             attr = "StepId"
         elif attr == "Name":
+            continue
+        if short and attr not in ("Type","StepId"):
             continue
         attr_def = next((a for a in attr_defs if a.name() == attr), None)
         data_type = ifcopenshell.util.attribute.get_primitive_type(attr_def) if attr_def else None
@@ -614,10 +621,11 @@ def set_geometry(obj, elem, ifcfile, cached=False):
         # set object shape
         shape, colors = get_shape([elem], ifcfile, cached)
         if shape is None:
-            print(
-                "Debug: No Shape returned for FC-IfcObject: {}, {}, {}"
-                .format(obj.StepId, obj.IfcType, obj.Label)
-            )
+            if not elem.is_a("IfcContext") and not elem.is_a("IfcSpatialStructureElement"):
+                print(
+                    "Debug: No Shape returned for object {}, {}, {}"
+                    .format(obj.StepId, obj.IfcType, obj.Label)
+                )
         else:
             placement = shape.Placement
             obj.Shape = shape
@@ -721,6 +729,8 @@ def save_ifc(obj, filepath=None):
             filepath = obj.FilePath
     if filepath:
         ifcfile = get_ifcfile(obj)
+        if not ifcfile:
+            ifcfile = create_ifcfile()
         ifcfile.write(filepath)
         FreeCAD.Console.PrintMessage("Saved " + filepath + "\n")
 
@@ -731,6 +741,102 @@ def save(obj, filepath=None):
 
     save_ifc(obj, filepath)
     obj.Modified = False
+
+
+def ifcize(obj, parent):
+
+    """Takes any FreeCAD object and aggregates it to an existing IFC object"""
+
+    if get_project(obj):
+        FreeCAD.Console.PrintError("This object is already part of an IFC project\n")
+        return
+    proj = get_project(parent)
+    if not proj:
+        FreeCAD.Console.PrintError("The parent object is not part of an IFC project\n")
+        return
+    ifcfile = get_ifcfile(proj)
+    product = create_product(obj, parent, ifcfile)
+    print("created",product)
+    newobj = create_object(product, obj.Document, ifcfile)
+    print("created obj",newobj)
+    rel = create_relationship(newobj, parent, product, ifcfile)
+    print("create rel",rel)
+    base = getattr(obj,"Base",None)
+    if base:
+        # make sure the base is used only by this object before deleting
+        if base.OutList != [obj]:
+            base = None
+    obj.Document.removeObject(obj.Name)
+    if base:
+        obj.Document.removeObject(base.Name)
+    return newobj
+
+
+def create_product(obj, parent, ifcfile):
+
+    """Creates an IFC product out of a FreeCAD object"""
+
+    uid = ifcopenshell.guid.new()
+    context = ifcfile[get_body_context_ids(ifcfile)[-1]] # TODO should this be different?
+    history = get_ifc_element(parent).OwnerHistory # TODO should this be changed?
+    name = obj.Label
+    description = getattr(obj,"Description","")
+
+    # use the Arch exporter
+    import exportIFC
+    import exportIFCHelper
+    # setup exporter - TODO do that in the module init
+    exportIFC.clones = {}
+    exportIFC.profiledefs = {}
+    exportIFC.surfstyles = {}
+    exportIFC.ifcopenshell = ifcopenshell
+    exportIFC.ifcbin = exportIFCHelper.recycler(ifcfile)
+    ifctype = exportIFC.getIfcTypeFromObj(obj)
+    prefs = exportIFC.getPreferences()
+    representation, placement, shapetype = exportIFC.getRepresentation(ifcfile, context, obj, preferences=prefs)
+    product = exportIFC.createProduct(ifcfile, obj, ifctype, uid, history, name, description, placement, representation, prefs)
+    return product
+
+
+def create_relationship(obj, parent, element, ifcfile):
+
+    """Creates a relationship between an IFC object and a parent IFC object"""
+
+    parent_element = get_ifc_element(parent)
+
+    # remove any existing rel
+    uprels = parent_element.IsDecomposedBy
+    rels = element.Decomposes
+    if rels:
+        for rel in rels:
+            if element in rel.RelatedObjects:
+                print("DEBUG: Element",element,"is part of",rel.RelatingObject,"- removing")
+                if len(rel.RelatedObjects) == 1:
+                    # delete uprel if only contains our element
+                    cmd = 'root.remove_product'
+                    ifcopenshell.api.run(cmd, ifcfile, product=rel)
+                else:
+                    # delete this element from these uprels
+                    cmd = 'attribute.edit_attributes'
+                    attribs = {"RelatedObjects": [o for o in rel.RelatedObjects if o != element]}
+                    ifcopenshell.api.run(cmd, ifcfile, product=rel, attributes=attribs)
+    # add to existing relationship if possible
+    if uprels:
+        for uprel in uprels:
+            if element in uprel.RelatedObjects:
+                # element already related to parent
+                break
+        else:
+            uprel = uprels [0] # We take arbitrarily the first one. TODO is that adequate?
+            cmd = 'attribute.edit_attributes'
+            attribs = {"RelatedObjects": uprel.RelatedObjects + (element,)}
+            ifcopenshell.api.run(cmd, ifcfile, product=uprel, attributes=attribs)
+    else:
+        # create aggregation
+        history = parent_element.OwnerHistory
+        uprel = ifcfile.createIfcRelAggregates(ifcopenshell.guid.new(), history, None, None, parent_element, [element])
+    parent.addObject(obj)
+    return uprel
 
 
 def get_elem_attribs(ifcentity):
