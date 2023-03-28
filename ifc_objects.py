@@ -133,8 +133,14 @@ class ifc_object:
         if not getattr(self,"old_schema",None):
             return
         if schema != ifcfile.wrapped_data.schema_name():
-            ifcfile = ifc_tools.migrate_schema(ifcfile, schema)
+            if obj.ViewObject:
+                if not obj.ViewObject.Proxy.schema_warning():
+                    return
+            ifcfile, migration_table = ifc_tools.migrate_schema(ifcfile, schema)
             self.ifcfile = ifcfile
             obj.Modified = True
-            # TODO the whole file will change! Need to see what to do
+            for old_id,new_id in migration_table.items():
+                child = [o for o in obj.OutListRecursive if getattr(o,"StepId",None) == old_id]
+                if len(child) == 1:
+                    child[0].StepId = new_id
 

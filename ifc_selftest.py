@@ -165,3 +165,8 @@ class ArchTest(unittest.TestCase):
         ifc_tools.create_document(doc)
         self.failUnless(len(FreeCAD.getDocument("IfcTest").Objects) == 1, "CreateDocument failed")
 
+    # change IFC schema
+
+    # create Storey
+
+    # create Wall

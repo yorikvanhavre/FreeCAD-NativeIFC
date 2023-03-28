@@ -248,3 +248,22 @@ class ifc_vp_document(ifc_vp_object):
         else:
             return False
 
+
+    def schema_warning(self):
+
+        from PySide2 import QtCore, QtGui, QtWidgets # lazy import
+
+        msg = "Warning: This operation will change the whole IFC file contents "
+        msg += "and will not give versionable results. It is best to not do "
+        msg += "this while you are in the middle of a project. "
+        msg += "Do you wish to continue anyway?"
+        dlg = QtWidgets.QMessageBox.question(None,
+                                           "Replace IFC file schema?",
+                                           msg,
+                                           QtWidgets.QMessageBox.Yes | QtWidgets.QMessageBox.No,
+                                           QtWidgets.QMessageBox.No)
+        if dlg == QtWidgets.QMessageBox.Yes:
+            return True
+        else:
+            return False
+

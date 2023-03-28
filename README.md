@@ -53,7 +53,7 @@ Check for updates on this project at https://yorik.uncreated.net/blog/nativeifc
 * [ ] Expand properties
 * [ ] Allow to regroup elements
 * [ ] Handle drag/drop
-* [ ] Allow to change the IFC schema
+* [x] Allow to change the IFC schema
 
 #### 5. Tie NativeIFC and BIM Workbenches
 

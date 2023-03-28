@@ -887,6 +887,8 @@ def migrate_schema(ifcfile, schema):
 
     newfile = ifcopenshell.file(schema=schema)
     migrator = ifcopenshell.util.schema.Migrator()
+    table = {}
     for entity in ifcfile:
-        migrator.migrate(entity,newfile)
-    return newfile
+        new_entity = migrator.migrate(entity,newfile)
+        table[entity.id()] = new_entity.id()
+    return newfile, table
