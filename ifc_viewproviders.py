@@ -224,25 +224,27 @@ class ifc_vp_document(ifc_vp_object):
         if sf and sf[0]:
             ifc_tools.save_ifc(self.Object, sf[0])
             self.replace_file(self.Object, sf[0])
-            
-    
+
+
     def replace_file(self, obj, newfile):
-        
+
         """Asks the user if the attached file path needs to be replaced"""
-        
-            msg = "Replace the stored IFC file path in object "
-            msg += self.Object.Label + " with the new one: "
-            msg += newfile
-            msg += " ?"
-            dlg = QtWidgets.QMessageBox.question(None,
-                                               "Replace IFC file path?",
-                                               msg,
-                                               QtWidgets.QMessageBox.Yes | QtWidgets.QMessageBox.No,
-                                               QtWidgets.QMessageBox.No)
-            if dlg == QtWidgets.QMessageBox.Yes:
-                self.Object.FilePath = newfile
-                self.Object.Modified = False
-                return True
-            else:
-                return False
+
+        from PySide2 import QtCore, QtGui, QtWidgets # lazy import
+
+        msg = "Replace the stored IFC file path in object "
+        msg += self.Object.Label + " with the new one: "
+        msg += newfile
+        msg += " ?"
+        dlg = QtWidgets.QMessageBox.question(None,
+                                           "Replace IFC file path?",
+                                           msg,
+                                           QtWidgets.QMessageBox.Yes | QtWidgets.QMessageBox.No,
+                                           QtWidgets.QMessageBox.No)
+        if dlg == QtWidgets.QMessageBox.Yes:
+            self.Object.FilePath = newfile
+            self.Object.Modified = False
+            return True
+        else:
+            return False
 

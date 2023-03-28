@@ -28,6 +28,13 @@ class ifc_object:
 
         self.cached = True # this marks that the object is freshly created and its shape should be taken from cache
 
+
+    def onBeforeChange(self, obj, prop):
+
+        if prop == "Schema":
+            self.old_schema = obj.Schema
+
+
     def onChanged(self, obj, prop):
 
         # link Type property to its hidder IfcType counterpart
@@ -37,7 +44,7 @@ class ifc_object:
         elif prop == "Type" and hasattr(obj,"IfcType") and obj.Type != obj.IfcType:
             obj.IfcType = obj.Type
             self.rebuild_classlist(obj, setprops=True)
-        
+
         # edit an IFC attribute
         if prop == "Schema":
             self.set_schema(obj, obj.Schema)
@@ -113,19 +120,21 @@ class ifc_object:
                 if hasattr(result,"id") and (result.id() != obj.StepId):
                     obj.StepId = result.id()
 
+
     def set_schema(self, obj, schema):
-        
+
         """Changes the schema of an IFC document"""
 
         import ifc_tools # lazy import
 
         ifcfile = ifc_tools.get_ifcfile(obj)
-        infile = obj.FilePath
-        if infile:
-            outfile = infile[:-4] + "_" + schema + ".ifc"
-            ifcfile = ifc_tools.migrate_schema(ifcfile, outfile, schema)
-            if obj.ViewObject:
-                if obj.ViewObject.Proxy.replace_file(obj, outfile):
-                    self.ifcfile = ifcfile
-                    # TODO rebuild all objects?
-        
+        if not ifcfile:
+            return
+        if not getattr(self,"old_schema",None):
+            return
+        if schema != ifcfile.wrapped_data.schema_name():
+            ifcfile = ifc_tools.migrate_schema(ifcfile, schema)
+            self.ifcfile = ifcfile
+            obj.Modified = True
+            # TODO the whole file will change! Need to see what to do
+

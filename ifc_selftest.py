@@ -150,17 +150,18 @@ class ArchTest(unittest.TestCase):
         obj = doc.Objects[-1]
         obj.Label = obj.Label + "Modified"
         proj = ifc_tools.get_project(obj)
-        proj.FilePath = proj.FilePath + "modified.ifc"
+        proj.FilePath = proj.FilePath[:-4] + "_modified.ifc"
         ifc_tools.save_ifc(proj)
         ifc_diff = compare(IFC_FILE_PATH, proj.FilePath)
         obj.ShapeMode = 0
         obj.Proxy.execute(obj)
         self.failUnless(obj.Shape.Volume > 2 and len(ifc_diff) == 3, "ModifyObjects failed")
 
-    def test07_CreateObject(self):
 
-        FreeCAD.Console.PrintMessage("Creating new IFC objects...\n")
+    def test07_CreateDocument(self):
+
+        FreeCAD.Console.PrintMessage("Creating new IFC document...\n")
         doc = FreeCAD.ActiveDocument
         ifc_tools.create_document(doc)
-        self.failUnless(len(FreeCAD.getDocument("IfcTest").Objects) == 1, "CreateObject failed")
+        self.failUnless(len(FreeCAD.getDocument("IfcTest").Objects) == 1, "CreateDocument failed")
 

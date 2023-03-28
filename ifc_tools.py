@@ -881,11 +881,11 @@ def get_elem_attribs(ifcentity):
     return info_ifcentity
 
 
-def migrate_schema(ifcfile, outfile, schema):
+def migrate_schema(ifcfile, schema):
     
     """migrates a file to a new schema"""
 
-    newfile = ifcopenshell.file() # TODO need to specify a schema
+    newfile = ifcopenshell.file(schema=schema)
     migrator = ifcopenshell.util.schema.Migrator()
     for entity in ifcfile:
         migrator.migrate(entity,newfile)
