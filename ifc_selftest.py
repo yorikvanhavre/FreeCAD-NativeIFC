@@ -167,6 +167,6 @@ class ArchTest(unittest.TestCase):
 
     # change IFC schema
 
-    # create Storey
+    # create site, building, storey, space, wall, column, beam, slab, door, window, roof
 
-    # create Wall
+    # delete objects

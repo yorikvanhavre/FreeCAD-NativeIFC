@@ -85,6 +85,10 @@ def create_ifcfile():
 
     """Creates a new, empty IFC document"""
 
+    # TODO do not rely on the template,
+    # and create a minimal file instead, with no person, no org, no
+    # nothing. These shold be populated later on by the user
+
     ifcfile = ifcopenshell.template.create()
     param = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Document")
     user = param.GetString("prefAuthor","")
@@ -759,11 +763,8 @@ def ifcize(obj, parent):
         return
     ifcfile = get_ifcfile(proj)
     product = create_product(obj, parent, ifcfile)
-    print("created",product)
-    newobj = create_object(product, obj.Document, ifcfile)
-    print("created obj",newobj)
+    newobj = create_object(product, obj.Document, ifcfile, parent.ShapeMode)
     rel = create_relationship(newobj, parent, product, ifcfile)
-    print("create rel",rel)
     base = getattr(obj,"Base",None)
     if base:
         # make sure the base is used only by this object before deleting
@@ -772,6 +773,7 @@ def ifcize(obj, parent):
     obj.Document.removeObject(obj.Name)
     if base:
         obj.Document.removeObject(base.Name)
+    proj.Modified = True
     return newobj
 
 
@@ -785,7 +787,14 @@ def create_product(obj, parent, ifcfile):
     name = obj.Label
     description = getattr(obj,"Description","")
 
-    # use the Arch exporter
+    # TEMPORARY use the Arch exporter
+    # TODO this is temporary. We should rely on ifcopenshell for this with:
+    # https://blenderbim.org/docs-python/autoapi/ifcopenshell/api/root/create_entity/index.html
+    # a new FreeCAD 'engine' should be added to:
+    # https://blenderbim.org/docs-python/autoapi/ifcopenshell/api/geometry/index.html
+    # that should contain all typical use cases one could have to convert FreeCAD geometry
+    # to IFC.
+
     import exportIFC
     import exportIFCHelper
     # setup exporter - TODO do that in the module init
