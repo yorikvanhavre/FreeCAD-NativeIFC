@@ -192,6 +192,9 @@ class ifc_vp_document(ifc_vp_object):
         icon = QtGui.QIcon(os.path.join(path ,"icons", "IFC.svg"))
         if vobj.Object.Modified:
             if vobj.Object.FilePath:
+                action_diff = QtWidgets.QAction(icon,"View diff...", menu)
+                action_diff.triggered.connect(self.diff)
+                menu.addAction(action_diff)
                 action_save = QtWidgets.QAction(icon,"Save IFC file", menu)
                 action_save.triggered.connect(self.save)
                 menu.addAction(action_save)
@@ -267,3 +270,9 @@ class ifc_vp_document(ifc_vp_object):
         else:
             return False
 
+
+    def diff(self):
+
+        import ifc_diff
+        diff = ifc_diff.get_diff(self.Object)
+        ifc_diff.show_diff(diff)
