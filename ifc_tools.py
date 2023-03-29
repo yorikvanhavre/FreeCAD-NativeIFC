@@ -750,7 +750,7 @@ def save(obj, filepath=None):
     obj.Modified = False
 
 
-def ifcize(obj, parent):
+def aggregate(obj, parent):
 
     """Takes any FreeCAD object and aggregates it to an existing IFC object"""
 
@@ -768,11 +768,11 @@ def ifcize(obj, parent):
     base = getattr(obj,"Base",None)
     if base:
         # make sure the base is used only by this object before deleting
-        if base.OutList != [obj]:
+        if base.InList != [obj]:
             base = None
-    obj.Document.removeObject(obj.Name)
     if base:
         obj.Document.removeObject(base.Name)
+    obj.Document.removeObject(obj.Name)
     proj.Modified = True
     return newobj
 

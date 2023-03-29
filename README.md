@@ -209,7 +209,7 @@ wall = Arch.makeWall(220,400,20)
 project = FreeCAD.ActiveDocument.getObject("IfcObject")
 
 import ifc_tools
-ifc_tools.ifcize(wall, project)
+ifc_tools.aggregate(wall, project)
 ```
 
 * [ ] Modify the shape of an element

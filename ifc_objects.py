@@ -133,7 +133,8 @@ class ifc_object:
         if not getattr(self,"old_schema",None):
             return
         if schema != ifcfile.wrapped_data.schema_name():
-            if obj.ViewObject:
+            # set obj.Proxy.silent = True to disable the schema change warning
+            if obj.ViewObject and not getattr(self,"silent",False):
                 if not obj.ViewObject.Proxy.schema_warning():
                     return
             ifcfile, migration_table = ifc_tools.migrate_schema(ifcfile, schema)
