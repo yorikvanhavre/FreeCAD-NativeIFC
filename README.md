@@ -213,8 +213,9 @@ ifc_tools.create_document(doc)
 myObject.Type = "IfcWall"
 ```
 
-* [ ] Add a new model structure
-* [ ] Add a new object
+* [ ] **Add a new model structure**
+
+* [ ] **Add a new object**
     * From Python:
 
 ```python
@@ -228,8 +229,9 @@ import ifc_tools
 ifc_tools.aggregate(wall, project)
 ```
 
-* [ ] Modify the shape of an element
-* [x] Changing the schema of an IFC document
+* [ ] **Modify the shape of an element**
+
+* [x] **Changing the schema of an IFC document**
     * From the UI: Change the 'Schema' property of the object
     * From Python:
 
@@ -251,8 +253,9 @@ myProject.Schema = "IFC4"
         * This view and its annotations can be added to a printable page using the [TechDraw Workbench](https://wiki.freecad.org/TechDraw_Workbench)
 ![](doc/images/workflow09.jpg)
 
-* [ ] Extracting quantities from an IFC file
-* [ ] Creating renderings of an IFC file
+* [ ] **Extracting quantities from an IFC file**
+
+* [ ] **Creating renderings of an IFC file**
 
 
 ### Notes
