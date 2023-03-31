@@ -219,6 +219,6 @@ class ArchTest(unittest.TestCase):
         print(ifco, "IFC objects created")
         self.failUnless(fco == 8 and ifco == 12, "CreateDocument failed")
 
-
+# test remove object
 
 

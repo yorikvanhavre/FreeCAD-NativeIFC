@@ -125,13 +125,13 @@ ifc_import.open(filepath) # or ifc_import.insert(fileapth,document)
 
 * [x] **Expand sub-objects of an IFC object**:
 
-    * From the UI: 
+    * From the UI:
         * Right-click any IFC object on the tree and select **Expand children**
 ![](doc/images/workflow03.jpg)
         * A site object, or any other child object is created. You can further expand those children, until there is no more child
 ![](doc/images/workflow04.jpg)
-    
-    
+
+
     * From Python:
 
 ```python
@@ -151,7 +151,7 @@ myObject.Document.recompute()
 
 * [x] **Change IFC attributes**:
 
-    * From the UI: 
+    * From the UI:
         * Change values like name, description... directly from the object's properties
 ![](doc/images/workflow05.jpg)
 
@@ -160,6 +160,22 @@ myObject.Document.recompute()
 ```python
 myObject.Label = "My New Name"
 myObject.Description = "A very nice object"
+```
+
+* [x] **See the changes in an IFC document**
+
+    * From the UI:
+        * Right-click a modified IFC project object in the tree view
+        * Select "View diff..."
+        * A dialog window pops up showing the modified lines since last saved version
+
+    * From Python:
+
+```python
+import ifc_diff
+# get an existing IFC document object by its name
+project = FreeCAD.ActiveDocument.getObject("IfcObject")
+ifc_diff.get_diff(project)
 ```
 
 * [x] **Saving the modified IFC file**:
@@ -216,7 +232,7 @@ ifc_tools.aggregate(wall, project)
 * [x] Changing the schema of an IFC document
     * From the UI: Change the 'Schema' property of the object
     * From Python:
-    
+
 ```python
 myProject.Schema = "IFC4"
 ```
@@ -234,7 +250,7 @@ myProject.Schema = "IFC4"
         * This view and its annotations can be exported to DXF/DWG using File -> Export
         * This view and its annotations can be added to a printable page using the [TechDraw Workbench](https://wiki.freecad.org/TechDraw_Workbench)
 ![](doc/images/workflow09.jpg)
-        
+
 * [ ] Extracting quantities from an IFC file
 * [ ] Creating renderings of an IFC file
 

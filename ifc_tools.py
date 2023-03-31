@@ -35,6 +35,7 @@ from ifcopenshell import api
 from ifcopenshell import template
 from ifcopenshell.util import attribute
 from ifcopenshell.util import schema
+from ifcopenshell.util import placement
 
 import ifc_objects
 import ifc_viewproviders
@@ -88,6 +89,7 @@ def create_ifcfile():
     # TODO do not rely on the template,
     # and create a minimal file instead, with no person, no org, no
     # nothing. These shold be populated later on by the user
+    # use api: https://blenderbim.org/docs-python/autoapi/ifcopenshell/api/project/create_file/index.html
 
     ifcfile = ifcopenshell.template.create()
     param = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Document")
@@ -152,6 +154,8 @@ def create_children(obj, ifcfile=None, recursive=False, only_structure=False, as
 def get_children(obj, ifcfile, only_structure=False, assemblies=True):
 
     """Returns the direct descendants of an object"""
+
+    # This function can become pure IFC
 
     ifcentity = ifcfile[obj.StepId]
     children = []
@@ -341,6 +345,8 @@ def get_ifc_classes(obj, baseclass):
 
     """Returns a list of sibling classes from a given FreeCAD object"""
 
+    # this function can become pure IFC
+
     if baseclass in ("IfcProject","IfcProjectLibrary"):
         return ("IfcProject","IfcProjectLibrary")
     ifcfile = get_ifcfile(obj)
@@ -373,6 +379,8 @@ def has_representation(element):
 
     """Tells if an elements has an own representation"""
 
+    # This function can become pure IFC
+
     if hasattr(element,"Representation") and element.Representation:
         return True
     return False
@@ -381,6 +389,8 @@ def has_representation(element):
 def filter_elements(elements, ifcfile, expand=True):
 
     """Filter elements list of unwanted types"""
+
+    # This function can become pure IFC
 
     # gather decomposition if needed
     if expand and (len(elements) == 1):
@@ -481,7 +491,7 @@ def get_shape(elements, ifcfile, cached=False):
             brep = item.geometry.brep_data
             shape = Part.Shape()
             shape.importBrepFromString(brep, False)
-            mat = get_matrix(item.transformation.matrix.data)
+            mat = get_freecad_matrix(item.transformation.matrix.data)
             shape.scale(SCALE)
             shape.transformShape(mat)
             shapes.append(shape)
@@ -549,7 +559,7 @@ def get_coin(elements, ifcfile, cached=False):
                 #mat.transparency.setValue(0.8)
                 node.addChild(mat)
             # verts
-            matrix = get_matrix(item.transformation.matrix.data)
+            matrix = get_freecad_matrix(item.transformation.matrix.data)
             verts = item.geometry.verts
             verts = [FreeCAD.Vector(verts[i:i+3]) for i in range(0,len(verts),3)]
             verts = [tuple(matrix.multVec(v.multiply(SCALE))) for v  in verts]
@@ -576,6 +586,8 @@ def get_settings(ifcfile, brep=True):
 
     """Returns ifcopenshell settings"""
 
+    # This function can become pure IFC
+
     settings = ifcopenshell.geom.settings()
     if brep:
         settings.set(settings.DISABLE_TRIANGULATION, True)
@@ -588,6 +600,8 @@ def get_settings(ifcfile, brep=True):
 
 
 def get_geom_iterator(ifcfile, elements, brep):
+
+    # This function can become pure IFC
 
     settings = get_settings(ifcfile, brep)
     cores = multiprocessing.cpu_count()
@@ -653,6 +667,8 @@ def set_attribute(ifcfile, element, attribute, value):
 
     """Sets the value of an attribute of an IFC element"""
 
+    # This function can become pure IFC
+
     if attribute == "Type":
         if value != element.is_a():
             if value and value.startswith("Ifc"):
@@ -684,6 +700,8 @@ def set_colors(obj, colors):
 
 def get_body_context_ids(ifcfile):
 
+    # This function can become pure IFC
+
     # Facetation is to accommodate broken Revit files
     # See https://forums.buildingsmart.org/t/suggestions-on-how-to-improve-clarity-of-representation-context-usage-in-documentation/3663/6?u=moult
     body_contexts = [
@@ -704,6 +722,8 @@ def get_body_context_ids(ifcfile):
 
 def get_plan_contexts_ids(ifcfile):
 
+    # This function can become pure IFC
+
     # Annotation is to accommodate broken Revit files
     # See https://github.com/Autodesk/revit-ifc/issues/187
     return [
@@ -713,7 +733,7 @@ def get_plan_contexts_ids(ifcfile):
     ]
 
 
-def get_matrix(ios_matrix):
+def get_freecad_matrix(ios_matrix):
 
     """Converts an IfcOpenShell matrix tuple into a FreeCAD matrix"""
 
@@ -725,6 +745,43 @@ def get_matrix(ios_matrix):
         line[-1] *= SCALE
         m_l.extend(line)
     return FreeCAD.Matrix(*m_l)
+
+
+def get_ios_matrix(freecad_placement):
+
+    """Converts a FreeCAD placement or matrix into an IfcOpenShell matrix tuple"""
+
+    if isinstance(freecad_placement,FreeCAD.Matrix):
+        freecad_placement = FreeCAD.Placement(freecad_placement)
+    pos = freecad_placement.Base
+    #pos = pos.multiply(1/SCALE) # does not work??
+    pos = FreeCAD.Vector(round(pos.x,4),round(pos.y,4),round(pos.z,4))
+    rot = freecad_placement.Rotation.multVec(FreeCAD.Vector(1,1,1))
+    mat = ( (rot.x, 0.0, 0.0, pos.x),
+            (0.0, rot.y, 0.0, pos.y),
+            (0.0, 0.0, rot.z, pos.z),
+            (0.0, 0.0, 0.0, 1.0 ) )
+    return mat
+
+
+def set_placement(obj):
+
+    """Updates the internal IFC placement according to the object placement"""
+
+    # This function can become pure IFC
+
+    ifcfile = get_ifcfile(obj)
+    element = get_ifc_element(obj)
+    new_matrix = get_ios_matrix(obj.Placement)
+    old_matrix = ifcopenshell.util.placement.get_local_placement(element.ObjectPlacement)
+    # conversion from numpy array
+    old_matrix = tuple([tuple(p) for p in old_matrix.tolist()])
+    if new_matrix != old_matrix:
+        print("DEBUG: placement changed for:",obj.Label)
+        print("old:",old_matrix)
+        print("new:",new_matrix)
+        api = "geometry.edit_object_placement"
+        ifcopenshell.api.run(api, ifcfile, product=element, matrix=new_matrix, is_si=False)
 
 
 def save_ifc(obj, filepath=None):
@@ -805,7 +862,9 @@ def create_product(obj, parent, ifcfile):
     exportIFC.ifcbin = exportIFCHelper.recycler(ifcfile)
     ifctype = exportIFC.getIfcTypeFromObj(obj)
     prefs = exportIFC.getPreferences()
+    # TODO migrate this to ifcopenshell api
     representation, placement, shapetype = exportIFC.getRepresentation(ifcfile, context, obj, preferences=prefs)
+    # TODO use api to create a product: ifcopenshell.api.run("root.create_entity", self.file, ifc_class="IfcWall")
     product = exportIFC.createProduct(ifcfile, obj, ifctype, uid, history, name, description, placement, representation, prefs)
     return product
 
@@ -813,6 +872,13 @@ def create_product(obj, parent, ifcfile):
 def create_relationship(obj, parent, element, ifcfile):
 
     """Creates a relationship between an IFC object and a parent IFC object"""
+
+    # This function can become pure IFC
+
+    # TODO use api https://blenderbim.org/docs-python/autoapi/ifcopenshell/api/spatial/assign_container/index.html
+    # need to distinguish between aggregates - api.aggregate.assign_object and contains - api.spatial.assign_container
+    # containment is when the element is an IfcElement and the parent an IfcSpatialElement
+    # deletion, etc... is taken care of automatically
 
     parent_element = get_ifc_element(parent)
 
@@ -853,6 +919,8 @@ def create_relationship(obj, parent, element, ifcfile):
 
 def get_elem_attribs(ifcentity):
 
+    # This function can become pure IFC
+
     # usually info_ifcentity = ifcentity.get_info() would de the trick
     # the above could raise an unhandled excption on corrupted ifc files in IfcOpenShell
     # see https://github.com/IfcOpenShell/IfcOpenShell/issues/2811
@@ -891,8 +959,10 @@ def get_elem_attribs(ifcentity):
 
 
 def migrate_schema(ifcfile, schema):
-    
+
     """migrates a file to a new schema"""
+
+    # This function can become pure IFC
 
     newfile = ifcopenshell.file(schema=schema)
     migrator = ifcopenshell.util.schema.Migrator()
@@ -901,3 +971,14 @@ def migrate_schema(ifcfile, schema):
         new_entity = migrator.migrate(entity,newfile)
         table[entity.id()] = new_entity.id()
     return newfile, table
+
+
+def remove_ifc_element(obj):
+
+    """removes the IFC data associated with an object"""
+
+    # This function can become pure IFC
+
+    element = get_ifc_element(obj)
+    ifcfile = get_ifcfile(obj)
+    ifcopenshell.api.run("root.remove_product", ifcfile, product=element)
