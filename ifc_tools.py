@@ -670,8 +670,10 @@ def set_geometry(obj, elem, ifcfile, cached=False):
             obj.Shape = Part.makeBox(1, 1, 1)
         # set coin representation
         node, colors, placement = get_coin([elem], ifcfile, cached)
-        basenode.addChild(node)
-        obj.Placement = placement
+        if node:
+            basenode.addChild(node)
+        if placement:
+            obj.Placement = placement
     set_colors(obj, colors)
 
 
