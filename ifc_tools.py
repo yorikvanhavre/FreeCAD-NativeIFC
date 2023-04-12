@@ -1,24 +1,24 @@
-#***************************************************************************
-#*                                                                         *
-#*   Copyright (c) 2022 Yorik van Havre <yorik@uncreated.net>              *
-#*                                                                         *
-#*   This program is free software; you can redistribute it and/or modify  *
-#*   it under the terms of the GNU General Public License (GPL)            *
-#*   as published by the Free Software Foundation; either version 3 of     *
-#*   the License, or (at your option) any later version.                   *
-#*   for detail see the LICENCE text file.                                 *
-#*                                                                         *
-#*   This program is distributed in the hope that it will be useful,       *
-#*   but WITHOUT ANY WARRANTY; without even the implied warranty of        *
-#*   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the         *
-#*   GNU General Public License for more details.                          *
-#*                                                                         *
-#*   You should have received a copy of the GNU Library General Public     *
-#*   License along with this program; if not, write to the Free Software   *
-#*   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  *
-#*   USA                                                                   *
-#*                                                                         *
-#***************************************************************************
+# ***************************************************************************
+# *                                                                         *
+# *   Copyright (c) 2022 Yorik van Havre <yorik@uncreated.net>              *
+# *                                                                         *
+# *   This program is free software; you can redistribute it and/or modify  *
+# *   it under the terms of the GNU General Public License (GPL)            *
+# *   as published by the Free Software Foundation; either version 3 of     *
+# *   the License, or (at your option) any later version.                   *
+# *   for detail see the LICENCE text file.                                 *
+# *                                                                         *
+# *   This program is distributed in the hope that it will be useful,       *
+# *   but WITHOUT ANY WARRANTY; without even the implied warranty of        *
+# *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the         *
+# *   GNU General Public License for more details.                          *
+# *                                                                         *
+# *   You should have received a copy of the GNU Library General Public     *
+# *   License along with this program; if not, write to the Free Software   *
+# *   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  *
+# *   USA                                                                   *
+# *                                                                         *
+# ***************************************************************************
 
 import os
 import multiprocessing
@@ -40,11 +40,10 @@ from ifcopenshell.util import placement
 import ifc_objects
 import ifc_viewproviders
 
-SCALE = 1000.0 # IfcOpenShell works in meters, FreeCAD works in mm
+SCALE = 1000.0  # IfcOpenShell works in meters, FreeCAD works in mm
 
 
 def create_document(document, filename=None, shapemode=0, strategy=0):
-
     """Creates a IFC document object in the given FreeCAD document.
 
     filename:  If not given, a blank IFC document is created
@@ -60,7 +59,7 @@ def create_document(document, filename=None, shapemode=0, strategy=0):
     d = "The path to the linked IFC file"
     obj.addProperty("App::PropertyFile", "FilePath", "Base", d)
     obj.addProperty("App::PropertyBool", "Modified", "Base")
-    obj.setPropertyStatus("Modified","Hidden")
+    obj.setPropertyStatus("Modified", "Hidden")
     if filename:
         obj.FilePath = filename
         ifcfile = ifcopenshell.open(filename)
@@ -83,7 +82,6 @@ def create_document(document, filename=None, shapemode=0, strategy=0):
 
 
 def create_ifcfile():
-
     """Creates a new, empty IFC document"""
 
     # TODO do not rely on the template,
@@ -93,12 +91,12 @@ def create_ifcfile():
 
     ifcfile = ifcopenshell.template.create()
     param = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Document")
-    user = param.GetString("prefAuthor","")
+    user = param.GetString("prefAuthor", "")
     user = user.split("<")[0].strip()
     if user:
         person = ifcfile.by_type("IfcPerson")[0]
         set_attribute(ifcfile, person, "FamilyName", user)
-    org = param.GetString("prefCompany","")
+    org = param.GetString("prefCompany", "")
     if org:
         comp = ifcfile.by_type("IfcOrganization")[0]
         set_attribute(ifcfile, comp, "Name", user)
@@ -112,10 +110,11 @@ def create_ifcfile():
 
 
 def create_object(ifcentity, document, ifcfile, shapemode=0):
-
     """Creates a FreeCAD object from an IFC entity"""
 
-    s = "Created #{}: {}, '{}'\n".format(ifcentity.id(), ifcentity.is_a(), ifcentity.Name)
+    s = "Created #{}: {}, '{}'\n".format(
+        ifcentity.id(), ifcentity.is_a(), ifcentity.Name
+    )
     FreeCAD.Console.PrintLog(s)
     obj = add_object(document)
     add_properties(obj, ifcfile, ifcentity, shapemode=shapemode)
@@ -123,24 +122,33 @@ def create_object(ifcentity, document, ifcfile, shapemode=0):
     return obj
 
 
-def create_children(obj, ifcfile=None, recursive=False, only_structure=False, assemblies=True):
-
+def create_children(
+    obj, ifcfile=None, recursive=False, only_structure=False, assemblies=True
+):
     """Creates a hierarchy of objects under an object"""
 
     def create_child(parent, element):
         subresult = []
         # do not create if a child with same stepid already exists
-        if not element.id() in [getattr(c,"StepId",0) for c in getattr(parent,"Group",[])]:
+        if not element.id() in [
+            getattr(c, "StepId", 0) for c in getattr(parent, "Group", [])
+        ]:
             child = create_object(element, parent.Document, ifcfile, parent.ShapeMode)
             subresult.append(child)
             parent.addObject(child)
             if element.is_a("IfcSite"):
                 # force-create contained buildings too if we just created a site
-                buildings = [o for o in get_children(child, ifcfile) if o.is_a("IfcBuilding")]
+                buildings = [
+                    o for o in get_children(child, ifcfile) if o.is_a("IfcBuilding")
+                ]
                 for building in buildings:
                     subresult.extend(create_child(child, building))
             if recursive:
-                subresult.extend(create_children(child, ifcfile, recursive, only_structure, assemblies))
+                subresult.extend(
+                    create_children(
+                        child, ifcfile, recursive, only_structure, assemblies
+                    )
+                )
         return subresult
 
     if not ifcfile:
@@ -152,7 +160,6 @@ def create_children(obj, ifcfile=None, recursive=False, only_structure=False, as
 
 
 def get_children(obj, ifcfile, only_structure=False, assemblies=True):
-
     """Returns the direct descendants of an object"""
 
     # This function can become pure IFC
@@ -173,30 +180,28 @@ def get_children(obj, ifcfile, only_structure=False, assemblies=True):
 
 
 def get_ifcfile(obj):
-
     """Returns the ifcfile that handles this object"""
 
     project = get_project(obj)
     if project:
-        if hasattr(project,"Proxy"):
-            if hasattr(project.Proxy,"ifcfile"):
+        if hasattr(project, "Proxy"):
+            if hasattr(project.Proxy, "ifcfile"):
                 return project.Proxy.ifcfile
         if project.FilePath:
             ifcfile = ifcopenshell.open(project.FilePath)
-            if hasattr(project,"Proxy"):
+            if hasattr(project, "Proxy"):
                 project.Proxy.ifcfile = ifcfile
             return ifcfile
     return None
 
 
 def get_project(obj):
-
     """Returns the ifcdocument this object belongs to"""
 
-    proj_types = ("IfcProject","IfcProjectLibrary")
+    proj_types = ("IfcProject", "IfcProjectLibrary")
     if getattr(obj, "Type", None) in proj_types:
         return obj
-    if hasattr(obj,"InListRecursive"):
+    if hasattr(obj, "InListRecursive"):
         for parent in obj.InListRecursive:
             if getattr(parent, "Type", None) in proj_types:
                 return parent
@@ -204,7 +209,6 @@ def get_project(obj):
 
 
 def can_expand(obj, ifcfile):
-
     """Returns True if this object can have any more child extracted"""
 
     children = get_children(obj, ifcfile)
@@ -216,7 +220,6 @@ def can_expand(obj, ifcfile):
 
 
 def add_object(document, project=False):
-
     """adds a new object to a FreeCAD document"""
 
     proxy = ifc_objects.ifc_object()
@@ -224,12 +227,13 @@ def add_object(document, project=False):
         vp = ifc_viewproviders.ifc_vp_document()
     else:
         vp = ifc_viewproviders.ifc_vp_object()
-    obj = document.addObject('Part::FeaturePython', 'IfcObject', proxy, vp, False)
+    obj = document.addObject("Part::FeaturePython", "IfcObject", proxy, vp, False)
     return obj
 
 
-def add_properties(obj, ifcfile=None ,ifcentity=None, links=False, shapemode=0, short=True):
-
+def add_properties(
+    obj, ifcfile=None, ifcentity=None, links=False, shapemode=0, short=True
+):
     """Adds the properties of the given IFC object to a FreeCAD object"""
 
     if not ifcfile:
@@ -241,13 +245,17 @@ def add_properties(obj, ifcfile=None ,ifcentity=None, links=False, shapemode=0, 
     else:
         obj.Label = ifcentity.is_a()
     if not obj.hasExtension("App::GroupExtensionPython"):
-        obj.addExtension('App::GroupExtensionPython')
+        obj.addExtension("App::GroupExtensionPython")
     if FreeCAD.GuiUp:
         obj.ViewObject.addExtension("Gui::ViewProviderGroupExtensionPython")
     if "ShapeMode" not in obj.PropertiesList:
         obj.addProperty("App::PropertyEnumeration", "ShapeMode", "Base")
-        shapemodes = ["Shape","Coin","None"] # possible shape modes for all IFC objects
-        if isinstance(shapemode,int):
+        shapemodes = [
+            "Shape",
+            "Coin",
+            "None",
+        ]  # possible shape modes for all IFC objects
+        if isinstance(shapemode, int):
             shapemode = shapemodes[shapemode]
         obj.ShapeMode = shapemodes
         obj.ShapeMode = shapemode
@@ -264,26 +272,30 @@ def add_properties(obj, ifcfile=None ,ifcentity=None, links=False, shapemode=0, 
             attr = "StepId"
         elif attr == "Name":
             continue
-        if short and attr not in ("Type","StepId"):
+        if short and attr not in ("Type", "StepId"):
             continue
         attr_def = next((a for a in attr_defs if a.name() == attr), None)
-        data_type = ifcopenshell.util.attribute.get_primitive_type(attr_def) if attr_def else None
+        data_type = (
+            ifcopenshell.util.attribute.get_primitive_type(attr_def)
+            if attr_def
+            else None
+        )
         if attr == "Type":
             # main enum property, not saved to file
             if attr not in obj.PropertiesList:
                 obj.addProperty("App::PropertyEnumeration", attr, "IFC")
-                obj.setPropertyStatus(attr,"Transient")
+                obj.setPropertyStatus(attr, "Transient")
             setattr(obj, attr, get_ifc_classes(obj, value))
             setattr(obj, attr, value)
             # companion hidden propertym that gets saved to file
             obj.addProperty("App::PropertyString", "IfcType", "IFC")
-            obj.setPropertyStatus("IfcType","Hidden")
+            obj.setPropertyStatus("IfcType", "Hidden")
             setattr(obj, "IfcType", value)
         elif isinstance(value, int):
             if attr not in obj.PropertiesList:
                 obj.addProperty("App::PropertyInteger", attr, "IFC")
                 if attr == "StepId":
-                    obj.setPropertyStatus(attr,"ReadOnly")
+                    obj.setPropertyStatus(attr, "ReadOnly")
             setattr(obj, attr, value)
         elif isinstance(value, float):
             if attr not in obj.PropertiesList:
@@ -292,29 +304,29 @@ def add_properties(obj, ifcfile=None ,ifcentity=None, links=False, shapemode=0, 
         elif data_type == "boolean":
             if attr not in obj.PropertiesList:
                 obj.addProperty("App::PropertyBool", attr, "IFC")
-            setattr(obj, attr, value) #will trigger error. TODO: Fix this
+            setattr(obj, attr, value)  # will trigger error. TODO: Fix this
         elif isinstance(value, ifcopenshell.entity_instance):
             if links:
                 if attr not in obj.PropertiesList:
-                    #value = create_object(value, obj.Document)
+                    # value = create_object(value, obj.Document)
                     obj.addProperty("App::PropertyLink", attr, "IFC")
-                #setattr(obj, attr, value)
+                # setattr(obj, attr, value)
         elif isinstance(value, (list, tuple)) and value:
             if isinstance(value[0], ifcopenshell.entity_instance):
                 if links:
                     if attr not in obj.PropertiesList:
-                        #nvalue = []
-                        #for elt in value:
+                        # nvalue = []
+                        # for elt in value:
                         #    nvalue.append(create_object(elt, obj.Document))
                         obj.addProperty("App::PropertyLinkList", attr, "IFC")
-                    #setattr(obj, attr, nvalue)
+                    # setattr(obj, attr, nvalue)
         elif data_type == "enum":
             if attr not in obj.PropertiesList:
                 obj.addProperty("App::PropertyEnumeration", attr, "IFC")
             items = ifcopenshell.util.attribute.get_enum_items(attr_def)
             setattr(obj, attr, items)
             if not value in items:
-                for v in ("UNDEFINED","NOTDEFINED","USERDEFINED"):
+                for v in ("UNDEFINED", "NOTDEFINED", "USERDEFINED"):
                     if v in items:
                         value = v
                         break
@@ -328,7 +340,6 @@ def add_properties(obj, ifcfile=None ,ifcentity=None, links=False, shapemode=0, 
 
 
 def remove_unused_properties(obj):
-
     """Remove IFC properties if they are not part of the current IFC class"""
 
     elt = get_ifc_element(obj)
@@ -342,13 +353,12 @@ def remove_unused_properties(obj):
 
 
 def get_ifc_classes(obj, baseclass):
-
     """Returns a list of sibling classes from a given FreeCAD object"""
 
     # this function can become pure IFC
 
-    if baseclass in ("IfcProject","IfcProjectLibrary"):
-        return ("IfcProject","IfcProjectLibrary")
+    if baseclass in ("IfcProject", "IfcProjectLibrary"):
+        return ("IfcProject", "IfcProjectLibrary")
     ifcfile = get_ifcfile(obj)
     if not ifcfile:
         return [baseclass]
@@ -366,7 +376,6 @@ def get_ifc_classes(obj, baseclass):
 
 
 def get_ifc_element(obj):
-
     """Returns the corresponding IFC element of an object"""
 
     ifc_file = get_ifcfile(obj)
@@ -376,18 +385,16 @@ def get_ifc_element(obj):
 
 
 def has_representation(element):
-
     """Tells if an elements has an own representation"""
 
     # This function can become pure IFC
 
-    if hasattr(element,"Representation") and element.Representation:
+    if hasattr(element, "Representation") and element.Representation:
         return True
     return False
 
 
 def filter_elements(elements, ifcfile, expand=True):
-
     """Filter elements list of unwanted types"""
 
     # This function can become pure IFC
@@ -405,7 +412,8 @@ def filter_elements(elements, ifcfile, expand=True):
             if elem.Representation.Representations:
                 rep = elem.Representation.Representations[0]
                 if (
-                    rep.Items and rep.Items[0].is_a() == "IfcPolyline"
+                    rep.Items
+                    and rep.Items[0].is_a() == "IfcPolyline"
                     and elem.IsDecomposedBy
                 ):
                     # only use the decomposition and not the polyline
@@ -427,32 +435,29 @@ def filter_elements(elements, ifcfile, expand=True):
 
 
 def get_cache(ifcfile):
-
     """Returns the shape cache dictionary associated with this ifc file"""
 
     for d in FreeCAD.listDocuments().values():
         for o in d.Objects:
-            if hasattr(o,"Proxy") and hasattr(o.Proxy,"ifcfile"):
+            if hasattr(o, "Proxy") and hasattr(o.Proxy, "ifcfile"):
                 if o.Proxy.ifcfile == ifcfile:
-                    if hasattr(o.Proxy,"ifccache") and o.Proxy.ifccache:
+                    if hasattr(o.Proxy, "ifccache") and o.Proxy.ifccache:
                         return o.Proxy.ifccache
-    return {"Shape":{},"Color":{},"Coin":{}}
+    return {"Shape": {}, "Color": {}, "Coin": {}}
 
 
 def set_cache(ifcfile, cache):
-
     """Sets the given dictionary as shape cache for the given ifc file"""
 
     for d in FreeCAD.listDocuments().values():
         for o in d.Objects:
-            if hasattr(o,"Proxy") and hasattr(o.Proxy,"ifcfile"):
+            if hasattr(o, "Proxy") and hasattr(o.Proxy, "ifcfile"):
                 if o.Proxy.ifcfile == ifcfile:
                     o.Proxy.ifccache = cache
                     return
 
 
 def get_shape(elements, ifcfile, cached=False):
-
     """Returns a Part shape from a list of IFC entities"""
 
     elements = filter_elements(elements, ifcfile)
@@ -471,7 +476,7 @@ def get_shape(elements, ifcfile, cached=False):
                 if e.id in cache["Color"]:
                     c = cache["Color"][e.id]
                 else:
-                    c = (0.8,0.8,0.8)
+                    c = (0.8, 0.8, 0.8)
                 for f in s.Faces:
                     colors.append(c)
             else:
@@ -481,7 +486,7 @@ def get_shape(elements, ifcfile, cached=False):
         return shapes, colors
     progressbar = Base.ProgressIndicator()
     total = len(elements)
-    progressbar.start("Generating "+str(total)+" shapes...",total)
+    progressbar.start("Generating " + str(total) + " shapes...", total)
     iterator = get_geom_iterator(ifcfile, elements, brep=True)
     if iterator is None:
         return None, None
@@ -496,13 +501,13 @@ def get_shape(elements, ifcfile, cached=False):
             shape.transformShape(mat)
             shapes.append(shape)
             color = item.geometry.surface_styles
-            #color = (color[0], color[1], color[2], 1.0 - color[3])
+            # color = (color[0], color[1], color[2], 1.0 - color[3])
             # TODO temp workaround for tranparency bug
             color = (color[0], color[1], color[2], 0.0)
             for f in shape.Faces:
                 colors.append(color)
-            cache["Shape"][item.id]=shape
-            cache["Color"][item.id]=color
+            cache["Shape"][item.id] = shape
+            cache["Color"][item.id] = color
             progressbar.next(True)
         if not iterator.next():
             break
@@ -516,7 +521,6 @@ def get_shape(elements, ifcfile, cached=False):
 
 
 def get_coin(elements, ifcfile, cached=False):
-
     """Returns a Coin node from a list of IFC entities"""
 
     elements = filter_elements(elements, ifcfile)
@@ -535,13 +539,17 @@ def get_coin(elements, ifcfile, cached=False):
     if not elements:
         return nodes, None, None
     if nodes.getNumChildren():
-        print("DEBUG: The following elements are excluded because they make coin crash (need to investigate):")
-        print("DEBUG: If you wish to test, comment out line 488 (return nodes, None) in ifc_tools.py")
+        print(
+            "DEBUG: The following elements are excluded because they make coin crash (need to investigate):"
+        )
+        print(
+            "DEBUG: If you wish to test, comment out line 488 (return nodes, None) in ifc_tools.py"
+        )
         [print("   ", e) for e in elements]
         return nodes, None, None
     progressbar = Base.ProgressIndicator()
     total = len(elements)
-    progressbar.start("Generating "+str(total)+" shapes...",total)
+    progressbar.start("Generating " + str(total) + " shapes...", total)
     iterator = get_geom_iterator(ifcfile, elements, brep=False)
     if iterator is None:
         return None, None, None
@@ -556,20 +564,22 @@ def get_coin(elements, ifcfile, cached=False):
                 mat = coin.SoMaterial()
                 mat.diffuseColor.setValue(color[:3])
                 # TODO treat transparency
-                #mat.transparency.setValue(0.8)
+                # mat.transparency.setValue(0.8)
                 node.addChild(mat)
             # verts
             matrix = get_freecad_matrix(item.transformation.matrix.data)
             verts = item.geometry.verts
-            verts = [FreeCAD.Vector(verts[i:i+3]) for i in range(0,len(verts),3)]
-            #verts = [tuple(matrix.multVec(v.multiply(SCALE))) for v  in verts]
-            verts = [tuple(v.multiply(SCALE)) for v  in verts]
+            verts = [FreeCAD.Vector(verts[i : i + 3]) for i in range(0, len(verts), 3)]
+            # verts = [tuple(matrix.multVec(v.multiply(SCALE))) for v  in verts]
+            verts = [tuple(v.multiply(SCALE)) for v in verts]
             coords = coin.SoCoordinate3()
             coords.point.setValues(verts)
             node.addChild(coords)
             # faces
             faces = list(item.geometry.faces)
-            faces = [f for i in range(0,len(faces),3) for f in faces[i:i+3]+[-1]]
+            faces = [
+                f for i in range(0, len(faces), 3) for f in faces[i : i + 3] + [-1]
+            ]
             faceset = coin.SoIndexedFaceSet()
             faceset.coordIndex.setValues(faces)
             node.addChild(faceset)
@@ -584,7 +594,6 @@ def get_coin(elements, ifcfile, cached=False):
 
 
 def get_settings(ifcfile, brep=True):
-
     """Returns ifcopenshell settings"""
 
     # This function can become pure IFC
@@ -592,8 +601,8 @@ def get_settings(ifcfile, brep=True):
     settings = ifcopenshell.geom.settings()
     if brep:
         settings.set(settings.DISABLE_TRIANGULATION, True)
-        settings.set(settings.USE_BREP_DATA,True)
-        settings.set(settings.SEW_SHELLS,True)
+        settings.set(settings.USE_BREP_DATA, True)
+        settings.set(settings.SEW_SHELLS, True)
     body_contexts = get_body_context_ids(ifcfile)
     if body_contexts:
         settings.set_context_ids(body_contexts)
@@ -601,7 +610,6 @@ def get_settings(ifcfile, brep=True):
 
 
 def get_geom_iterator(ifcfile, elements, brep):
-
     # This function can become pure IFC
 
     settings = get_settings(ifcfile, brep)
@@ -615,7 +623,6 @@ def get_geom_iterator(ifcfile, elements, brep):
 
 
 def set_geometry(obj, elem, ifcfile, cached=False):
-
     """Sets the geometry of the given object
     obj: FreeCAD document object
     elem: IfcOpenShell ifc entity instance
@@ -633,20 +640,23 @@ def set_geometry(obj, elem, ifcfile, cached=False):
         if basenode.getNumChildren() == 5:
             # Part VP has 4 nodes, we have added 1 more
             basenode.removeChild(4)
-    if obj.Group and not(has_representation(get_ifc_element(obj))):
+    if obj.Group and not (has_representation(get_ifc_element(obj))):
         # workaround for group extension bug: add a dummy placeholder shape)
         # otherwise a shape is force-created from the child shapes
         # and we don't want that otherwise we can't select children
-        obj.Shape = Part.makeBox(1,1,1)
+        obj.Shape = Part.makeBox(1, 1, 1)
         colors = None
     elif obj.ShapeMode == "Shape":
         # set object shape
         shape, colors = get_shape([elem], ifcfile, cached)
         if shape is None:
-            if not elem.is_a("IfcContext") and not elem.is_a("IfcSpatialStructureElement"):
+            if not elem.is_a("IfcContext") and not elem.is_a(
+                "IfcSpatialStructureElement"
+            ):
                 print(
-                    "Debug: No Shape returned for object {}, {}, {}"
-                    .format(obj.StepId, obj.IfcType, obj.Label)
+                    "Debug: No Shape returned for object {}, {}, {}".format(
+                        obj.StepId, obj.IfcType, obj.Label
+                    )
                 )
         else:
             placement = shape.Placement
@@ -657,7 +667,7 @@ def set_geometry(obj, elem, ifcfile, cached=False):
             # this is for objects that have own coin representation,
             # but shapes among their children and not taken by first if
             # case above. TODO do this more elegantly
-            obj.Shape = Part.makeBox(1,1,1)
+            obj.Shape = Part.makeBox(1, 1, 1)
         # set coin representation
         node, colors, placement = get_coin([elem], ifcfile, cached)
         basenode.addChild(node)
@@ -666,7 +676,6 @@ def set_geometry(obj, elem, ifcfile, cached=False):
 
 
 def set_attribute(ifcfile, element, attribute, value):
-
     """Sets the value of an attribute of an IFC element"""
 
     # This function can become pure IFC
@@ -674,34 +683,46 @@ def set_attribute(ifcfile, element, attribute, value):
     if attribute == "Type":
         if value != element.is_a():
             if value and value.startswith("Ifc"):
-                cmd = 'root.reassign_class'
-                FreeCAD.Console.PrintLog("Changing IFC class value: "+element.is_a()+" to "+str(value)+"\n")
-                product = ifcopenshell.api.run(cmd, ifcfile, product=element, ifc_class=value)
+                cmd = "root.reassign_class"
+                FreeCAD.Console.PrintLog(
+                    "Changing IFC class value: "
+                    + element.is_a()
+                    + " to "
+                    + str(value)
+                    + "\n"
+                )
+                product = ifcopenshell.api.run(
+                    cmd, ifcfile, product=element, ifc_class=value
+                )
                 # TODO fix attributes
                 return product
-    cmd = 'attribute.edit_attributes'
+    cmd = "attribute.edit_attributes"
     attribs = {attribute: value}
     if hasattr(element, attribute):
         if getattr(element, attribute) != value:
-            FreeCAD.Console.PrintLog("Changing IFC attribute value of "+str(attribute)+": "+str(value)+"\n")
+            FreeCAD.Console.PrintLog(
+                "Changing IFC attribute value of "
+                + str(attribute)
+                + ": "
+                + str(value)
+                + "\n"
+            )
             ifcopenshell.api.run(cmd, ifcfile, product=element, attributes=attribs)
             return True
     return False
 
 
 def set_colors(obj, colors):
-
     """Sets the given colors to an object"""
 
     if FreeCAD.GuiUp and colors:
-        if hasattr(obj.ViewObject,"ShapeColor"):
+        if hasattr(obj.ViewObject, "ShapeColor"):
             obj.ViewObject.ShapeColor = colors[0][:3]
-        if hasattr(obj.ViewObject,"DiffuseColor"):
+        if hasattr(obj.ViewObject, "DiffuseColor"):
             obj.ViewObject.DiffuseColor = colors
 
 
 def get_body_context_ids(ifcfile):
-
     # This function can become pure IFC
 
     # Facetation is to accommodate broken Revit files
@@ -715,7 +736,9 @@ def get_body_context_ids(ifcfile):
     body_contexts.extend(
         [
             c.id()
-            for c in ifcfile.by_type("IfcGeometricRepresentationContext", include_subtypes=False)
+            for c in ifcfile.by_type(
+                "IfcGeometricRepresentationContext", include_subtypes=False
+            )
             if c.ContextType == "Model"
         ]
     )
@@ -723,7 +746,6 @@ def get_body_context_ids(ifcfile):
 
 
 def get_plan_contexts_ids(ifcfile):
-
     # This function can become pure IFC
 
     # Annotation is to accommodate broken Revit files
@@ -736,7 +758,6 @@ def get_plan_contexts_ids(ifcfile):
 
 
 def get_freecad_matrix(ios_matrix):
-
     """Converts an IfcOpenShell matrix tuple into a FreeCAD matrix"""
 
     # https://github.com/IfcOpenShell/IfcOpenShell/issues/1440
@@ -750,25 +771,25 @@ def get_freecad_matrix(ios_matrix):
 
 
 def get_ios_matrix(freecad_placement):
-
     """Converts a FreeCAD placement or matrix into an IfcOpenShell matrix tuple"""
 
-    if isinstance(freecad_placement,FreeCAD.Matrix):
+    if isinstance(freecad_placement, FreeCAD.Matrix):
         freecad_placement = FreeCAD.Placement(freecad_placement)
     pos = freecad_placement.Base
-    #pos = pos.multiply(1/SCALE) # does not work??
-    pos = FreeCAD.Vector(round(pos.x,4),round(pos.y,4),round(pos.z,4))
-    rot = freecad_placement.Rotation.multVec(FreeCAD.Vector(1,1,1))
-    rot = FreeCAD.Vector(round(rot.x,8),round(rot.y,8),round(rot.z,8))
-    mat = [ [rot.x, 0.0, 0.0, pos.x],
-            [0.0, rot.y, 0.0, pos.y],
-            [0.0, 0.0, rot.z, pos.z],
-            [0.0, 0.0, 0.0, 1.0 ] ]
+    # pos = pos.multiply(1/SCALE) # does not work??
+    pos = FreeCAD.Vector(round(pos.x, 4), round(pos.y, 4), round(pos.z, 4))
+    rot = freecad_placement.Rotation.multVec(FreeCAD.Vector(1, 1, 1))
+    rot = FreeCAD.Vector(round(rot.x, 8), round(rot.y, 8), round(rot.z, 8))
+    mat = [
+        [rot.x, 0.0, 0.0, pos.x],
+        [0.0, rot.y, 0.0, pos.y],
+        [0.0, 0.0, rot.z, pos.z],
+        [0.0, 0.0, 0.0, 1.0],
+    ]
     return mat
 
 
 def set_placement(obj):
-
     """Updates the internal IFC placement according to the object placement"""
 
     # This function can become pure IFC
@@ -776,7 +797,9 @@ def set_placement(obj):
     ifcfile = get_ifcfile(obj)
     element = get_ifc_element(obj)
     new_matrix = get_ios_matrix(obj.Placement)
-    old_matrix = ifcopenshell.util.placement.get_local_placement(element.ObjectPlacement)
+    old_matrix = ifcopenshell.util.placement.get_local_placement(
+        element.ObjectPlacement
+    )
     # conversion from numpy array
     old_matrix = old_matrix.tolist()
     if new_matrix != old_matrix:
@@ -784,17 +807,18 @@ def set_placement(obj):
         # print("old:",old_matrix)
         # print("new:",new_matrix)
         api = "geometry.edit_object_placement"
-        ifcopenshell.api.run(api, ifcfile, product=element, matrix=new_matrix, is_si=False)
+        ifcopenshell.api.run(
+            api, ifcfile, product=element, matrix=new_matrix, is_si=False
+        )
         return True
     return False
 
 
 def save_ifc(obj, filepath=None):
-
     """Saves the linked IFC file of a project, but does not mark it as saved"""
 
     if not filepath:
-        if hasattr(obj,"FilePath") and obj.FilePath:
+        if hasattr(obj, "FilePath") and obj.FilePath:
             filepath = obj.FilePath
     if filepath:
         ifcfile = get_ifcfile(obj)
@@ -805,7 +829,6 @@ def save_ifc(obj, filepath=None):
 
 
 def save(obj, filepath=None):
-
     """Saves the linked IFC file of a project and set its saved status"""
 
     save_ifc(obj, filepath)
@@ -813,7 +836,6 @@ def save(obj, filepath=None):
 
 
 def aggregate(obj, parent):
-
     """Takes any FreeCAD object and aggregates it to an existing IFC object"""
 
     if get_project(obj):
@@ -827,7 +849,7 @@ def aggregate(obj, parent):
     product = create_product(obj, parent, ifcfile)
     newobj = create_object(product, obj.Document, ifcfile, parent.ShapeMode)
     rel = create_relationship(newobj, parent, product, ifcfile)
-    base = getattr(obj,"Base",None)
+    base = getattr(obj, "Base", None)
     if base:
         # make sure the base is used only by this object before deleting
         if base.InList != [obj]:
@@ -840,14 +862,15 @@ def aggregate(obj, parent):
 
 
 def create_product(obj, parent, ifcfile):
-
     """Creates an IFC product out of a FreeCAD object"""
 
     uid = ifcopenshell.guid.new()
-    context = ifcfile[get_body_context_ids(ifcfile)[-1]] # TODO should this be different?
-    history = get_ifc_element(parent).OwnerHistory # TODO should this be changed?
+    context = ifcfile[
+        get_body_context_ids(ifcfile)[-1]
+    ]  # TODO should this be different?
+    history = get_ifc_element(parent).OwnerHistory  # TODO should this be changed?
     name = obj.Label
-    description = getattr(obj,"Description","")
+    description = getattr(obj, "Description", "")
 
     # TEMPORARY use the Arch exporter
     # TODO this is temporary. We should rely on ifcopenshell for this with:
@@ -859,6 +882,7 @@ def create_product(obj, parent, ifcfile):
 
     import exportIFC
     import exportIFCHelper
+
     # setup exporter - TODO do that in the module init
     exportIFC.clones = {}
     exportIFC.profiledefs = {}
@@ -868,14 +892,26 @@ def create_product(obj, parent, ifcfile):
     ifctype = exportIFC.getIfcTypeFromObj(obj)
     prefs = exportIFC.getPreferences()
     # TODO migrate this to ifcopenshell api
-    representation, placement, shapetype = exportIFC.getRepresentation(ifcfile, context, obj, preferences=prefs)
+    representation, placement, shapetype = exportIFC.getRepresentation(
+        ifcfile, context, obj, preferences=prefs
+    )
     # TODO use api to create a product: ifcopenshell.api.run("root.create_entity", self.file, ifc_class="IfcWall")
-    product = exportIFC.createProduct(ifcfile, obj, ifctype, uid, history, name, description, placement, representation, prefs)
+    product = exportIFC.createProduct(
+        ifcfile,
+        obj,
+        ifctype,
+        uid,
+        history,
+        name,
+        description,
+        placement,
+        representation,
+        prefs,
+    )
     return product
 
 
 def create_relationship(obj, parent, element, ifcfile):
-
     """Creates a relationship between an IFC object and a parent IFC object"""
 
     # This function can become pure IFC
@@ -893,15 +929,25 @@ def create_relationship(obj, parent, element, ifcfile):
     if rels:
         for rel in rels:
             if element in rel.RelatedObjects:
-                print("DEBUG: Element",element,"is part of",rel.RelatingObject,"- removing")
+                print(
+                    "DEBUG: Element",
+                    element,
+                    "is part of",
+                    rel.RelatingObject,
+                    "- removing",
+                )
                 if len(rel.RelatedObjects) == 1:
                     # delete uprel if only contains our element
-                    cmd = 'root.remove_product'
+                    cmd = "root.remove_product"
                     ifcopenshell.api.run(cmd, ifcfile, product=rel)
                 else:
                     # delete this element from these uprels
-                    cmd = 'attribute.edit_attributes'
-                    attribs = {"RelatedObjects": [o for o in rel.RelatedObjects if o != element]}
+                    cmd = "attribute.edit_attributes"
+                    attribs = {
+                        "RelatedObjects": [
+                            o for o in rel.RelatedObjects if o != element
+                        ]
+                    }
                     ifcopenshell.api.run(cmd, ifcfile, product=rel, attributes=attribs)
     # add to existing relationship if possible
     if uprels:
@@ -910,20 +956,23 @@ def create_relationship(obj, parent, element, ifcfile):
                 # element already related to parent
                 break
         else:
-            uprel = uprels [0] # We take arbitrarily the first one. TODO is that adequate?
-            cmd = 'attribute.edit_attributes'
+            uprel = uprels[
+                0
+            ]  # We take arbitrarily the first one. TODO is that adequate?
+            cmd = "attribute.edit_attributes"
             attribs = {"RelatedObjects": uprel.RelatedObjects + (element,)}
             ifcopenshell.api.run(cmd, ifcfile, product=uprel, attributes=attribs)
     else:
         # create aggregation
         history = parent_element.OwnerHistory
-        uprel = ifcfile.createIfcRelAggregates(ifcopenshell.guid.new(), history, None, None, parent_element, [element])
+        uprel = ifcfile.createIfcRelAggregates(
+            ifcopenshell.guid.new(), history, None, None, parent_element, [element]
+        )
     parent.addObject(obj)
     return uprel
 
 
 def get_elem_attribs(ifcentity):
-
     # This function can become pure IFC
 
     # usually info_ifcentity = ifcentity.get_info() would de the trick
@@ -931,10 +980,7 @@ def get_elem_attribs(ifcentity):
     # see https://github.com/IfcOpenShell/IfcOpenShell/issues/2811
     # thus workaround
 
-    info_ifcentity = {
-        "id": ifcentity.id(),
-        "type": ifcentity.is_a()
-    }
+    info_ifcentity = {"id": ifcentity.id(), "type": ifcentity.is_a()}
 
     # get attrib keys
     attribs = []
@@ -954,8 +1000,9 @@ def get_elem_attribs(ifcentity):
             # print(e)
             value = "Error: {}".format(e)
             print(
-                "DEBUG: The entity #{} has a problem on attribut {}: {}"
-                .format(ifcentity.id(), attr, e)
+                "DEBUG: The entity #{} has a problem on attribut {}: {}".format(
+                    ifcentity.id(), attr, e
+                )
             )
         # print(value)
         info_ifcentity[attr] = value
@@ -964,7 +1011,6 @@ def get_elem_attribs(ifcentity):
 
 
 def migrate_schema(ifcfile, schema):
-
     """migrates a file to a new schema"""
 
     # This function can become pure IFC
@@ -973,13 +1019,12 @@ def migrate_schema(ifcfile, schema):
     migrator = ifcopenshell.util.schema.Migrator()
     table = {}
     for entity in ifcfile:
-        new_entity = migrator.migrate(entity,newfile)
+        new_entity = migrator.migrate(entity, newfile)
         table[entity.id()] = new_entity.id()
     return newfile, table
 
 
 def remove_ifc_element(obj):
-
     """removes the IFC data associated with an object"""
 
     # This function can become pure IFC

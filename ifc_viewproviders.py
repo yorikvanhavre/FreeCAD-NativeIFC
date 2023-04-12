@@ -1,26 +1,27 @@
-#***************************************************************************
-#*                                                                         *
-#*   Copyright (c) 2022 Yorik van Havre <yorik@uncreated.net>              *
-#*                                                                         *
-#*   This program is free software; you can redistribute it and/or modify  *
-#*   it under the terms of the GNU General Public License (GPL)            *
-#*   as published by the Free Software Foundation; either version 3 of     *
-#*   the License, or (at your option) any later version.                   *
-#*   for detail see the LICENCE text file.                                 *
-#*                                                                         *
-#*   This program is distributed in the hope that it will be useful,       *
-#*   but WITHOUT ANY WARRANTY; without even the implied warranty of        *
-#*   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the         *
-#*   GNU General Public License for more details.                          *
-#*                                                                         *
-#*   You should have received a copy of the GNU Library General Public     *
-#*   License along with this program; if not, write to the Free Software   *
-#*   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  *
-#*   USA                                                                   *
-#*                                                                         *
-#***************************************************************************
+# ***************************************************************************
+# *                                                                         *
+# *   Copyright (c) 2022 Yorik van Havre <yorik@uncreated.net>              *
+# *                                                                         *
+# *   This program is free software; you can redistribute it and/or modify  *
+# *   it under the terms of the GNU General Public License (GPL)            *
+# *   as published by the Free Software Foundation; either version 3 of     *
+# *   the License, or (at your option) any later version.                   *
+# *   for detail see the LICENCE text file.                                 *
+# *                                                                         *
+# *   This program is distributed in the hope that it will be useful,       *
+# *   but WITHOUT ANY WARRANTY; without even the implied warranty of        *
+# *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the         *
+# *   GNU General Public License for more details.                          *
+# *                                                                         *
+# *   You should have received a copy of the GNU Library General Public     *
+# *   License along with this program; if not, write to the Free Software   *
+# *   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  *
+# *   USA                                                                   *
+# *                                                                         *
+# ***************************************************************************
 
 import os
+
 
 class ifc_vp_object:
 
@@ -35,7 +36,7 @@ class ifc_vp_object:
     def getDefaultDisplayMode(self):
         return "FlatLines"
 
-    def setDisplayMode(self,mode):
+    def setDisplayMode(self, mode):
         return mode
 
     def onChanged(self, vobj, prop):
@@ -47,9 +48,7 @@ class ifc_vp_object:
     def __setstate__(self, state):
         return None
 
-
     def updateData(self, obj, prop):
-
         if prop == "Shape" and getattr(obj, "Group", None):
             colors = []
             for child in obj.Group:
@@ -57,25 +56,21 @@ class ifc_vp_object:
             if colors:
                 obj.ViewObject.DiffuseColor = colors
 
-
     def getIcon(self):
-
         path = os.path.dirname(os.path.dirname(__file__))
         if self.Object.ShapeMode == "Shape":
             i = "IFC_object.svg"
         else:
             i = "IFC_mesh.svg"
-        return os.path.join(path,"icons",i)
-
+        return os.path.join(path, "icons", i)
 
     def setupContextMenu(self, vobj, menu):
-
-        from PySide2 import QtCore, QtGui, QtWidgets # lazy import
+        from PySide2 import QtCore, QtGui, QtWidgets  # lazy import
 
         path = os.path.dirname(os.path.dirname(__file__))
-        icon = QtGui.QIcon(os.path.join(path ,"icons", "IFC.svg"))
+        icon = QtGui.QIcon(os.path.join(path, "icons", "IFC.svg"))
         if self.hasChildren(vobj.Object):
-            action_expand = QtWidgets.QAction(icon,"Expand children", menu)
+            action_expand = QtWidgets.QAction(icon, "Expand children", menu)
             action_expand.triggered.connect(self.expandChildren)
             menu.addAction(action_expand)
         if vobj.Object.ShapeMode == "Shape":
@@ -90,38 +85,33 @@ class ifc_vp_object:
             action_coin.triggered.connect(self.switchCoin)
             menu.addAction(action_coin)
 
-
     def hasChildren(self, obj):
-
         """Returns True if this IFC object can be decomposed"""
 
-        import ifc_tools # lazy import
+        import ifc_tools  # lazy import
 
         ifcfile = ifc_tools.get_ifcfile(obj)
         if ifcfile:
             return ifc_tools.can_expand(obj, ifcfile)
         return False
 
-
     def expandChildren(self):
-
         """Creates children of this object"""
 
-        import ifc_tools # lazy import
+        import ifc_tools  # lazy import
 
         ifcfile = ifc_tools.get_ifcfile(self.Object)
         if ifcfile:
             ifc_tools.create_children(self.Object, ifcfile)
         self.Object.Document.recompute()
 
-
     def switchShape(self):
-
         """Switch this object between shape and coin"""
 
         if self.Object.ShapeMode == "Shape":
             self.Object.ShapeMode = "Coin"
-            import Part # lazy loading
+            import Part  # lazy loading
+
             self.Object.Shape = Part.Shape()
         elif self.Object.ShapeMode == "Coin":
             self.Object.ShapeMode = "Shape"
@@ -129,9 +119,7 @@ class ifc_vp_object:
         self.Object.ViewObject.DiffuseColor = self.Object.ViewObject.DiffuseColor
         self.Object.ViewObject.signalChangeIcon()
 
-
     def switchCoin(self):
-
         """Switch this object between coin and no representation"""
 
         changed = []
@@ -140,7 +128,7 @@ class ifc_vp_object:
             changed.append(self.Object.ViewObject)
         # reveal children
         for child in self.Object.OutListRecursive:
-            if getattr(child,"ShapeMode",0) == 2:
+            if getattr(child, "ShapeMode", 0) == 2:
                 child.ShapeMode = 1
                 changed.append(child.ViewObject)
         self.Object.Document.recompute()
@@ -148,25 +136,21 @@ class ifc_vp_object:
             vobj.DiffuseColor = vobj.DiffuseColor
 
 
-
 class ifc_vp_document(ifc_vp_object):
 
     """View provider for the IFC document object"""
 
-
     def getIcon(self):
-
         basepath = os.path.dirname(os.path.dirname(__file__))
-        iconpath = os.path.join(basepath,"icons","IFC_document.svg")
+        iconpath = os.path.join(basepath, "icons", "IFC_document.svg")
         if self.Object.Modified:
             if not hasattr(self, "modicon"):
-
-                from PySide import QtCore, QtGui # lazy load
+                from PySide import QtCore, QtGui  # lazy load
 
                 # build an overlay "warning" icon
                 baseicon = QtGui.QImage(iconpath)
                 overlay = QtGui.QImage(":/icons/media-record.svg")
-                width = baseicon.width()/2
+                width = baseicon.width() / 2
                 overlay = overlay.scaled(width, width)
                 painter = QtGui.QPainter()
                 painter.begin(baseicon)
@@ -175,75 +159,71 @@ class ifc_vp_document(ifc_vp_object):
                 ba = QtCore.QByteArray()
                 b = QtCore.QBuffer(ba)
                 b.open(QtCore.QIODevice.WriteOnly)
-                baseicon.save(b,"XPM")
+                baseicon.save(b, "XPM")
                 self.modicon = ba.data().decode("latin1")
             return self.modicon
         else:
             return iconpath
 
-
     def setupContextMenu(self, vobj, menu):
-
         super().setupContextMenu(vobj, menu)
 
-        from PySide2 import QtCore, QtGui, QtWidgets # lazy import
+        from PySide2 import QtCore, QtGui, QtWidgets  # lazy import
 
         path = os.path.dirname(os.path.dirname(__file__))
-        icon = QtGui.QIcon(os.path.join(path ,"icons", "IFC.svg"))
+        icon = QtGui.QIcon(os.path.join(path, "icons", "IFC.svg"))
         if vobj.Object.Modified:
             if vobj.Object.FilePath:
-                action_diff = QtWidgets.QAction(icon,"View diff...", menu)
+                action_diff = QtWidgets.QAction(icon, "View diff...", menu)
                 action_diff.triggered.connect(self.diff)
                 menu.addAction(action_diff)
-                action_save = QtWidgets.QAction(icon,"Save IFC file", menu)
+                action_save = QtWidgets.QAction(icon, "Save IFC file", menu)
                 action_save.triggered.connect(self.save)
                 menu.addAction(action_save)
-        action_saveas = QtWidgets.QAction(icon,"Save IFC file as...", menu)
+        action_saveas = QtWidgets.QAction(icon, "Save IFC file as...", menu)
         action_saveas.triggered.connect(self.saveas)
         menu.addAction(action_saveas)
 
-
     def save(self):
-
         """Saves the associated IFC file"""
 
-        import ifc_tools # lazy import
+        import ifc_tools  # lazy import
 
         ifc_tools.save_ifc(self.Object)
         self.Object.Modified = False
 
-
     def saveas(self):
-
         """Saves the associated IFC file to another file"""
 
-        import ifc_tools # lazy import
-        from PySide2 import QtCore, QtGui, QtWidgets # lazy import
+        import ifc_tools  # lazy import
+        from PySide2 import QtCore, QtGui, QtWidgets  # lazy import
 
-        sf = QtWidgets.QFileDialog.getSaveFileName(None,
-                                               "Save an IFC file",
-                                               self.Object.FilePath,
-                                               "Industry Foundation Classes (*.ifc)",)
+        sf = QtWidgets.QFileDialog.getSaveFileName(
+            None,
+            "Save an IFC file",
+            self.Object.FilePath,
+            "Industry Foundation Classes (*.ifc)",
+        )
         if sf and sf[0]:
             ifc_tools.save_ifc(self.Object, sf[0])
             self.replace_file(self.Object, sf[0])
 
-
     def replace_file(self, obj, newfile):
-
         """Asks the user if the attached file path needs to be replaced"""
 
-        from PySide2 import QtCore, QtGui, QtWidgets # lazy import
+        from PySide2 import QtCore, QtGui, QtWidgets  # lazy import
 
         msg = "Replace the stored IFC file path in object "
         msg += self.Object.Label + " with the new one: "
         msg += newfile
         msg += " ?"
-        dlg = QtWidgets.QMessageBox.question(None,
-                                           "Replace IFC file path?",
-                                           msg,
-                                           QtWidgets.QMessageBox.Yes | QtWidgets.QMessageBox.No,
-                                           QtWidgets.QMessageBox.No)
+        dlg = QtWidgets.QMessageBox.question(
+            None,
+            "Replace IFC file path?",
+            msg,
+            QtWidgets.QMessageBox.Yes | QtWidgets.QMessageBox.No,
+            QtWidgets.QMessageBox.No,
+        )
         if dlg == QtWidgets.QMessageBox.Yes:
             self.Object.FilePath = newfile
             self.Object.Modified = False
@@ -251,28 +231,27 @@ class ifc_vp_document(ifc_vp_object):
         else:
             return False
 
-
     def schema_warning(self):
-
-        from PySide2 import QtCore, QtGui, QtWidgets # lazy import
+        from PySide2 import QtCore, QtGui, QtWidgets  # lazy import
 
         msg = "Warning: This operation will change the whole IFC file contents "
         msg += "and will not give versionable results. It is best to not do "
         msg += "this while you are in the middle of a project. "
         msg += "Do you wish to continue anyway?"
-        dlg = QtWidgets.QMessageBox.question(None,
-                                           "Replace IFC file schema?",
-                                           msg,
-                                           QtWidgets.QMessageBox.Yes | QtWidgets.QMessageBox.No,
-                                           QtWidgets.QMessageBox.No)
+        dlg = QtWidgets.QMessageBox.question(
+            None,
+            "Replace IFC file schema?",
+            msg,
+            QtWidgets.QMessageBox.Yes | QtWidgets.QMessageBox.No,
+            QtWidgets.QMessageBox.No,
+        )
         if dlg == QtWidgets.QMessageBox.Yes:
             return True
         else:
             return False
 
-
     def diff(self):
-
         import ifc_diff
+
         diff = ifc_diff.get_diff(self.Object)
         ifc_diff.show_diff(diff)
