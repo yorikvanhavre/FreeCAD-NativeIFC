@@ -533,18 +533,18 @@ def get_coin(elements, ifcfile, cached=False):
         elements = rest
     elements = [e for e in elements if has_representation(e)]
     if not elements:
-        return nodes, None
+        return nodes, None, None
     if nodes.getNumChildren():
         print("DEBUG: The following elements are excluded because they make coin crash (need to investigate):")
         print("DEBUG: If you wish to test, comment out line 488 (return nodes, None) in ifc_tools.py")
         [print("   ", e) for e in elements]
-        return nodes, None
+        return nodes, None, None
     progressbar = Base.ProgressIndicator()
     total = len(elements)
     progressbar.start("Generating "+str(total)+" shapes...",total)
     iterator = get_geom_iterator(ifcfile, elements, brep=False)
     if iterator is None:
-        return None, None
+        return None, None, None
     while True:
         item = iterator.get()
         if item:
@@ -562,7 +562,8 @@ def get_coin(elements, ifcfile, cached=False):
             matrix = get_freecad_matrix(item.transformation.matrix.data)
             verts = item.geometry.verts
             verts = [FreeCAD.Vector(verts[i:i+3]) for i in range(0,len(verts),3)]
-            verts = [tuple(matrix.multVec(v.multiply(SCALE))) for v  in verts]
+            #verts = [tuple(matrix.multVec(v.multiply(SCALE))) for v  in verts]
+            verts = [tuple(v.multiply(SCALE)) for v  in verts]
             coords = coin.SoCoordinate3()
             coords.point.setValues(verts)
             node.addChild(coords)
@@ -579,7 +580,7 @@ def get_coin(elements, ifcfile, cached=False):
             break
     set_cache(ifcfile, cache)
     progressbar.stop()
-    return nodes, None
+    return nodes, None, FreeCAD.Placement(matrix)
 
 
 def get_settings(ifcfile, brep=True):
@@ -658,8 +659,9 @@ def set_geometry(obj, elem, ifcfile, cached=False):
             # case above. TODO do this more elegantly
             obj.Shape = Part.makeBox(1,1,1)
         # set coin representation
-        node, colors = get_coin([elem], ifcfile, cached)
+        node, colors, placement = get_coin([elem], ifcfile, cached)
         basenode.addChild(node)
+        obj.Placement = placement
     set_colors(obj, colors)
 
 
@@ -757,10 +759,11 @@ def get_ios_matrix(freecad_placement):
     #pos = pos.multiply(1/SCALE) # does not work??
     pos = FreeCAD.Vector(round(pos.x,4),round(pos.y,4),round(pos.z,4))
     rot = freecad_placement.Rotation.multVec(FreeCAD.Vector(1,1,1))
-    mat = ( (rot.x, 0.0, 0.0, pos.x),
-            (0.0, rot.y, 0.0, pos.y),
-            (0.0, 0.0, rot.z, pos.z),
-            (0.0, 0.0, 0.0, 1.0 ) )
+    rot = FreeCAD.Vector(round(rot.x,8),round(rot.y,8),round(rot.z,8))
+    mat = [ [rot.x, 0.0, 0.0, pos.x],
+            [0.0, rot.y, 0.0, pos.y],
+            [0.0, 0.0, rot.z, pos.z],
+            [0.0, 0.0, 0.0, 1.0 ] ]
     return mat
 
 
@@ -775,13 +778,15 @@ def set_placement(obj):
     new_matrix = get_ios_matrix(obj.Placement)
     old_matrix = ifcopenshell.util.placement.get_local_placement(element.ObjectPlacement)
     # conversion from numpy array
-    old_matrix = tuple([tuple(p) for p in old_matrix.tolist()])
+    old_matrix = old_matrix.tolist()
     if new_matrix != old_matrix:
-        print("DEBUG: placement changed for:",obj.Label)
-        print("old:",old_matrix)
-        print("new:",new_matrix)
+        # print("DEBUG: placement changed for:",obj.Label)
+        # print("old:",old_matrix)
+        # print("new:",new_matrix)
         api = "geometry.edit_object_placement"
         ifcopenshell.api.run(api, ifcfile, product=element, matrix=new_matrix, is_si=False)
+        return True
+    return False
 
 
 def save_ifc(obj, filepath=None):

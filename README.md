@@ -47,6 +47,7 @@ Check for updates on this project at https://yorik.uncreated.net/blog/nativeifc
 
 #### 4. Allow advanced editing
 
+* [x] Allow to edit placements
 * [ ] Define a strategy for expanding non-IfcProduct elements
 * [ ] Expand attributes
 * [ ] Expand materials

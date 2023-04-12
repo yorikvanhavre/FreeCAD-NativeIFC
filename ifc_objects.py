@@ -27,7 +27,7 @@ class ifc_object:
     def __init__(self):
 
         self.cached = True # this marks that the object is freshly created and its shape should be taken from cache
-
+        self.virgin_placement = True # this allows to set the initial placement without triggering any placement change
 
     def onBeforeChange(self, obj, prop):
 
@@ -56,6 +56,14 @@ class ifc_object:
         elif prop == "Label":
             self.edit_attribute(obj, "Name", obj.Label)
 
+        # change placement
+        if prop == "Placement":
+            if getattr(self,"virgin_placement",False):
+                self.virgin_placement = False
+            else:
+                # print("placement changed for",obj.Label,"to",obj.Placement)
+                self.edit_placement(obj)
+
 
     def onDocumentRestored(self, obj):
 
@@ -66,7 +74,6 @@ class ifc_object:
                 if child.ShapeMode == "Coin":
                     child.Proxy.cached = True
                     child.touch()
-            obj.Document.recompute()
 
 
     def rebuild_classlist(self, obj, setprops=False):
@@ -145,3 +152,14 @@ class ifc_object:
                 if len(child) == 1:
                     child[0].StepId = new_id
 
+
+    def edit_placement(self, obj):
+
+        """Syncs the internal IFC placement"""
+
+        import ifc_tools # lazy import
+
+        result = ifc_tools.set_placement(obj)
+        if result:
+            proj = ifc_tools.get_project(obj)
+            proj.Modified = True
