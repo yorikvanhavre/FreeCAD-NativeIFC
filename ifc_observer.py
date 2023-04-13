@@ -35,7 +35,6 @@ def add_observer():
 
 
 class ifc_observer:
-
     """A general document observer that handles IFC objects"""
 
     def slotStartSaveDocument(self, doc, value):
@@ -50,6 +49,8 @@ class ifc_observer:
         QtCore.QTimer.singleShot(100, self.save)
 
     def save(self):
+        """Saves all IFC documents contained in self.docname Document"""
+
         if not hasattr(self, "docname"):
             return
         if not self.docname in FreeCAD.listDocuments():
@@ -81,3 +82,14 @@ class ifc_observer:
                     obj.ViewObject.Proxy.save()
                 else:
                     obj.ViewObject.Proxy.save_as()
+
+    def slotDeletedObject(self, obj):
+        """Deletes the corresponding object in the IFC document"""
+
+        import ifc_tools  # lazy loading
+
+        proj = ifc_tools.get_project(obj)
+        if not proj:
+            return
+        if ifc_tools.remove_ifc_element(obj):
+            proj.Modified = True

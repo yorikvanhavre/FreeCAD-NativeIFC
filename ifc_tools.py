@@ -325,7 +325,7 @@ def add_properties(
                 obj.addProperty("App::PropertyEnumeration", attr, "IFC")
             items = ifcopenshell.util.attribute.get_enum_items(attr_def)
             setattr(obj, attr, items)
-            if not value in items:
+            if value not in items:
                 for v in ("UNDEFINED", "NOTDEFINED", "USERDEFINED"):
                     if v in items:
                         value = v
@@ -370,7 +370,7 @@ def get_ifc_classes(obj, baseclass):
     classes = [sub.name() for sub in declaration.supertype().subtypes()]
     # also include subtypes of the current class (ex, StandardCases)
     classes.extend([sub.name() for sub in declaration.subtypes()])
-    if not baseclass in classes:
+    if baseclass not in classes:
         classes.append(baseclass)
     return classes
 
@@ -635,7 +635,8 @@ def set_geometry(obj, elem, ifcfile, cached=False):
     colors = None
     if obj.ViewObject:
         # getChild(2) is master on/off switch,
-        # getChild(0) is flatlines display mode (1 = shaded, 2 = wireframe, 3 = points)
+        # getChild(0) is flatlines display mode
+        # (1 = shaded, 2 = wireframe, 3 = points)
         basenode = obj.ViewObject.RootNode.getChild(2).getChild(0)
         if basenode.getNumChildren() == 5:
             # Part VP has 4 nodes, we have added 1 more
@@ -1031,6 +1032,9 @@ def remove_ifc_element(obj):
 
     # This function can become pure IFC
 
-    element = get_ifc_element(obj)
     ifcfile = get_ifcfile(obj)
-    ifcopenshell.api.run("root.remove_product", ifcfile, product=element)
+    element = get_ifc_element(obj)
+    if ifcfile and element:
+        ifcopenshell.api.run("root.remove_product", ifcfile, product=element)
+        return True
+    return False
