@@ -73,6 +73,10 @@ class ifc_vp_object:
             action_expand = QtWidgets.QAction(icon, "Expand children", menu)
             action_expand.triggered.connect(self.expandChildren)
             menu.addAction(action_expand)
+        if vobj.Object.Group:
+            action_shrink = QtWidgets.QAction(icon, "Shrink children", menu)
+            action_shrink.triggered.connect(self.shrinkChildren)
+            menu.addAction(action_shrink)
         if vobj.Object.ShapeMode == "Shape":
             t = "Remove shape"
         else:
@@ -102,8 +106,34 @@ class ifc_vp_object:
 
         ifcfile = ifc_tools.get_ifcfile(self.Object)
         if ifcfile:
-            ifc_tools.create_children(self.Object, ifcfile)
+            ifc_tools.create_children(
+                self.Object, ifcfile, recursive=True, assemblies=False
+            )
         self.Object.Document.recompute()
+
+    def shrinkChildren(self):
+        """Shrinks the children of this object"""
+
+        objs = self.Object.Group
+        for o in objs:
+            objs.extend(self.getOwnChildren(o))
+        for o in objs:
+            if hasattr(o, "Proxy"):
+                # this prevents to trigger the deletion inside the IFC file
+                o.Proxy.nodelete = True
+        names = [o.Name for o in objs]
+        for name in names:
+            self.Object.Document.removeObject(name)
+        self.Object.Document.recompute()
+
+    def getOwnChildren(self, obj):
+        """Recursively gets the children only used by this object"""
+        children = []
+        for child in obj.OutList:
+            if len(child.InList) == 1 and child.InList[1] == obj:
+                children.append(child)
+                children.extend(self.getOwnChildren(child))
+        return children
 
     def switchShape(self):
         """Switch this object between shape and coin"""

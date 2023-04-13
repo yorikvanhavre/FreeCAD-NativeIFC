@@ -443,7 +443,7 @@ def get_cache(ifcfile):
                 if o.Proxy.ifcfile == ifcfile:
                     if hasattr(o.Proxy, "ifccache") and o.Proxy.ifccache:
                         return o.Proxy.ifccache
-    return {"Shape": {}, "Color": {}, "Coin": {}}
+    return {"Shape": {}, "Color": {}, "Coin": {}, "Placement": {}}
 
 
 def set_cache(ifcfile, cache):
@@ -520,24 +520,43 @@ def get_shape(elements, ifcfile, cached=False):
     return shape, colors
 
 
+def apply_coin_placement(node, placement):
+    """Applies the given placement to the given node"""
+
+    coords = node.getChild(1)
+    verts = [FreeCAD.Vector(p.getValue()) for p in coords.point.getValues()]
+    verts = [tuple(placement.multVec(v)) for v in verts]
+    coords.point.setValues(verts)
+
+
 def get_coin(elements, ifcfile, cached=False):
     """Returns a Coin node from a list of IFC entities"""
 
     elements = filter_elements(elements, ifcfile)
+    grouping = bool(len(elements) > 1)
     nodes = coin.SoSeparator()
     # process cached elements
+    placement = None
     cache = get_cache(ifcfile)
     if cached:
         rest = []
         for e in elements:
+            if e.id() in cache["Placement"]:
+                placement = cache["Placement"][e.id()]
             if e.id() in cache["Coin"]:
-                nodes.addChild(cache["Coin"][e.id()].copy())
+                node = cache["Coin"][e.id()].copy()
+                if grouping:
+                    apply_coin_placement(node, placement)
+                nodes.addChild(node)
             else:
                 rest.append(e)
+        if grouping:
+            placement = None
         elements = rest
     elements = [e for e in elements if has_representation(e)]
     if not elements:
-        return nodes, None, None
+        return nodes, None, placement
+    # TODO fix below
     if nodes.getNumChildren():
         print(
             "DEBUG: The following elements are excluded because they make coin crash (need to investigate):"
@@ -568,9 +587,9 @@ def get_coin(elements, ifcfile, cached=False):
                 node.addChild(mat)
             # verts
             matrix = get_freecad_matrix(item.transformation.matrix.data)
+            placement = FreeCAD.Placement(matrix)
             verts = item.geometry.verts
             verts = [FreeCAD.Vector(verts[i : i + 3]) for i in range(0, len(verts), 3)]
-            # verts = [tuple(matrix.multVec(v.multiply(SCALE))) for v  in verts]
             verts = [tuple(v.multiply(SCALE)) for v in verts]
             coords = coin.SoCoordinate3()
             coords.point.setValues(verts)
@@ -583,14 +602,22 @@ def get_coin(elements, ifcfile, cached=False):
             faceset = coin.SoIndexedFaceSet()
             faceset.coordIndex.setValues(faces)
             node.addChild(faceset)
-            nodes.addChild(node)
             cache["Coin"][item.id] = node
+            if grouping:
+                # if we are joining nodes together, their placement
+                # must be baked in
+                node = node.copy()
+                apply_coin_placement(node, placement)
+            nodes.addChild(node)
+            cache["Placement"][item.id] = placement
             progressbar.next(True)
         if not iterator.next():
             break
+    if grouping:
+        placement = None
     set_cache(ifcfile, cache)
     progressbar.stop()
-    return nodes, None, FreeCAD.Placement(matrix)
+    return nodes, None, placement
 
 
 def get_settings(ifcfile, brep=True):

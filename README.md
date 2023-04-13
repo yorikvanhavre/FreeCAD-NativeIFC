@@ -43,7 +43,7 @@ Check for updates on this project at https://yorik.uncreated.net/blog/nativeifc
 * [x] Allow to add building structure (building, storey...)
 * [x] Allow to add a simple generic IFC product
 * [x] Allow to delete objects
-* [ ] Allow to hide children of an object
+* [x] Allow to hide children of an object
 * [ ] Tie all of the above to BIM commands
 
 #### 4. Allow advanced editing

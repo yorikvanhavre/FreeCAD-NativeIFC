@@ -91,5 +91,7 @@ class ifc_observer:
         proj = ifc_tools.get_project(obj)
         if not proj:
             return
+        if getattr(obj.Proxy, "nodelete", False):
+            return
         if ifc_tools.remove_ifc_element(obj):
             proj.Modified = True
