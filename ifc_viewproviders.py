@@ -74,8 +74,8 @@ class ifc_vp_object:
             action_expand.triggered.connect(self.expandChildren)
             menu.addAction(action_expand)
         if vobj.Object.Group:
-            action_shrink = QtWidgets.QAction(icon, "Shrink children", menu)
-            action_shrink.triggered.connect(self.shrinkChildren)
+            action_shrink = QtWidgets.QAction(icon, "Collapse children", menu)
+            action_shrink.triggered.connect(self.collapseChildren)
             menu.addAction(action_shrink)
         if vobj.Object.ShapeMode == "Shape":
             t = "Remove shape"
@@ -111,8 +111,8 @@ class ifc_vp_object:
             )
         self.Object.Document.recompute()
 
-    def shrinkChildren(self):
-        """Shrinks the children of this object"""
+    def collapseChildren(self):
+        """Collapses the children of this object"""
 
         objs = self.Object.Group
         for o in objs:
