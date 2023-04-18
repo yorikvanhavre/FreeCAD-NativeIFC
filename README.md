@@ -54,7 +54,7 @@ Check for updates on this project at https://yorik.uncreated.net/blog/nativeifc
 * [ ] Expand materials
 * [ ] Expand properties
 * [ ] Allow to regroup elements
-* [ ] Handle drag/drop
+* [x] Handle drag/drop
 * [ ] Handle undo/redo
 * [x] Allow to change the IFC schema
 
@@ -216,9 +216,35 @@ ifc_tools.create_document(doc)
 myObject.Type = "IfcWall"
 ```
 
-* [ ] **Add a new model structure**
+* [x] **Add a new model structure**:
+    * From the UI:
+        * Switch to the BIM workbench
+        * Create a Project object
+        * Create a Site object
+        * Drag the site onto the project
+        * Create a Building object
+        * Drag the building onto the site
+        * Create a Level object
+        * Drag the level onto the building
+    * From Python:
 
-* [ ] **Add a new object**
+```python
+import ifc_tools
+import Arch
+doc = FreeCAD.ActiveDocument
+project = ifc_tools.create_document(doc)
+site = Arch.makeSite()
+site = ifc_tools.aggregate(site, project)
+building = Arch.makeBuilding()
+building = ifc_tools.aggregate(building, site)
+level = Arch.makeFloor()
+level = ifc_tools.aggregate(floor, building)
+```
+
+* [x] **Add a new object**
+    * From the UI:
+        * Create any desired object with other FreeCAD tools, ex. a wall with the BIM workbench
+        * In the tree view, drag that wall onto an IFC project object or a building structure element (Building, storey,...)
     * From Python:
 
 ```python

@@ -165,6 +165,44 @@ class ifc_vp_object:
         for vobj in changed:
             vobj.DiffuseColor = vobj.DiffuseColor
 
+    def canDragObjects(self):
+        """Whether children can be removed by d&d"""
+
+        return True
+
+    def canDropObjects(self):
+        """Whether objects can be added here by d&d or drop only"""
+
+        return True
+
+    def canDragObject(self, dragged_object):
+        """Whether the given object can be removed by d&d"""
+
+        return True
+
+    def canDropObject(self, incoming_object):
+        """Whether the object can be dropped here by d&d or drop only"""
+
+        return True  # in principle, any object can be dropped and become IFC
+
+    def dragObject(self, vobj, dragged_object):
+        """Remove a child from the view provider by d&d"""
+
+        import ifc_tools  # lazy import
+
+        parent = vobj.Object
+        ifc_tools.deaggregate(dragged_object, parent)
+
+    def dropObject(self, vobj, incoming_object):
+        """Add an object to the view provider by d&d"""
+
+        import ifc_tools  # lazy import
+
+        parent = vobj.Object
+        ifc_tools.aggregate(incoming_object, parent)
+        proj = ifc_tools.get_project(parent)
+        proj.Modified = True
+
 
 class ifc_vp_document(ifc_vp_object):
 
@@ -235,8 +273,11 @@ class ifc_vp_document(ifc_vp_object):
             "Industry Foundation Classes (*.ifc)",
         )
         if sf and sf[0]:
-            ifc_tools.save_ifc(self.Object, sf[0])
-            self.replace_file(self.Object, sf[0])
+            sf = sf[0]
+            if not sf.lower().endswith(".ifc"):
+                sf += ".ifc"
+            ifc_tools.save_ifc(self.Object, sf)
+            self.replace_file(self.Object, sf)
 
     def replace_file(self, obj, newfile):
         """Asks the user if the attached file path needs to be replaced"""

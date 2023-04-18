@@ -41,9 +41,7 @@ class ifc_object:
         elif prop == "Type" and hasattr(obj, "IfcType") and obj.Type != obj.IfcType:
             obj.IfcType = obj.Type
             self.rebuild_classlist(obj, setprops=True)
-
-        # edit an IFC attribute
-        if prop == "Schema":
+        elif prop == "Schema":
             self.set_schema(obj, obj.Schema)
         elif obj.getGroupOfProperty(prop) == "IFC":
             if prop in ["StepId"]:
@@ -52,14 +50,15 @@ class ifc_object:
                 self.edit_attribute(obj, prop, obj.getPropertyByName(prop))
         elif prop == "Label":
             self.edit_attribute(obj, "Name", obj.Label)
-
-        # change placement
-        if prop == "Placement":
+        elif prop == "Placement":
             if getattr(self, "virgin_placement", False):
                 self.virgin_placement = False
             else:
                 # print("placement changed for",obj.Label,"to",obj.Placement)
                 self.edit_placement(obj)
+        elif prop == "Modified":
+            if obj.ViewObject:
+                obj.ViewObject.signalChangeIcon()
 
     def onDocumentRestored(self, obj):
         self.rebuild_classlist(obj)

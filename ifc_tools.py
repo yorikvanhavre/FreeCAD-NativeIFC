@@ -36,6 +36,7 @@ from ifcopenshell import template
 from ifcopenshell.util import attribute
 from ifcopenshell.util import schema
 from ifcopenshell.util import placement
+from ifcopenshell.util import unit
 
 import ifc_objects
 import ifc_viewproviders
@@ -876,8 +877,13 @@ def aggregate(obj, parent):
         FreeCAD.Console.PrintError("The parent object is not part of an IFC project\n")
         return
     ifcfile = get_ifcfile(proj)
-    product = create_product(obj, parent, ifcfile)
-    newobj = create_object(product, obj.Document, ifcfile, parent.ShapeMode)
+    product = get_ifc_element(obj)
+    if product:
+        # this object already has an associated IFC product
+        newobj = obj
+    else:
+        product = create_product(obj, parent, ifcfile)
+        newobj = create_object(product, obj.Document, ifcfile, parent.ShapeMode)
     rel = create_relationship(newobj, parent, product, ifcfile)
     base = getattr(obj, "Base", None)
     if base:
@@ -889,6 +895,17 @@ def aggregate(obj, parent):
     obj.Document.removeObject(obj.Name)
     proj.Modified = True
     return newobj
+
+
+def deaggregate(obj, parent):
+    """Removes a FreeCAD object form its parent"""
+
+    ifcfile = get_ifcfile(obj)
+    element = get_ifc_element(obj)
+    if not element:
+        return
+    ifcopenshell.api.run("aggregate.unassign_object", ifcfile, product=element)
+    parent.removeObject(obj)
 
 
 def create_product(obj, parent, ifcfile):
@@ -917,15 +934,19 @@ def create_product(obj, parent, ifcfile):
     exportIFC.clones = {}
     exportIFC.profiledefs = {}
     exportIFC.surfstyles = {}
+    exportIFC.shapedefs = {}
     exportIFC.ifcopenshell = ifcopenshell
-    exportIFC.ifcbin = exportIFCHelper.recycler(ifcfile)
+    exportIFC.ifcbin = exportIFCHelper.recycler(ifcfile, template=False)
     ifctype = exportIFC.getIfcTypeFromObj(obj)
     prefs = exportIFC.getPreferences()
+    prefs["SCHEMA"] = ifcfile.wrapped_data.schema_name()
+    s = ifcopenshell.util.unit.calculate_unit_scale(ifcfile)
+    # the above lines yields meter -> file unit scale factor. We need mm
+    prefs["SCALE_FACTOR"] = 0.001 / s
     # TODO migrate this to ifcopenshell api
     representation, placement, shapetype = exportIFC.getRepresentation(
         ifcfile, context, obj, preferences=prefs
     )
-    # TODO use api to create a product: ifcopenshell.api.run("root.create_entity", self.file, ifc_class="IfcWall")
     product = exportIFC.createProduct(
         ifcfile,
         obj,
@@ -938,6 +959,11 @@ def create_product(obj, parent, ifcfile):
         representation,
         prefs,
     )
+    # TODO use api to create a product: ifcopenshell.api.run("root.create_entity", self.file, ifc_class="IfcWall")
+    # product = ifcopenshell.api.run("root.create_entity", ifcfile, ifc_class=ifctype, name=obj.Label)
+    # product.ObjectPlacement = placement
+    # product.Description = getattr(obj, "Description", "")
+    # ifcopenshell.api.run("geometry.assign_representation", ifcfile, product=product, representation=representation)
     return product
 
 
@@ -946,58 +972,14 @@ def create_relationship(obj, parent, element, ifcfile):
 
     # This function can become pure IFC
 
-    # TODO use api https://blenderbim.org/docs-python/autoapi/ifcopenshell/api/spatial/assign_container/index.html
-    # need to distinguish between aggregates - api.aggregate.assign_object and contains - api.spatial.assign_container
-    # containment is when the element is an IfcElement and the parent an IfcSpatialElement
-    # deletion, etc... is taken care of automatically
-
+    ifcopenshell.api.run("aggregate.unassign_object", ifcfile, product=element)
     parent_element = get_ifc_element(parent)
-
-    # remove any existing rel
-    uprels = parent_element.IsDecomposedBy
-    rels = element.Decomposes
-    if rels:
-        for rel in rels:
-            if element in rel.RelatedObjects:
-                print(
-                    "DEBUG: Element",
-                    element,
-                    "is part of",
-                    rel.RelatingObject,
-                    "- removing",
-                )
-                if len(rel.RelatedObjects) == 1:
-                    # delete uprel if only contains our element
-                    cmd = "root.remove_product"
-                    ifcopenshell.api.run(cmd, ifcfile, product=rel)
-                else:
-                    # delete this element from these uprels
-                    cmd = "attribute.edit_attributes"
-                    attribs = {
-                        "RelatedObjects": [
-                            o for o in rel.RelatedObjects if o != element
-                        ]
-                    }
-                    ifcopenshell.api.run(cmd, ifcfile, product=rel, attributes=attribs)
-    # add to existing relationship if possible
-    if uprels:
-        for uprel in uprels:
-            if element in uprel.RelatedObjects:
-                # element already related to parent
-                break
-        else:
-            uprel = uprels[
-                0
-            ]  # We take arbitrarily the first one. TODO is that adequate?
-            cmd = "attribute.edit_attributes"
-            attribs = {"RelatedObjects": uprel.RelatedObjects + (element,)}
-            ifcopenshell.api.run(cmd, ifcfile, product=uprel, attributes=attribs)
-    else:
-        # create aggregation
-        history = parent_element.OwnerHistory
-        uprel = ifcfile.createIfcRelAggregates(
-            ifcopenshell.guid.new(), history, None, None, parent_element, [element]
-        )
+    uprel = ifcopenshell.api.run(
+        "aggregate.assign_object",
+        ifcfile,
+        product=element,
+        relating_object=parent_element,
+    )
     parent.addObject(obj)
     return uprel
 
@@ -1006,7 +988,8 @@ def get_elem_attribs(ifcentity):
     # This function can become pure IFC
 
     # usually info_ifcentity = ifcentity.get_info() would de the trick
-    # the above could raise an unhandled excption on corrupted ifc files in IfcOpenShell
+    # the above could raise an unhandled excption on corrupted ifc files
+    # in IfcOpenShell
     # see https://github.com/IfcOpenShell/IfcOpenShell/issues/2811
     # thus workaround
 
