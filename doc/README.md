@@ -2,9 +2,39 @@
 
 This is the documentation of the NativeIFC addon. It is made a of a series of common BIM tasks, and explains simply how to perform each of them with the NativeIFC addon.
 
+### Table of contents
+
+* [Introduction](#introduction)
+* [Enabling NativeIFC](#enabling-nativeifc)
+* [Import an IFC file](#import-an-ifc-file)
+* [Expand sub-objects of an IFC object](#expand-sub-objects-of-an-ifc-object)
+* [Load the shape of an IFC object](#load-the-shape-of-an-ifc-object)
+* [Change IFC attributes](#change-ifc-attributes)
+* [See the changes in an IFC document](#see-the-changes-in-an-ifc-document)
+* [Saving the modified IFC file](#saving-the-modified-ifc-file)
+* [Add a new IFC document](#add-a-new-ifc-document)
+* [Modifying the IFC type of an object](#modifying-the-ifc-type-of-an-object)
+* [Add a new model structure](#add-a-new-model-structure)
+* [Add a new object](#add-a-new-object)
+* [Change the schema of an IFC document](#change-the-schema-of-an-ifc-document)
+* [Create 2D drawings (plans, sections) from an IFC file](#create-2d-drawings-plans-sections-from-an-ifc-file)
+
+### Introduction
+
+The NativeIFC addon is designed to allow you to work on IFC file in FreeCAD natively. 
+
+The traditional way most BIM applications work with IFC files consists of loading the file, translating its contents into the application's own format, then letting you work with the model. When saving back to IFC, another translation is done between the application's format and the IFC format. That's two translation operatins each time you need to work on the file. This brings huge imprevisibility and a lot of data loss.
+
+The Native IFC concept, on the other way, considers the IFC file as the only source of truth. Loading an IFC file into FreeCAD merely shows you the contents of the IFC file in the FreeCAD interface and 3D view. Any operation made on those contents is directly affecting the contents of the IFC file. When saving the file, only what you have modified will have changed in the IFC file.
+
+This allows a lot more control over what changes in different stages of the life of an IFC file, and turns it truly and fully versionable.with systems like [Git](https://git-scm.com/). FreeCAD is the second BIM application that supports NativeIFC, after [BlenderBIM](https://blenderbim.org).
+
+Working with native IFC files in FreeCAD is simple: Open an existing IFC file or create a new project using the project tool from the BIM workbench. Create new objects with any of the FreeCAD workbenches or tools. Add these objects to your IFC project by dragging them into the project structure. Save the file, and you are done!
+
 ### Enabling NativeIFC
 
 * Install the addon as described above
+* Also install the BIM workbench addon to be able to create new IFC projects
 * Restart FreeCAD
 
 ### Import an IFC file
@@ -179,7 +209,7 @@ import ifc_tools
 ifc_tools.aggregate(wall, project)
 ```
 
-### Changing the schema of an IFC document
+### Change the schema of an IFC document
 
 #### From the UI
 
