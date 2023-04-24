@@ -169,7 +169,7 @@ class ArchTest(unittest.TestCase):
     def test07_CreateDocument(self):
         FreeCAD.Console.PrintMessage("7.  Creating new IFC document...")
         doc = FreeCAD.ActiveDocument
-        ifc_tools.create_document(doc)
+        ifc_tools.create_document(doc, silent=True)
         fco = len(FreeCAD.getDocument("IfcTest").Objects)
         print(FreeCAD.getDocument("IfcTest").Objects[0])
         self.failUnless(fco == 1, "CreateDocument failed")
@@ -192,7 +192,7 @@ class ArchTest(unittest.TestCase):
     def test09_CreateBIMObjects(self):
         FreeCAD.Console.PrintMessage("9.  Creating BIM objects...")
         doc = FreeCAD.ActiveDocument
-        proj = ifc_tools.create_document(doc)
+        proj = ifc_tools.create_document(doc, silent=True)
         site = Arch.makeSite()
         site = ifc_tools.aggregate(site, proj)
         bldg = Arch.makeBuilding()

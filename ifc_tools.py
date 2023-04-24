@@ -45,7 +45,7 @@ import ifc_import
 SCALE = 1000.0  # IfcOpenShell works in meters, FreeCAD works in mm
 
 
-def create_document(document, filename=None, shapemode=0, strategy=0):
+def create_document(document, filename=None, shapemode=0, strategy=0, silent=False):
     """Creates a IFC document object in the given FreeCAD document.
 
     filename:  If not given, a blank IFC document is created
@@ -67,7 +67,7 @@ def create_document(document, filename=None, shapemode=0, strategy=0):
         obj.FilePath = filename
         ifcfile = ifcopenshell.open(filename)
     else:
-        full = ifc_import.get_project_type()
+        full = ifc_import.get_project_type(silent)
         ifcfile = create_ifcfile()
     project = ifcfile.by_type("IfcProject")[0]
     obj.Proxy.ifcfile = ifcfile
@@ -588,14 +588,16 @@ def get_coin(elements, ifcfile, cached=False):
         if item:
             node = coin.SoSeparator()
             # colors
+            mat = coin.SoMaterial()
             if item.geometry.materials:
                 color = item.geometry.materials[0].diffuse
                 color = (color[0], color[1], color[2], 0.0)
-                mat = coin.SoMaterial()
                 mat.diffuseColor.setValue(color[:3])
                 # TODO treat transparency
                 # mat.transparency.setValue(0.8)
-                node.addChild(mat)
+            else:
+                mat.diffuseColor.setValue(0.85, 0.85, 0.85)
+            node.addChild(mat)
             # verts
             matrix = get_freecad_matrix(item.transformation.matrix.data)
             placement = FreeCAD.Placement(matrix)

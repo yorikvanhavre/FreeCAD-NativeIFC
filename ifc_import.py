@@ -120,11 +120,13 @@ def get_options(strategy=None, shapemode=None, switchwb=None, silent=False):
     return strategy, shapemode, switchwb
 
 
-def get_project_type():
+def get_project_type(silent=False):
     """Gets the type of project to make"""
 
     ask = params.GetBool("ProjectAskAgain", True)
     ptype = params.GetBool("ProjectFull", False)
+    if silent:
+        return ptype
     if ask and FreeCAD.GuiUp:
         import FreeCADGui
         from PySide import QtGui
