@@ -43,7 +43,7 @@ import ifc_viewproviders
 import ifc_import
 
 SCALE = 1000.0  # IfcOpenShell works in meters, FreeCAD works in mm
-
+SHORT = False # If True, only Step ID attribute is created
 
 def create_document(document, filename=None, shapemode=0, strategy=0, silent=False):
     """Creates a IFC document object in the given FreeCAD document.
@@ -243,7 +243,7 @@ def add_object(document, project=False):
 
 
 def add_properties(
-    obj, ifcfile=None, ifcentity=None, links=False, shapemode=0, short=True
+    obj, ifcfile=None, ifcentity=None, links=False, shapemode=0, short=SHORT
 ):
     """Adds the properties of the given IFC object to a FreeCAD object"""
 
@@ -348,6 +348,9 @@ def add_properties(
                 obj.addProperty("App::PropertyString", attr, "IFC")
             if value is not None:
                 setattr(obj, attr, str(value))
+    # link Label2 and Description
+    if "Description" in obj.PropertiesList:
+        obj.setExpression('Label2', 'Description')
 
 
 def remove_unused_properties(obj):
