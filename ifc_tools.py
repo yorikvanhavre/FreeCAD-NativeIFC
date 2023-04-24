@@ -40,6 +40,7 @@ from ifcopenshell.util import unit
 
 import ifc_objects
 import ifc_viewproviders
+import ifc_import
 
 SCALE = 1000.0  # IfcOpenShell works in meters, FreeCAD works in mm
 
@@ -57,6 +58,7 @@ def create_document(document, filename=None, shapemode=0, strategy=0):
     """
 
     obj = add_object(document, project=True)
+    full = False
     d = "The path to the linked IFC file"
     obj.addProperty("App::PropertyFile", "FilePath", "Base", d)
     obj.addProperty("App::PropertyBool", "Modified", "Base")
@@ -65,6 +67,7 @@ def create_document(document, filename=None, shapemode=0, strategy=0):
         obj.FilePath = filename
         ifcfile = ifcopenshell.open(filename)
     else:
+        full = ifc_import.get_project_type()
         ifcfile = create_ifcfile()
     project = ifcfile.by_type("IfcProject")[0]
     obj.Proxy.ifcfile = ifcfile
@@ -79,6 +82,13 @@ def create_document(document, filename=None, shapemode=0, strategy=0):
         create_children(obj, ifcfile, recursive=True, only_structure=True)
     elif strategy == 2:
         create_children(obj, ifcfile, recursive=True, assemblies=False)
+    # create default structure
+    if full:
+        import Arch
+
+        site = aggregate(Arch.makeSite(), obj)
+        building = aggregate(Arch.makeBuilding(), site)
+        storey = aggregate(Arch.makeFloor(), building)
     return obj
 
 
@@ -892,7 +902,9 @@ def aggregate(obj, parent):
             base = None
     if base:
         obj.Document.removeObject(base.Name)
+    label = obj.Label
     obj.Document.removeObject(obj.Name)
+    newobj.Label = label  # to avoid 001-ing the Label...
     proj.Modified = True
     return newobj
 

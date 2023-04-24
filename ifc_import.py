@@ -31,6 +31,9 @@ if FreeCAD.GuiUp:
     import FreeCADGui
 
 
+params = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Mod/NativeIFC")
+
+
 def open(filename):
     """Opens an IFC file"""
 
@@ -83,7 +86,6 @@ def get_options(strategy=None, shapemode=None, switchwb=None, silent=False):
                2 = all children
     """
 
-    params = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Mod/NativeIFC")
     if strategy is None:
         strategy = params.GetInt("ImportStrategy", 0)
     if shapemode is None:
@@ -116,3 +118,23 @@ def get_options(strategy=None, shapemode=None, switchwb=None, silent=False):
         params.SetBool("SwitchWB", switchwb)
         params.SetBool("AskAgain", ask)
     return strategy, shapemode, switchwb
+
+
+def get_project_type():
+    """Gets the type of project to make"""
+
+    ask = params.GetBool("ProjectAskAgain", True)
+    ptype = params.GetBool("ProjectFull", False)
+    if ask and FreeCAD.GuiUp:
+        import FreeCADGui
+        from PySide import QtGui
+
+        dlg = FreeCADGui.PySideUic.loadUi(
+            os.path.join(os.path.dirname(__file__), "ui", "dialogCreateProject.ui")
+        )
+        result = dlg.exec_()
+        ask = not (dlg.checkBox.isChecked())
+        ptype = bool(result)
+        params.SetBool("ProjectAskAgain", ask)
+        params.SetBool("ProjectFull", ptype)
+    return ptype
