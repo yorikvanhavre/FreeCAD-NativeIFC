@@ -43,7 +43,8 @@ import ifc_viewproviders
 import ifc_import
 
 SCALE = 1000.0  # IfcOpenShell works in meters, FreeCAD works in mm
-SHORT = False # If True, only Step ID attribute is created
+SHORT = False  # If True, only Step ID attribute is created
+
 
 def create_document(document, filename=None, shapemode=0, strategy=0, silent=False):
     """Creates a IFC document object in the given FreeCAD document.
@@ -98,7 +99,7 @@ def create_ifcfile():
     # TODO do not rely on the template,
     # and create a minimal file instead, with no person, no org, no
     # nothing. These shold be populated later on by the user
-    # use api: https://blenderbim.org/docs-python/autoapi/ifcopenshell/api/project/create_file/index.html
+    # use api: https://blenderbim.org/docs-python/autoapi/ifcopenshell/api/project/create_file/
 
     ifcfile = ifcopenshell.template.create()
     param = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Document")
@@ -129,6 +130,8 @@ def create_object(ifcentity, document, ifcfile, shapemode=0):
     FreeCAD.Console.PrintLog(s)
     obj = add_object(document)
     add_properties(obj, ifcfile, ifcentity, shapemode=shapemode)
+    if ifcentity.is_a("IfcSpace") and FreeCAD.GuiUp:
+        obj.ViewObject.DisplayMode = "Wireframe"
     elements = [ifcentity]
     return obj
 
@@ -187,7 +190,7 @@ def get_children(obj, ifcfile, only_structure=False, assemblies=True):
             children.extend([rel.RelatedOpeningElement])
         for rel in getattr(ifcentity, "HasFillings", []):
             children.extend([rel.RelatedBuildingElement])
-    return filter_elements(children, ifcfile, expand=False)
+    return filter_elements(children, ifcfile, expand=False, spaces=True)
 
 
 def get_ifcfile(obj):
@@ -350,7 +353,7 @@ def add_properties(
                 setattr(obj, attr, str(value))
     # link Label2 and Description
     if "Description" in obj.PropertiesList:
-        obj.setExpression('Label2', 'Description')
+        obj.setExpression("Label2", "Description")
 
 
 def remove_unused_properties(obj):
@@ -408,7 +411,7 @@ def has_representation(element):
     return False
 
 
-def filter_elements(elements, ifcfile, expand=True):
+def filter_elements(elements, ifcfile, expand=True, spaces=False):
     """Filter elements list of unwanted types"""
 
     # This function can become pure IFC
@@ -416,6 +419,8 @@ def filter_elements(elements, ifcfile, expand=True):
     # gather decomposition if needed
     if expand and (len(elements) == 1):
         elem = elements[0]
+        if elem.is_a("IfcSpace"):
+            spaces = True
         if not has_representation(elem):
             if elem.is_a("IfcProject"):
                 elements = ifcfile.by_type("IfcElement")
@@ -437,8 +442,9 @@ def filter_elements(elements, ifcfile, expand=True):
                     elements = ifcopenshell.util.element.get_decomposition(elem)
     # Never load feature elements, they can be lazy loaded
     elements = [e for e in elements if not e.is_a("IfcFeatureElement")]
-    # do not load spaces for now (TODO handle them correctly)
-    elements = [e for e in elements if not e.is_a("IfcSpace")]
+    # do load spaces when required, otherwise skip computing their shapes
+    if not spaces:
+        elements = [e for e in elements if not e.is_a("IfcSpace")]
     # skip projects
     elements = [e for e in elements if not e.is_a("IfcProject")]
     # skip furniture for now, they can be lazy loaded probably
@@ -573,7 +579,7 @@ def get_coin(elements, ifcfile, cached=False):
     # TODO fix below
     if nodes.getNumChildren():
         print(
-            "DEBUG: The following elements are excluded because they make coin crash (need to investigate):"
+            "DEBUG: Following elements are excluded because they make coin crash (to investigate):"
         )
         print(
             "DEBUG: If you wish to test, comment out line 488 (return nodes, None) in ifc_tools.py"
@@ -684,7 +690,8 @@ def set_geometry(obj, elem, ifcfile, cached=False):
         if basenode.getNumChildren() == 5:
             # Part VP has 4 nodes, we have added 1 more
             basenode.removeChild(4)
-    if obj.Group and not (has_representation(get_ifc_element(obj))):
+    allspaces = all([ch.Type == "IfcSpace" for ch in obj.Group])
+    if obj.Group and not (has_representation(get_ifc_element(obj))) and not allspaces:
         # workaround for group extension bug: add a dummy placeholder shape)
         # otherwise a shape is force-created from the child shapes
         # and we don't want that otherwise we can't select children
@@ -778,7 +785,8 @@ def get_body_context_ids(ifcfile):
         for c in ifcfile.by_type("IfcGeometricRepresentationSubContext")
         if c.ContextIdentifier in ["Body", "Facetation"]
     ]
-    # Ideally, all representations should be in a subcontext, but some BIM programs don't do this correctly
+    # Ideally, all representations should be in a subcontext, but some BIM apps don't do this
+    # correctly
     body_contexts.extend(
         [
             c.id()
