@@ -226,7 +226,7 @@ def can_expand(obj, ifcfile):
     """Returns True if this object can have any more child extracted"""
 
     children = get_children(obj, ifcfile)
-    group = [o.StepId for o in obj.Group]
+    group = [o.StepId for o in obj.Group if hasattr(o,"StepId")]
     for child in children:
         if child.id() not in group:
             return True
@@ -1097,7 +1097,7 @@ def load_orphans(obj):
     shapemode = obj.ShapeMode
     elements = get_orphan_elements(ifcfile)
     if elements:
-        group = doc.addObject("App::DocumentObjectGroup", "Orphans")
+        group = doc.addObject("App::DocumentObjectGroupPython", "Orphans")
         obj.addObject(group)
         for element in elements:
             child = create_object(element, doc, ifcfile, shapemode)
