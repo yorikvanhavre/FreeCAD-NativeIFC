@@ -52,7 +52,8 @@ class ifc_vp_object:
         if prop == "Shape" and getattr(obj, "Group", None):
             colors = []
             for child in obj.Group:
-                colors.extend(child.ViewObject.DiffuseColor)
+                if hasattr(child.ViewObject, "DiffuseColor"):
+                    colors.extend(child.ViewObject.DiffuseColor)
             if colors:
                 obj.ViewObject.DiffuseColor = colors
 

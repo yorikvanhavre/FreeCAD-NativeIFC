@@ -51,13 +51,17 @@ def insert(
     """Inserts an IFC document in a FreeCAD document"""
 
     importlib.reload(ifc_tools)  # useful as long as we are in early dev times
-    strategy, shapemode, switchwb = get_options(strategy, shapemode, switchwb, silent)
+    strategy, shapemode, switchwb, orphans = get_options(
+        strategy, shapemode, switchwb, silent
+    )
     if strategy is None:
         print("Aborted.")
         return
     stime = time.time()
     document = FreeCAD.getDocument(docname)
     prj_obj = ifc_tools.create_document(document, filename, shapemode, strategy)
+    if orphans:
+        ifc_tools.load_orphans(prj_obj)
     document.recompute()
     if FreeCAD.GuiUp:
         FreeCADGui.doCommand(
@@ -75,7 +79,9 @@ def insert(
     return document
 
 
-def get_options(strategy=None, shapemode=None, switchwb=None, silent=False):
+def get_options(
+    strategy=None, shapemode=None, switchwb=None, silent=False, orphans=None
+):
     """Shows a dialog to get import options
 
     shapemode: 0 = full shape
@@ -86,6 +92,7 @@ def get_options(strategy=None, shapemode=None, switchwb=None, silent=False):
                2 = all children
     """
 
+    orphans = params.GetBool("LoadOrphans", False)
     if strategy is None:
         strategy = params.GetInt("ImportStrategy", 0)
     if shapemode is None:
@@ -106,18 +113,21 @@ def get_options(strategy=None, shapemode=None, switchwb=None, silent=False):
         dlg.comboShapeMode.setCurrentIndex(shapemode)
         dlg.checkSwitchWB.setChecked(switchwb)
         dlg.checkAskAgain.setChecked(ask)
+        dlg.checkLoadOrphans.setChecked(orphans)
         result = dlg.exec_()
         if not result:
-            return None, None, None
+            return None, None, None, None
         strategy = dlg.comboStrategy.currentIndex()
         shapemode = dlg.comboShapeMode.currentIndex()
         switchwb = dlg.checkSwitchWB.isChecked()
         ask = dlg.checkAskAgain.isChecked()
+        orphans = dlg.checkLoadOrphans.isChecked()
         params.SetInt("ImportStrategy", strategy)
         params.SetInt("ShapeMode", shapemode)
         params.SetBool("SwitchWB", switchwb)
         params.SetBool("AskAgain", ask)
-    return strategy, shapemode, switchwb
+        params.SetBool("LoadOrphans", orphans)
+    return strategy, shapemode, switchwb, orphans
 
 
 def get_project_type(silent=False):

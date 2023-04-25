@@ -690,7 +690,9 @@ def set_geometry(obj, elem, ifcfile, cached=False):
         if basenode.getNumChildren() == 5:
             # Part VP has 4 nodes, we have added 1 more
             basenode.removeChild(4)
-    allspaces = all([ch.Type == "IfcSpace" for ch in obj.Group])
+    allspaces = all(
+        [(not hasattr(ch, "Type") or ch.Type == "IfcSpace") for ch in obj.Group]
+    )
     if obj.Group and not (has_representation(get_ifc_element(obj))) and not allspaces:
         # workaround for group extension bug: add a dummy placeholder shape)
         # otherwise a shape is force-created from the child shapes
@@ -1073,3 +1075,30 @@ def remove_ifc_element(obj):
         ifcopenshell.api.run("root.remove_product", ifcfile, product=element)
         return True
     return False
+
+
+def get_orphan_elements(ifcfile):
+    """returns a list of orphan products in an ifcfile"""
+
+    products = ifcfile.by_type("IfcProduct")
+    products = [p for p in products if not p.Decomposes]
+    products = [p for p in products if not p.ContainedInStructure]
+    products = [
+        p for p in products if not hasattr(p, "VoidsElements") or not p.VoidsElements
+    ]
+    return products
+
+
+def load_orphans(obj):
+    """loads orphan objects from the given project object"""
+
+    doc = obj.Document
+    ifcfile = get_ifcfile(obj)
+    shapemode = obj.ShapeMode
+    elements = get_orphan_elements(ifcfile)
+    if elements:
+        group = doc.addObject("App::DocumentObjectGroup", "Orphans")
+        obj.addObject(group)
+        for element in elements:
+            child = create_object(element, doc, ifcfile, shapemode)
+            group.addObject(child)
