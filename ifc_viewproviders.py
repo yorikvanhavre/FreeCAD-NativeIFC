@@ -66,6 +66,8 @@ class ifc_vp_object:
         return os.path.join(path, "icons", i)
 
     def setupContextMenu(self, vobj, menu):
+
+        import ifc_tools  # lazy import
         from PySide2 import QtCore, QtGui, QtWidgets  # lazy import
 
         path = os.path.dirname(os.path.dirname(__file__))
@@ -89,6 +91,11 @@ class ifc_vp_object:
             action_coin = QtWidgets.QAction(icon, "Load representation", menu)
             action_coin.triggered.connect(self.switchCoin)
             menu.addAction(action_coin)
+        element = ifc_tools.get_ifc_element(vobj.Object)
+        if element and ifc_tools.has_representation(element):
+            action_geom = QtWidgets.QAction(icon, "Add geometry properties", menu)
+            action_geom.triggered.connect(self.addGeometryProperties)
+            menu.addAction(action_geom)
 
     def hasChildren(self, obj):
         """Returns True if this IFC object can be decomposed"""
@@ -165,6 +172,13 @@ class ifc_vp_object:
         self.Object.Document.recompute()
         for vobj in changed:
             vobj.DiffuseColor = vobj.DiffuseColor
+
+    def addGeometryProperties(self):
+        """Adds geometry properties to this object"""
+
+        import ifc_geometry  # lazy loading
+
+        ifc_geometry.add_geom_properties(self.Object)
 
     def canDragObjects(self):
         """Whether children can be removed by d&d"""

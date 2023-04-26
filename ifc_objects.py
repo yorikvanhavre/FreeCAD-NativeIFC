@@ -47,7 +47,7 @@ class ifc_object:
             if prop in ["StepId"]:
                 pass
             else:
-                self.edit_attribute(obj, prop, obj.getPropertyByName(prop))
+                self.edit_attribute(obj, prop)
         elif prop == "Label":
             self.edit_attribute(obj, "Name", obj.Label)
         elif prop == "Placement":
@@ -59,6 +59,8 @@ class ifc_object:
         elif prop == "Modified":
             if obj.ViewObject:
                 obj.ViewObject.signalChangeIcon()
+        elif obj.getGroupOfProperty(prop) == "Geometry":
+            self.edit_geometry(obj, prop)
 
     def onDocumentRestored(self, obj):
         self.rebuild_classlist(obj)
@@ -70,7 +72,7 @@ class ifc_object:
                     child.touch()
 
     def rebuild_classlist(self, obj, setprops=False):
-        """rebuilds the list of Type property according to current class"""
+        """rebuilds the list of Type enum property according to current class"""
 
         import ifc_tools  # lazy import
 
@@ -96,11 +98,13 @@ class ifc_object:
         self.cached = False
         self.rebuild_classlist(obj)
 
-    def edit_attribute(self, obj, attribute, value):
+    def edit_attribute(self, obj, attribute, value=None):
         """Edits an attribute of an underlying IFC object"""
 
         import ifc_tools  # lazy import
 
+        if not value:
+            value = obj.getPropertyByName(attribute)
         ifcfile = ifc_tools.get_ifcfile(obj)
         elt = ifc_tools.get_ifc_element(obj)
         if elt:
@@ -110,6 +114,18 @@ class ifc_object:
                 proj.Modified = True
                 if hasattr(result, "id") and (result.id() != obj.StepId):
                     obj.StepId = result.id()
+
+    def edit_geometry(self, obj, prop):
+        """Edits a geometry property of an object"""
+
+        import ifc_tools  # lazy import
+        import ifc_geometry  # lazy loading
+
+        result = ifc_geometry.set_geom_property(obj, prop)
+        if result:
+            obj.touch()
+            proj = ifc_tools.get_project(obj)
+            proj.Modified = True
 
     def set_schema(self, obj, schema):
         """Changes the schema of an IFC document"""
