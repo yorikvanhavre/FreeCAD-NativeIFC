@@ -226,7 +226,7 @@ def can_expand(obj, ifcfile):
     """Returns True if this object can have any more child extracted"""
 
     children = get_children(obj, ifcfile)
-    group = [o.StepId for o in obj.Group if hasattr(o,"StepId")]
+    group = [o.StepId for o in obj.Group if hasattr(o, "StepId")]
     for child in children:
         if child.id() not in group:
             return True
