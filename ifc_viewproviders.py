@@ -327,3 +327,13 @@ class ifc_vp_document(ifc_vp_object):
 
         diff = ifc_diff.get_diff(self.Object)
         ifc_diff.show_diff(diff)
+
+
+class ifc_vp_group:
+
+    """View provider for the IFC group object"""
+
+    def getIcon(self):
+        path = os.path.dirname(os.path.dirname(__file__))
+        icom = "IFC_group.svg"
+        return os.path.join(path, "icons", icom)

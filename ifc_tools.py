@@ -58,7 +58,7 @@ def create_document(document, filename=None, shapemode=0, strategy=0, silent=Fal
                2 = all children
     """
 
-    obj = add_object(document, project=True)
+    obj = add_object(document, otype="project")
     full = False
     d = "The path to the linked IFC file"
     obj.addProperty("App::PropertyFile", "FilePath", "Base", d)
@@ -233,15 +233,23 @@ def can_expand(obj, ifcfile):
     return False
 
 
-def add_object(document, project=False):
-    """adds a new object to a FreeCAD document"""
+def add_object(document, otype=None):
+    """adds a new object to a FreeCAD document.
+    otype can be 'project', 'group' or None (normal object)"""
 
-    proxy = ifc_objects.ifc_object()
-    if project:
+    if otype == "group":
+        proxy = None
+        ftype = "App::DocumentObjectGroupPython"
+    else:
+        proxy = ifc_objects.ifc_object()
+        ftype = "Part::FeaturePython"
+    if otype == "project":
         vp = ifc_viewproviders.ifc_vp_document()
+    elif otype == "group":
+        vp = ifc_viewproviders.ifc_vp_group()
     else:
         vp = ifc_viewproviders.ifc_vp_object()
-    obj = document.addObject("Part::FeaturePython", "IfcObject", proxy, vp, False)
+    obj = document.addObject(ftype, "IfcObject", proxy, vp, False)
     return obj
 
 
@@ -1102,7 +1110,8 @@ def load_orphans(obj):
     shapemode = obj.ShapeMode
     elements = get_orphan_elements(ifcfile)
     if elements:
-        group = doc.addObject("App::DocumentObjectGroupPython", "Orphans")
+        group = add_object(doc, otype="group")
+        group.Label = "Orphans"
         obj.addObject(group)
         for element in elements:
             child = create_object(element, doc, ifcfile, shapemode)
