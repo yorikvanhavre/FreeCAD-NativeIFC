@@ -852,7 +852,12 @@ def set_placement(obj):
 
     ifcfile = get_ifcfile(obj)
     element = get_ifc_element(obj)
-    new_matrix = get_ios_matrix(obj.Placement)
+    placement = FreeCAD.Placement(obj.Placement)
+    scale = ifcopenshell.util.unit.calculate_unit_scale(ifcfile)
+    # the above lines yields meter -> file unit scale factor. We need mm
+    scale = 0.001 / scale
+    placement.Base = FreeCAD.Vector(placement.Base).multiply(scale)
+    new_matrix = get_ios_matrix(placement)
     old_matrix = ifcopenshell.util.placement.get_local_placement(
         element.ObjectPlacement
     )
