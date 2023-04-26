@@ -109,6 +109,7 @@ def get_options(
         dlg = FreeCADGui.PySideUic.loadUi(
             os.path.join(os.path.dirname(__file__), "ui", "dialogImport.ui")
         )
+        dlg.checkSwitchWB.hide()  # TODO see what to do with this...
         dlg.comboStrategy.setCurrentIndex(strategy)
         dlg.comboShapeMode.setCurrentIndex(shapemode)
         dlg.checkSwitchWB.setChecked(switchwb)
