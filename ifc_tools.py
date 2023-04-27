@@ -1010,16 +1010,23 @@ def create_product(obj, parent, ifcfile):
 def create_relationship(obj, parent, element, ifcfile):
     """Creates a relationship between an IFC object and a parent IFC object"""
 
-    # This function can become pure IFC
-
-    ifcopenshell.api.run("aggregate.unassign_object", ifcfile, product=element)
     parent_element = get_ifc_element(parent)
-    uprel = ifcopenshell.api.run(
-        "aggregate.assign_object",
-        ifcfile,
-        product=element,
-        relating_object=parent_element,
-    )
+    if parent_element.is_a("IfcSpatialStructureElement") and element.is_a("IfcProduct"):
+        ifcopenshell.api.run("spatial.unassign_container", ifcfile, product=element)
+        uprel = ifcopenshell.api.run(
+            "spatial.assign_container",
+            ifcfile,
+            product=element,
+            relating_structure=parent_element,
+        )
+    else:
+        ifcopenshell.api.run("aggregate.unassign_object", ifcfile, product=element)
+        uprel = ifcopenshell.api.run(
+            "aggregate.assign_object",
+            ifcfile,
+            product=element,
+            relating_object=parent_element,
+        )
     parent.addObject(obj)
     return uprel
 
