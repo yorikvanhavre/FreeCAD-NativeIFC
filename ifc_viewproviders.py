@@ -107,17 +107,17 @@ class ifc_vp_object:
             return ifc_tools.can_expand(obj, ifcfile)
         return False
 
-    def expandChildren(self):
+    def expandChildren(self, obj=None):
         """Creates children of this object"""
 
         import ifc_tools  # lazy import
 
-        ifcfile = ifc_tools.get_ifcfile(self.Object)
+        if not obj:
+            obj = self.Object
+        ifcfile = ifc_tools.get_ifcfile(obj)
         if ifcfile:
-            ifc_tools.create_children(
-                self.Object, ifcfile, recursive=False, assemblies=True
-            )
-        self.Object.Document.recompute()
+            ifc_tools.create_children(obj, ifcfile, recursive=False, assemblies=True)
+        obj.Document.recompute()
 
     def collapseChildren(self):
         """Collapses the children of this object"""
@@ -215,6 +215,8 @@ class ifc_vp_object:
 
         parent = vobj.Object
         ifc_tools.aggregate(incoming_object, parent)
+        if self.hasChildren(parent):
+            self.expandChildren(parent)
         proj = ifc_tools.get_project(parent)
         proj.Modified = True
 
