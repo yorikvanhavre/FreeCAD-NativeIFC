@@ -1,8 +1,14 @@
 ## NativeIFC addon for FreeCAD
 
-This is a preliminary stub to integrate [BlenderBIM](https://blenderbim.org) into [FreeCAD](https://freecad.org). The final goal is to offer in FreeCAD the same level of functionality found in BlenderBIM, mainly the native handling of IFC files, which means the data manipulation in FreeCAD is affecting directly the IFC model.
+This project implements [NativeIFC](https://github.com/brunopostle/ifcmerge/blob/main/docs/whitepaper.rst) concept into [FreeCAD](https://freecad.org). It allows FreeCAD users to open, manipulate and create [IFC](https://en.wikipedia.org/wiki/Industry_Foundation_Classes) files natively in FreeCAD.
 
-Check for updates on this project at https://yorik.uncreated.net/blog/nativeifc
+Although FreeCAD already supports opening and saving IFC files through the [Arch workbench](https://wiki.freecad.org/Arch_Workbench), it does so, like most other BIM applications, by translating to and from the IFC file format and FreeCAD's internal data model. This means two translations, one when opening and another one when saving, which cause a) data loss, and b) a complete rewrite of the file, which turns it unsuitable for [version control systems](https://en.wikipedia.org/wiki/Version_control) like [Git](https://en.wikipedia.org/wiki/Git).
+
+NativeIFC means that the IFC file is itself the data structure in FreeCAD. When opening an IFC file in FreeCAD, what you see on the screen is a direct reflection of the contents of the IFC file. Anything you modify will directly modify the IFC file. If you open a file, modify one element and save the file, the only thing that will have changed in the file is the line concerning that element. The rest of the file will be 100% identical to how it was before you saved. No data loss, and very identificable changes.
+
+This project is heavily inspired by [BlenderBIM](https://blenderbim.org) into [FreeCAD](https://freecad.org) and tries as much as possible to use the same concepts and reuse the code. The final goal is to offer in FreeCAD the same level of functionality and performance found in BlenderBIM, and to upstream as much as possible to [IfcOpenShell](https://ifcopenshell.org), the common IFC engine used by both applications.
+
+The roadmap below will show you an overview of the current state of the implementation. Check the [documentation](doc/README.md) to learn how to use this addon, and I also write regular updates on this project at https://yorik.uncreated.net/blog/nativeifc
 
 ### Roadmap
 
@@ -44,13 +50,13 @@ Check for updates on this project at https://yorik.uncreated.net/blog/nativeifc
 * [x] Allow to add a simple generic IFC product
 * [x] Allow to delete objects
 * [x] Allow to hide children of an object
-* [ ] Tie all of the above to BIM commands
+* [ ] ~~Tie all of the above to BIM commands~~ cancelled because the only one necesary is the Project tool
 
 #### 4. Allow advanced editing
 
 * [x] Allow to edit placements
-* [ ] Define a strategy for expanding non-IfcProduct elements
-* [ ] Expand attributes
+* [x] Define a strategy for expanding non-IfcProduct elements
+* [ ] ~~Expand attributes~~ cancelled for now because only non-link attributes need to be shown so far
 * [ ] Expand materials
 * [ ] Expand properties
 * [ ] Allow to regroup elements
@@ -58,13 +64,14 @@ Check for updates on this project at https://yorik.uncreated.net/blog/nativeifc
 * [ ] Handle undo/redo
 * [x] Allow to change the IFC schema
 
-#### 5. Tie NativeIFC and BIM Workbenches
+#### 5. Full workflow (creation and edition) of different tools
 
-* [ ] Support walls
-* [ ] Support structures
-* [ ] Support windows
-* [ ] Support 2D entitties
-* [ ] Support dimensions
+* [x] Support Arch walls
+* [x] Support Arch structures
+* [ ] Support Arch objects with subtractions and additions
+* [ ] Support Arch windows
+* [ ] Support Draft 2D entitties
+* [ ] Support Draft dimensions
 * [ ] Support Part extrusions
 * [ ] Support Part booleans
 
