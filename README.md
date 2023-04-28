@@ -88,6 +88,12 @@ The roadmap below will show you an overview of the current state of the implemen
 * [ ] Transfer Arch exportIFC.getRepresentation() functionality to ifcopenshell.api.geometry
 
 
+#### Further goals
+
+* [ ] Support Types
+* [ ] Support mapped geometry
+* [ ] Wall joining system
+
 ### Documentation
 
 * [Installing](doc/installation.md)
