@@ -149,7 +149,7 @@ def create_children(
         ]:
             child = create_object(element, parent.Document, ifcfile, parent.ShapeMode)
             subresult.append(child)
-            parent.addObject(child)
+            parent.Proxy.addObject(parent, child)
             if element.is_a("IfcSite"):
                 # force-create contained buildings too if we just created a site
                 buildings = [
@@ -266,10 +266,8 @@ def add_properties(
         obj.Label = ifcentity.Name
     else:
         obj.Label = ifcentity.is_a()
-    if not obj.hasExtension("App::GroupExtensionPython"):
-        obj.addExtension("App::GroupExtensionPython")
-    if FreeCAD.GuiUp:
-        obj.ViewObject.addExtension("Gui::ViewProviderGroupExtensionPython")
+    if "Group" not in obj.PropertiesList:
+        obj.addProperty("App::PropertyLinkList", "Group", "Base")
     if "ShapeMode" not in obj.PropertiesList:
         obj.addProperty("App::PropertyEnumeration", "ShapeMode", "Base")
         shapemodes = [
@@ -942,7 +940,7 @@ def deaggregate(obj, parent):
     if not element:
         return
     ifcopenshell.api.run("aggregate.unassign_object", ifcfile, product=element)
-    parent.removeObject(obj)
+    parent.Proxy.removeObject(parent, obj)
 
 
 def create_product(obj, parent, ifcfile):
@@ -1024,7 +1022,7 @@ def create_relationship(obj, parent, element, ifcfile):
             product=element,
             relating_object=parent_element,
         )
-    parent.addObject(obj)
+    parent.Proxy.addObject(parent, obj)
     return uprel
 
 
@@ -1116,7 +1114,7 @@ def load_orphans(obj):
     if elements:
         group = add_object(doc, otype="group")
         group.Label = "Orphans"
-        obj.addObject(group)
+        obj.Proxy.addObject(obj, group)
         for element in elements:
             child = create_object(element, doc, ifcfile, shapemode)
             group.addObject(child)

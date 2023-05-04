@@ -98,6 +98,18 @@ class ifc_object:
         self.cached = False
         self.rebuild_classlist(obj)
 
+    def addObject(self, obj, child):
+        if child not in obj.Group:
+            g = obj.Group
+            g.append(child)
+            obj.Group = g
+
+    def removeObject(self, obj, child):
+        if child in obj.Group:
+            g = obj.Group
+            g.remove(child)
+            obj.Group = g
+
     def edit_attribute(self, obj, attribute, value=None):
         """Edits an attribute of an underlying IFC object"""
 

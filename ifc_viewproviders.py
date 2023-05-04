@@ -40,7 +40,10 @@ class ifc_vp_object:
         return mode
 
     def onChanged(self, vobj, prop):
-        return
+        if prop == "Visibility":
+            for child in vobj.Object.Group:
+                child.ViewObject.Visibility = vobj.Visibility
+            return True
 
     def __getstate__(self):
         return None
@@ -64,6 +67,9 @@ class ifc_vp_object:
         else:
             i = "IFC_mesh.svg"
         return os.path.join(path, "icons", i)
+
+    def claimChildren(self):
+        return self.Object.Group
 
     def setupContextMenu(self, vobj, menu):
 
