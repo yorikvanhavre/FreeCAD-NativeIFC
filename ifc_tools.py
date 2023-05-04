@@ -834,23 +834,20 @@ def get_freecad_matrix(ios_matrix):
     return FreeCAD.Matrix(*m_l)
 
 
-def get_ios_matrix(freecad_placement):
+def get_ios_matrix(m):
     """Converts a FreeCAD placement or matrix into an IfcOpenShell matrix tuple"""
 
-    if isinstance(freecad_placement, FreeCAD.Matrix):
-        freecad_placement = FreeCAD.Placement(freecad_placement)
-    pos = freecad_placement.Base
-    # pos = pos.multiply(1/SCALE) # does not work??
-    pos = FreeCAD.Vector(round(pos.x, 4), round(pos.y, 4), round(pos.z, 4))
-    rot = freecad_placement.Rotation.multVec(FreeCAD.Vector(1, 1, 1))
-    rot = FreeCAD.Vector(round(rot.x, 8), round(rot.y, 8), round(rot.z, 8))
-    mat = [
-        [rot.x, 0.0, 0.0, pos.x],
-        [0.0, rot.y, 0.0, pos.y],
-        [0.0, 0.0, rot.z, pos.z],
-        [0.0, 0.0, 0.0, 1.0],
-    ]
-    return mat
+    if isinstance(m, FreeCAD.Placement):
+        m = m.Matrix
+    mat = [ [m.A11, m.A12, m.A13, m.A14],
+             [m.A21, m.A22, m.A23, m.A24],
+             [m.A31, m.A32, m.A33, m.A34],
+             [m.A41, m.A42, m.A42, m.A44] ]
+    # apply rounding because OCCT often changes 1.0 to 0.99999999999 or something
+    rmat = []
+    for row in mat:
+        rmat.append([round(e,8) for e in row])
+    return rmat
 
 
 def set_placement(obj):
@@ -1100,7 +1097,7 @@ def remove_ifc_element(obj):
 def get_orphan_elements(ifcfile):
     """returns a list of orphan products in an ifcfile"""
 
-    products = ifcfile.by_type("IfcProduct")
+    products = ifcfile.by_type("IfcElement")
     products = [p for p in products if not p.Decomposes]
     products = [p for p in products if not p.ContainedInStructure]
     products = [
