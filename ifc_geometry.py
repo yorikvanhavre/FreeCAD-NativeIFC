@@ -39,8 +39,9 @@ def add_geom_properties(obj):
     scaling = scaling * 1000  # given scale is for m, we work in mm
     for rep in element.Representation.Representations:
         if rep.RepresentationIdentifier == "Body":
-            # Extrusion of a rectangle
             if len(rep.Items) == 1:
+
+                # Extrusions
                 if rep.Items[0].is_a("IfcExtrudedAreaSolid"):
                     ext = rep.Items[0]
                     if "ExtrusionDepth" not in obj.PropertiesList:
@@ -55,6 +56,8 @@ def add_geom_properties(obj):
                     obj.ExtrusionDirection = FreeCAD.Vector(
                         ext.ExtrudedDirection.DirectionRatios
                     )
+
+                    # Extrusion of a rectangle
                     if ext.SweptArea.is_a("IfcRectangleProfileDef"):
                         if "RectangleLength" not in obj.PropertiesList:
                             obj.addProperty(
@@ -66,6 +69,18 @@ def add_geom_properties(obj):
                                 "App::PropertyLength", "RectangleWidth", "Geometry"
                             )
                         obj.RectangleWidth = ext.SweptArea.YDim * scaling
+
+                    # Extrusion of a polyline
+                    elif ext.SweptArea.is_a("IfcArbitraryClosedProfileDef"):
+                        if ext.SweptArea.OuterCurve.is_a("IfcPolyline"):
+                            if "PolylinePoints" not in obj.PropertiesList:
+                                obj.addProperty(
+                                    "App::PropertyVectorList", "PolylinePoints", "Geometry"
+                                )
+                            points = [p.Coordinates for p in ext.SweptArea.OuterCurve.Points]
+                            points = [p + (0,) for p in points if len(p) < 3]
+                            points = [FreeCAD.Vector(p).multiply(scaling) for p in points]
+                            obj.PolylinePoints = points
 
         # below is disabled for now... Don't know if it's useful to expose to the user
         elif False:  # rep.RepresentationIdentifier == "Axis":
@@ -171,4 +186,41 @@ def set_geom_property(obj, prop):
                             )
                             return True
 
+    elif prop == "PolylinePoints":
+        for rep in element.Representation.Representations:
+            if rep.RepresentationIdentifier == "Body":
+                if len(rep.Items) == 1:
+                    if rep.Items[0].is_a("IfcArbitraryClosedProfileDef"):
+                        if rep.Items[0].SweptArea.OuterCurve.is_a("IfcPolyline"):
+                            elem = rep.Items[0].SweptArea.OuterCurve
+                            elem_points = elem.Points
+                            psize = elem_points[0].Dim
+                            points = getattr(obj, prop)
+                            if len(points) > len(elem_points):
+                                for i in range(len(points) - len(elem_points)):
+                                    p = ifcopenshell.api.run(
+                                        "root.create_entity",
+                                        ifcfile,
+                                        ifc_class="IfcCartesianPoint"
+                                    )
+                                    elem_points. append(p)
+                                elem.Points = elem_points
+                            elif len(points) < len(elem_points):
+                                rest = []
+                                for i in range(len(elem_points) - len(points)):
+                                    rest.append(elem_points.pop())
+                                elem.Points = elem_points
+                                for r in rest:
+                                    ifcopenshell.api.run("root.remove_product", ifcfile, product=r)
+                            if len(points) == len(elem_points):
+                                for i in range(len(points)):
+                                    v = FreeCAD.Vector(points[i]).multiply(scaling)
+                                    coord = tuple(v)[:psize]
+                                    ifcopenshell.api.run(
+                                        "attribute.edit_attributes",
+                                        ifcfile,
+                                        product=elem_points[i],
+                                        attributes={"Coordinates": coord},
+                                    )
+                                return True
     return False
