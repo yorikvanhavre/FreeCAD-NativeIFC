@@ -68,7 +68,8 @@ def create_document(document, filename=None, shapemode=0, strategy=0, silent=Fal
         obj.FilePath = filename
         ifcfile = ifcopenshell.open(filename)
     else:
-        full = ifc_import.get_project_type(silent)
+        if not silent:
+            full = ifc_import.get_project_type()
         ifcfile = create_ifcfile()
     project = ifcfile.by_type("IfcProject")[0]
     obj.Proxy.ifcfile = ifcfile
@@ -971,7 +972,10 @@ def create_product(obj, parent, ifcfile):
     exportIFC.surfstyles = {}
     exportIFC.shapedefs = {}
     exportIFC.ifcopenshell = ifcopenshell
-    exportIFC.ifcbin = exportIFCHelper.recycler(ifcfile, template=False)
+    try:
+        exportIFC.ifcbin = exportIFCHelper.recycler(ifcfile, template=False)
+    except:
+        print("ERROR: You need a more recent version of FreeCAD")
     ifctype = exportIFC.getIfcTypeFromObj(obj)
     prefs = exportIFC.getPreferences()
     prefs["SCHEMA"] = ifcfile.wrapped_data.schema_name()
@@ -1006,7 +1010,7 @@ def create_relationship(obj, parent, element, ifcfile):
     """Creates a relationship between an IFC object and a parent IFC object"""
 
     parent_element = get_ifc_element(parent)
-    if parent_element.is_a("IfcSpatialStructureElement") and element.is_a("IfcProduct"):
+    if parent_element.is_a("IfcSpatialStructureElement") and element.is_a("IfcElement"):
         ifcopenshell.api.run("spatial.unassign_container", ifcfile, product=element)
         uprel = ifcopenshell.api.run(
             "spatial.assign_container",

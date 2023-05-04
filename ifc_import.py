@@ -100,7 +100,7 @@ def get_options(
     if switchwb is None:
         switchwb = params.GetBool("SwitchWB", True)
     if silent:
-        return strategy, shapemode, switchwb
+        return strategy, shapemode, switchwb, orphans
     ask = params.GetBool("AskAgain", True)
     if ask and FreeCAD.GuiUp:
         import FreeCADGui
