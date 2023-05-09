@@ -72,7 +72,6 @@ class ifc_vp_object:
         return self.Object.Group
 
     def setupContextMenu(self, vobj, menu):
-
         import ifc_tools  # lazy import
         from PySide2 import QtCore, QtGui, QtWidgets  # lazy import
 
@@ -102,6 +101,9 @@ class ifc_vp_object:
             action_geom = QtWidgets.QAction(icon, "Add geometry properties", menu)
             action_geom.triggered.connect(self.addGeometryProperties)
             menu.addAction(action_geom)
+        action_tree = QtWidgets.QAction(icon, "Show geometry tree", menu)
+        action_tree.triggered.connect(self.showTree)
+        menu.addAction(action_tree)
 
     def hasChildren(self, obj):
         """Returns True if this IFC object can be decomposed"""
@@ -185,6 +187,16 @@ class ifc_vp_object:
         import ifc_geometry  # lazy loading
 
         ifc_geometry.add_geom_properties(self.Object)
+
+    def showTree(self):
+        """Shows a dialog with a geometry tree for the object"""
+
+        import ifc_tools  # lazy loading
+        import ifc_tree  # lazy loading
+
+        element = ifc_tools.get_ifc_element(self.Object)
+        if element:
+            ifc_tree.show_geometry_tree(element)
 
     def canDragObjects(self):
         """Whether children can be removed by d&d"""

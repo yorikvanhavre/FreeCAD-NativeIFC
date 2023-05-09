@@ -838,14 +838,16 @@ def get_ios_matrix(m):
 
     if isinstance(m, FreeCAD.Placement):
         m = m.Matrix
-    mat = [ [m.A11, m.A12, m.A13, m.A14],
-             [m.A21, m.A22, m.A23, m.A24],
-             [m.A31, m.A32, m.A33, m.A34],
-             [m.A41, m.A42, m.A42, m.A44] ]
+    mat = [
+        [m.A11, m.A12, m.A13, m.A14],
+        [m.A21, m.A22, m.A23, m.A24],
+        [m.A31, m.A32, m.A33, m.A34],
+        [m.A41, m.A42, m.A42, m.A44],
+    ]
     # apply rounding because OCCT often changes 1.0 to 0.99999999999 or something
     rmat = []
     for row in mat:
-        rmat.append([round(e,8) for e in row])
+        rmat.append([round(e, 8) for e in row])
     return rmat
 
 

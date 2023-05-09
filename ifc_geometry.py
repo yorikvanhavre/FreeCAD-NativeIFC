@@ -40,7 +40,6 @@ def add_geom_properties(obj):
     for rep in element.Representation.Representations:
         if rep.RepresentationIdentifier == "Body":
             if len(rep.Items) == 1:
-
                 # Extrusions
                 if rep.Items[0].is_a("IfcExtrudedAreaSolid"):
                     ext = rep.Items[0]
@@ -75,11 +74,17 @@ def add_geom_properties(obj):
                         if ext.SweptArea.OuterCurve.is_a("IfcPolyline"):
                             if "PolylinePoints" not in obj.PropertiesList:
                                 obj.addProperty(
-                                    "App::PropertyVectorList", "PolylinePoints", "Geometry"
+                                    "App::PropertyVectorList",
+                                    "PolylinePoints",
+                                    "Geometry",
                                 )
-                            points = [p.Coordinates for p in ext.SweptArea.OuterCurve.Points]
+                            points = [
+                                p.Coordinates for p in ext.SweptArea.OuterCurve.Points
+                            ]
                             points = [p + (0,) for p in points if len(p) < 3]
-                            points = [FreeCAD.Vector(p).multiply(scaling) for p in points]
+                            points = [
+                                FreeCAD.Vector(p).multiply(scaling) for p in points
+                            ]
                             obj.PolylinePoints = points
 
         # below is disabled for now... Don't know if it's useful to expose to the user
@@ -201,9 +206,9 @@ def set_geom_property(obj, prop):
                                     p = ifcopenshell.api.run(
                                         "root.create_entity",
                                         ifcfile,
-                                        ifc_class="IfcCartesianPoint"
+                                        ifc_class="IfcCartesianPoint",
                                     )
-                                    elem_points. append(p)
+                                    elem_points.append(p)
                                 elem.Points = elem_points
                             elif len(points) < len(elem_points):
                                 rest = []
@@ -211,7 +216,9 @@ def set_geom_property(obj, prop):
                                     rest.append(elem_points.pop())
                                 elem.Points = elem_points
                                 for r in rest:
-                                    ifcopenshell.api.run("root.remove_product", ifcfile, product=r)
+                                    ifcopenshell.api.run(
+                                        "root.remove_product", ifcfile, product=r
+                                    )
                             if len(points) == len(elem_points):
                                 for i in range(len(points)):
                                     v = FreeCAD.Vector(points[i]).multiply(scaling)
