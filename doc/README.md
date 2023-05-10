@@ -14,6 +14,7 @@ This is the documentation of the NativeIFC addon. It is made a of a series of co
 * [Saving the modified IFC file](#saving-the-modified-ifc-file)
 * [Add a new IFC document](#add-a-new-ifc-document)
 * [Modifying the IFC type of an object](#modifying-the-ifc-type-of-an-object)
+* [Inspecting the IFC structure of an object](#inspecting-the-ifc-structure-of-an-object)
 * [Add a new model structure](#add-a-new-model-structure)
 * [Add a new object](#add-a-new-object)
 * [Change the schema of an IFC document](#change-the-schema-of-an-ifc-document)
@@ -159,6 +160,22 @@ Change the type directly from the object's properties
 
 ```python
 myObject.Type = "IfcWall"
+```
+
+### Inspecting the IFC structure of an object
+
+#### From the UI
+
+Right-click any object in the tree, and choose **Show geometry tree**
+
+#### From Python
+
+```python
+import ifc_tools
+import ifc_tree
+element = ifc_tools.get_ifc_element(myObject)
+ifc_tree.print_geometry_tree(element) # this prints text, or
+tree_list = ifc_tree.get_geometry_tree(element) # this returns a list
 ```
 
 ### Add a new model structure
