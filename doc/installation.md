@@ -4,7 +4,7 @@ These instructions are temporary. The NativeIFC addon is meant to be integrated 
 
 ### Prerequisites
 
-The NativeIFC addon will install and work with any version of FreeCAD and will allow to open and inspect IFCfiles. However, to create new IFC objects, you will need a FreeCAD version above or equal to 0.20.3.
+The NativeIFC addon will install and work with any version of FreeCAD and will allow to open and inspect IFC files. However, to create new IFC objects, you will need a FreeCAD version above or equal to 0.20.3.
 
 ### Auto install
 
