@@ -34,7 +34,7 @@ Working with native IFC files in FreeCAD is simple: Open an existing IFC file or
 
 ### Enabling NativeIFC
 
-* Install the addon as described above
+* Install the addon as described in the [installation page](installation.md)
 * Also install the BIM workbench addon to be able to create new IFC projects
 * Restart FreeCAD
 
