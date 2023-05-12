@@ -48,6 +48,8 @@ class ifc_object:
                 pass
             else:
                 self.edit_attribute(obj, prop)
+        elif obj.getGroupOfProperty(prop).startswith("Pset_"):
+            self.edit_pset(obj, prop)
         elif prop == "Label":
             self.edit_attribute(obj, "Name", obj.Label)
         elif prop == "Placement":
@@ -172,6 +174,16 @@ class ifc_object:
         import ifc_tools  # lazy import
 
         result = ifc_tools.set_placement(obj)
+        if result:
+            proj = ifc_tools.get_project(obj)
+            proj.Modified = True
+
+    def edit_pset(self, obj, prop):
+        """Edits a Pset value"""
+
+        import ifc_tools  # lazy import
+
+        result = ifc_tools.edit_pset(obj, prop)
         if result:
             proj = ifc_tools.get_project(obj)
             proj.Modified = True

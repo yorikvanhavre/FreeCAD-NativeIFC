@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>353</width>
-    <height>235</height>
+    <height>266</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -96,6 +96,13 @@
      </property>
      <property name="text">
       <string>Load orphan objects</string>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <widget class="QCheckBox" name="checkLoadPsets">
+     <property name="text">
+      <string>Load property sets</string>
      </property>
     </widget>
    </item>

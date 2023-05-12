@@ -60,7 +60,7 @@ The roadmap below will show you an overview of the current state of the implemen
 * [x] Define a strategy for expanding non-IfcProduct elements
 * [ ] ~~Expand attributes~~ cancelled for now because only non-link attributes need to be shown so far
 * [ ] Expand materials
-* [ ] Expand properties
+* [x] Expand properties
 * [ ] Allow to regroup elements
 * [x] Handle drag/drop
 * [ ] Handle undo/redo
@@ -91,6 +91,7 @@ The roadmap below will show you an overview of the current state of the implemen
 #### Further goals
 
 * [ ] Support Types
+* [ ] Support quantity sets
 * [ ] Support mapped geometry
 * [ ] Wall joining system
 

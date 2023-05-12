@@ -104,6 +104,9 @@ class ifc_vp_object:
         action_tree = QtWidgets.QAction(icon, "Show geometry tree", menu)
         action_tree.triggered.connect(self.showTree)
         menu.addAction(action_tree)
+        action_props = QtWidgets.QAction(icon, "Expand property sets", menu)
+        action_props.triggered.connect(self.showProps)
+        menu.addAction(action_props)
 
     def hasChildren(self, obj):
         """Returns True if this IFC object can be decomposed"""
@@ -197,6 +200,14 @@ class ifc_vp_object:
         element = ifc_tools.get_ifc_element(self.Object)
         if element:
             ifc_tree.show_geometry_tree(element)
+
+    def showProps(self):
+        """Expands property sets"""
+
+        import ifc_tools  # lazy loading
+
+        ifc_tools.show_psets(self.Object)
+        self.Object.Document.recompute()
 
     def canDragObjects(self):
         """Whether children can be removed by d&d"""

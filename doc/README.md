@@ -8,6 +8,7 @@ This is the documentation of the NativeIFC addon. It is made a of a series of co
 * [Enabling NativeIFC](#enabling-nativeifc)
 * [Import an IFC file](#import-an-ifc-file)
 * [Expand sub-objects of an IFC object](#expand-sub-objects-of-an-ifc-object)
+* [Expand the property sets of an object](#expand-the-property-sets-of-an-object)
 * [Load the shape of an IFC object](#load-the-shape-of-an-ifc-object)
 * [Change IFC attributes](#change-ifc-attributes)
 * [See the changes in an IFC document](#see-the-changes-in-an-ifc-document)
@@ -72,6 +73,19 @@ ifc_import.open(filepath) # or ifc_import.insert(fileapth,document)
 ```python
 import ifc_tools
 ifc_tools.create_children(myObject,[recursive=True/False])
+```
+
+### Expand the property sets of an object
+
+#### From the UI
+
+* Right-click any IFC object on the tree and select **Expand property sets**
+
+#### From Python
+
+```python
+import ifc_tools
+ifc_tools.show_psets(myObject)
 ```
 
 ### Load the shape of an IFC object
