@@ -987,7 +987,10 @@ def create_product(obj, parent, ifcfile):
     try:
         exportIFC.ifcbin = exportIFCHelper.recycler(ifcfile, template=False)
     except:
-        print("ERROR: You need a more recent version of FreeCAD")
+        FreeCAD.Console.PrintError(
+            "ERROR: You need a more recent version of FreeCAD >= 0.20.3\n"
+        )
+        return
     ifctype = exportIFC.getIfcTypeFromObj(obj)
     prefs = exportIFC.getPreferences()
     prefs["SCHEMA"] = ifcfile.wrapped_data.schema_name()
