@@ -48,7 +48,9 @@ class ifc_object:
                 pass
             else:
                 self.edit_attribute(obj, prop)
-        elif obj.getGroupOfProperty(prop).startswith("Pset_"):
+        elif obj.getGroupOfProperty(prop) not in ["Base", "IFC", ""]:
+            # Treat all property groups outside the default ones as Psets
+            # print("DEBUG: editinog pset prop",prop)
             self.edit_pset(obj, prop)
         elif prop == "Label":
             self.edit_attribute(obj, "Name", obj.Label)

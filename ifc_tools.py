@@ -22,6 +22,9 @@
 
 import os
 import multiprocessing
+import re
+
+# heavyweight libraries - ifc_tools should always be lazy loaded
 
 import FreeCAD
 from FreeCAD import Base
@@ -44,7 +47,7 @@ import ifc_import
 
 SCALE = 1000.0  # IfcOpenShell works in meters, FreeCAD works in mm
 SHORT = False  # If True, only Step ID attribute is created
-ROUND = 8 # rounding value for placements
+ROUND = 8  # rounding value for placements
 
 
 def create_document(document, filename=None, shapemode=0, strategy=0, silent=False):
@@ -872,7 +875,14 @@ def set_placement(obj):
     old_matrix = old_matrix.tolist()
     old_matrix = [[round(c, ROUND) for c in r] for r in old_matrix]
     if new_matrix != old_matrix:
-        print("DEBUG: placement changed for:", obj.Label, "old:", old_matrix, "new:", new_matrix)
+        print(
+            "DEBUG: placement changed for:",
+            obj.Label,
+            "old:",
+            old_matrix,
+            "new:",
+            new_matrix,
+        )
         api = "geometry.edit_object_placement"
         ifcopenshell.api.run(
             api, ifcfile, product=element, matrix=new_matrix, is_si=False
@@ -1126,6 +1136,17 @@ def load_orphans(obj):
             group.addObject(child)
 
 
+def has_psets(obj):
+    """Returns True if an object has attached psets"""
+
+    element = get_ifc_element(obj)
+    psets = getattr(element, "IsDefinedBy", [])
+    if [p for p in psets if p.is_a("IfcRelDefinesByProperties")]:
+        # TODO verify too if these psets are not already there
+        return True
+    return False
+
+
 def get_psets(element):
     """Returns a dictionary of dictionaries representing the
     properties of an element in the form:
@@ -1169,33 +1190,41 @@ def show_psets(obj):
     psets = get_psets(element)
     for gname, pset in psets.items():
         for pname, pvalue in pset.items():
-            ptype, value = pvalue.split("(",1)
+            oname = pname
+            ptype, value = pvalue.split("(", 1)
             value = value.strip(")")
             value = value.strip("'")
-            if pname in obj.PropertiesList:
-                print("DEBUG: property", pname, "already exists in", obj.Label)
-            elif ptype in [
+            pname = re.sub("[^0-9a-zA-Z]+", "", pname)
+            if pname[0].isdigit():
+                pname = "_" + pname
+            ttip = (
+                ptype + ":" + oname
+            )  # setting IfcType:PropName as a tooltip to desambiguate
+            while pname in obj.PropertiesList:
+                # print("DEBUG: property", pname, "(", value, ") already exists in", obj.Label)
+                pname += "_"
+            if ptype in [
                 "IfcPositiveLengthMeasure",
                 "IfcLengthMeasure",
                 "IfcNonNegativeLengthMeasure",
             ]:
-                obj.addProperty("App::PropertyDistance", pname, gname)
+                obj.addProperty("App::PropertyDistance", pname, gname, ttip)
             elif ptype in ["IfcVolumeMeasure"]:
-                obj.addProperty("App::PropertyVolume", pname, gname)
+                obj.addProperty("App::PropertyVolume", pname, gname, ttip)
             elif ptype in ["IfcPositivePlaneAngleMeasure", "IfcPlaneAngleMeasure"]:
-                obj.addProperty("App::PropertyAngle", pname, gname)
+                obj.addProperty("App::PropertyAngle", pname, gname, ttip)
             elif ptype in ["IfcMassMeasure"]:
-                obj.addProperty("App::PropertyMass", pname, gname)
+                obj.addProperty("App::PropertyMass", pname, gname, ttip)
             elif ptype in ["IfcAreaMeasure"]:
-                obj.addProperty("App::PropertyArea", pname, gname)
+                obj.addProperty("App::PropertyArea", pname, gname, ttip)
             elif ptype in ["IfcCountMeasure", "IfcInteger"]:
-                obj.addProperty("App::PropertyInteger", pname, gname)
+                obj.addProperty("App::PropertyInteger", pname, gname, ttip)
                 value = int(value.strip("."))
             elif ptype in ["IfcReal"]:
-                obj.addProperty("App::PropertyFloat", pname, gname)
+                obj.addProperty("App::PropertyFloat", pname, gname, ttip)
                 value = float(value)
             elif ptype in ["IfcBoolean", "IfcLogical"]:
-                obj.addProperty("App::PropertyBool", pname, gname)
+                obj.addProperty("App::PropertyBool", pname, gname, ttip)
                 if value in [".T."]:
                     value = True
                 else:
@@ -1207,10 +1236,10 @@ def show_psets(obj):
                 "IfcDuration",
                 "IfcTimeStamp",
             ]:
-                obj.addProperty("App::PropertyTime", pname, gname)
+                obj.addProperty("App::PropertyTime", pname, gname, ttip)
             else:
-                obj.addProperty("App::PropertyString", pname, gname)
-            #print("DEBUG: setting",pname, ptype, value)
+                obj.addProperty("App::PropertyString", pname, gname, ttip)
+            # print("DEBUG: setting",pname, ptype, value)
             setattr(obj, pname, value)
 
 
@@ -1218,14 +1247,30 @@ def edit_pset(obj, prop, value=None):
     """Edits the corresponding property"""
 
     pset = obj.getGroupOfProperty(prop)
+    ttip = obj.getDocumentationOfProperty(prop)
     if value is None:
         value = getattr(obj, prop)
     ifcfile = get_ifcfile(obj)
     element = get_ifc_element(obj)
     pset_exist = get_psets(element)
+    if ttip.startswith("Ifc") and ":" in ttip:
+        target_prop = ttip.split(":", 1)[-1]
+    else:
+        # no tooltip set - try to build a name
+        prop = prop.rstrip("_")
+        prop_uncamel = re.sub(r"(\w)([A-Z])", r"\1 \2", prop)
+        prop_unslash = re.sub(r"(\w)([A-Z])", r"\1\/\2", prop)
+        target_prop = None
     if pset in pset_exist:
-        if prop in pset_exist[pset]:
-            value_exist = pset_exist[pset][prop].split("(",1)[1][:-1].strip("'")
+        if not target_prop:
+            if prop in pset_exist[pset]:
+                target_prop = prop
+            elif prop_uncamel in pset_exist[pset]:
+                target_prop = prop_uncamel
+            elif prop_unslash in pset_exist[pset]:
+                target_prop = prop_unslash
+        if target_prop:
+            value_exist = pset_exist[pset][target_prop].split("(", 1)[1][:-1].strip("'")
             if value_exist in [".F.", ".U."]:
                 value_exist = False
             elif value_exist in [".T."]:
@@ -1235,18 +1280,37 @@ def edit_pset(obj, prop, value=None):
             elif isinstance(value, float):
                 value_exist = float(value_exist)
             elif isinstance(value, FreeCAD.Units.Quantity):
-                value_exist = FreeCAD.Units.Quantity(float(value_exist),value.Unit)
+                value_exist = FreeCAD.Units.Quantity(float(value_exist), value.Unit)
             if value == value_exist:
                 return False
             else:
-                print("DEBUG: changed value of", obj.Label, "(", obj.StepId, ") /", prop, ":",
-                    value, "(", type(value),") ->", value_exist, "(", type(value_exist), ")")
+                print(
+                    "DEBUG: changed value of",
+                    obj.Label,
+                    "(",
+                    obj.StepId,
+                    ") /",
+                    target_prop,
+                    ":",
+                    value,
+                    "(",
+                    type(value),
+                    ") ->",
+                    value_exist,
+                    "(",
+                    type(value_exist),
+                    ")",
+                )
         pset = get_pset(pset, element)
     else:
         pset = ifcopenshell.api.run(
             "pset.add_pset", ifcfile, product=element, name=pset
         )
-    ifcopenshell.api.run("pset.edit_pset", ifcfile, pset=pset, properties={prop: value})
+    if not target_prop:
+        target_prop = prop
+    ifcopenshell.api.run(
+        "pset.edit_pset", ifcfile, pset=pset, properties={target_prop: value}
+    )
     # TODO manage quantities
     return True
 

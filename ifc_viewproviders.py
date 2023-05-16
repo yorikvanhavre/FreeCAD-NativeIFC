@@ -69,7 +69,9 @@ class ifc_vp_object:
         return os.path.join(path, "icons", i)
 
     def claimChildren(self):
-        return self.Object.Group
+        if hasattr(self.Object, "Group"):
+            return self.Object.Group
+        return []
 
     def setupContextMenu(self, vobj, menu):
         import ifc_tools  # lazy import
@@ -104,9 +106,10 @@ class ifc_vp_object:
         action_tree = QtWidgets.QAction(icon, "Show geometry tree", menu)
         action_tree.triggered.connect(self.showTree)
         menu.addAction(action_tree)
-        action_props = QtWidgets.QAction(icon, "Expand property sets", menu)
-        action_props.triggered.connect(self.showProps)
-        menu.addAction(action_props)
+        if ifc_tools.has_psets(self.Object):
+            action_props = QtWidgets.QAction(icon, "Expand property sets", menu)
+            action_props.triggered.connect(self.showProps)
+            menu.addAction(action_props)
 
     def hasChildren(self, obj):
         """Returns True if this IFC object can be decomposed"""
