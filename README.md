@@ -99,8 +99,12 @@ The roadmap below will show you an overview of the current state of the implemen
 
 * [Installing](doc/installation.md)
 * [Usage](doc/README.md)
-* [IfcOpenShell documentation links](doc/links.md)
 * [IfcOpenShell code examples](doc/code_examples.md)
+* [IfcOpenShell github](https://github.com/IfcOpenShell/IfcOpenShell)
+* [IfcOpenShell docs](https://blenderbim.org/docs-python/ifcopenshell.html)
+* [BlenderBIM docs](https://blenderbim.org/docs/)
+* [IfcOpenShell matrix structure](https://github.com/IfcOpenShell/IfcOpenShell/issues/1440)
+* [IfcOpenShell to FreeCAD matrix conversion](https://pythoncvc.net/?cat=203)
 
 
 ### Performance
