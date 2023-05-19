@@ -32,6 +32,8 @@ class ifc_object:
     def onBeforeChange(self, obj, prop):
         if prop == "Schema":
             self.old_schema = obj.Schema
+        elif prop == "Placement":
+            self.old_placement = obj.Placement
 
     def onChanged(self, obj, prop):
         # link Type property to its hidder IfcType counterpart
@@ -44,16 +46,14 @@ class ifc_object:
         elif prop == "Schema":
             self.set_schema(obj, obj.Schema)
         elif obj.getGroupOfProperty(prop) == "IFC":
-            if prop in ["StepId"]:
-                pass
-            else:
+            if prop not in ["StepId"]:
                 self.edit_attribute(obj, prop)
         elif prop == "Label":
             self.edit_attribute(obj, "Name", obj.Label)
         elif prop == "Placement":
             if getattr(self, "virgin_placement", False):
                 self.virgin_placement = False
-            else:
+            elif obj.Placement != getattr(self, "old_placement", None):
                 # print("placement changed for",obj.Label,"to",obj.Placement)
                 self.edit_placement(obj)
         elif prop == "Modified":
