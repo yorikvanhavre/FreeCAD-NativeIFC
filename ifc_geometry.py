@@ -87,6 +87,29 @@ def add_geom_properties(obj):
                             ]
                             obj.PolylinePoints = points
 
+                    # I profile
+                    elif ext.SweptArea.is_a("IfcIShapeProfileDef"):
+                        for p in [
+                            "FilletRadius",
+                            "FlangeEdgeRadius",
+                            "FlangeSlope",
+                            "FlangeThickness",
+                            "OverallDepth",
+                            "OverallWidth",
+                            "WebThickness",
+                        ]:
+                            if hasattr(ext.SweptArea, p):
+                                obj.addProperty("App::PropertyLength", p, "Geometry")
+                                value = getattr(ext.SweptArea, p)
+                                if not value:
+                                    value = 0
+                                value = value * scaling
+                                setattr(obj, p, value)
+                            obj.addProperty(
+                                "App::PropertyString", "ProfileName", "Geometry"
+                            )
+                            obj.ProfileName = ext.SweptArea.ProfileName
+
         # below is disabled for now... Don't know if it's useful to expose to the user
         elif False:  # rep.RepresentationIdentifier == "Axis":
             # Wall axis consisting on a single line
@@ -117,8 +140,24 @@ def add_geom_properties(obj):
                                     ).multiply(scaling)
 
 
+def set_attribute(ifcfile, element, prop, value):
+    """Sets an attribute. Returns True if the attribute was changed"""
+
+    if value != getattr(elem, prop):
+        ifcopenshell.api.run(
+            "attribute.edit_attributes",
+            ifcfile,
+            product=element,
+            attributes={prop: value},
+        )
+        return True
+    return False
+
+
 def set_geom_property(obj, prop):
     """Updates the internal IFC file with the given value"""
+
+    # TODO verify if values are different than the stored value before changing!
 
     element = ifc_tools.get_ifc_element(obj)
     if not ifc_tools.has_representation(element):
@@ -126,8 +165,7 @@ def set_geom_property(obj, prop):
     ifcfile = ifc_tools.get_ifcfile(obj)
     scaling = ifcopenshell.util.unit.calculate_unit_scale(ifcfile)
     scaling = 0.001 / scaling
-
-    print("Debug: Changing prop", obj.Label, ":", prop, "to", getattr(obj, prop))
+    changed = False
 
     if prop == "ExtrusionDepth":
         for rep in element.Representation.Representations:
@@ -135,14 +173,8 @@ def set_geom_property(obj, prop):
                 if len(rep.Items) == 1:
                     if rep.Items[0].is_a("IfcExtrudedAreaSolid"):
                         elem = rep.Items[0]
-                        depth = getattr(obj, prop).Value * scaling
-                        ifcopenshell.api.run(
-                            "attribute.edit_attributes",
-                            ifcfile,
-                            product=elem,
-                            attributes={"Depth": depth},
-                        )
-                        return True
+                        value = getattr(obj, prop).Value * scaling
+                        changed = set_attribute(ifcfile, elem, "Depth", value)
 
     elif prop == "ExtrusionDirection":
         for rep in element.Representation.Representations:
@@ -150,14 +182,8 @@ def set_geom_property(obj, prop):
                 if len(rep.Items) == 1:
                     if rep.Items[0].is_a("IfcExtrudedAreaSolid"):
                         elem = rep.Items[0].ExtrudedDirection
-                        direction = tuple(getattr(obj, prop))
-                        ifcopenshell.api.run(
-                            "attribute.edit_attributes",
-                            ifcfile,
-                            product=elem,
-                            attributes={"DirectionRatios": direction},
-                        )
-                        return True
+                        value = tuple(getattr(obj, prop))
+                        changed = set_attribute(ifcfile, elem, "DirectionRatios", value)
 
     elif prop == "RectangleLength":
         for rep in element.Representation.Representations:
@@ -167,13 +193,7 @@ def set_geom_property(obj, prop):
                         elem = rep.Items[0].SweptArea
                         if elem.is_a("IfcRectangleProfileDef"):
                             value = getattr(obj, prop).Value * scaling
-                            ifcopenshell.api.run(
-                                "attribute.edit_attributes",
-                                ifcfile,
-                                product=elem,
-                                attributes={"XDim": value},
-                            )
-                            return True
+                            changed = set_attribute(ifcfile, elem, "XDim", value)
 
     elif prop == "RectangleWidth":
         for rep in element.Representation.Representations:
@@ -183,51 +203,78 @@ def set_geom_property(obj, prop):
                         elem = rep.Items[0].SweptArea
                         if elem.is_a("IfcRectangleProfileDef"):
                             value = getattr(obj, prop).Value * scaling
-                            ifcopenshell.api.run(
-                                "attribute.edit_attributes",
-                                ifcfile,
-                                product=elem,
-                                attributes={"YDim": value},
-                            )
-                            return True
+                            changed = set_attribute(ifcfile, elem, "YDim", value)
 
     elif prop == "PolylinePoints":
+        # TODO check values against existing
         for rep in element.Representation.Representations:
             if rep.RepresentationIdentifier == "Body":
                 if len(rep.Items) == 1:
-                    if rep.Items[0].is_a("IfcArbitraryClosedProfileDef"):
-                        if rep.Items[0].SweptArea.OuterCurve.is_a("IfcPolyline"):
-                            elem = rep.Items[0].SweptArea.OuterCurve
-                            elem_points = elem.Points
-                            psize = elem_points[0].Dim
-                            points = getattr(obj, prop)
-                            if len(points) > len(elem_points):
-                                for i in range(len(points) - len(elem_points)):
-                                    p = ifcopenshell.api.run(
-                                        "root.create_entity",
-                                        ifcfile,
-                                        ifc_class="IfcCartesianPoint",
-                                    )
-                                    elem_points.append(p)
-                                elem.Points = elem_points
-                            elif len(points) < len(elem_points):
-                                rest = []
-                                for i in range(len(elem_points) - len(points)):
-                                    rest.append(elem_points.pop())
-                                elem.Points = elem_points
-                                for r in rest:
-                                    ifcopenshell.api.run(
-                                        "root.remove_product", ifcfile, product=r
-                                    )
-                            if len(points) == len(elem_points):
-                                for i in range(len(points)):
-                                    v = FreeCAD.Vector(points[i]).multiply(scaling)
-                                    coord = tuple(v)[:psize]
-                                    ifcopenshell.api.run(
-                                        "attribute.edit_attributes",
-                                        ifcfile,
-                                        product=elem_points[i],
-                                        attributes={"Coordinates": coord},
-                                    )
-                                return True
-    return False
+                    if rep.Items[0].is_a("IfcExtrudedAreaSolid"):
+                        if rep.Items[0].SweptArea.is_a("IfcArbitraryClosedProfileDef"):
+                            if rep.Items[0].SweptArea.OuterCurve.is_a("IfcPolyline"):
+                                elem = rep.Items[0].SweptArea.OuterCurve
+                                elem_points = elem.Points
+                                psize = elem_points[0].Dim
+                                points = getattr(obj, prop)
+                                if len(points) > len(elem_points):
+                                    for i in range(len(points) - len(elem_points)):
+                                        p = ifcopenshell.api.run(
+                                            "root.create_entity",
+                                            ifcfile,
+                                            ifc_class="IfcCartesianPoint",
+                                        )
+                                        elem_points.append(p)
+                                    elem.Points = elem_points
+                                elif len(points) < len(elem_points):
+                                    rest = []
+                                    for i in range(len(elem_points) - len(points)):
+                                        rest.append(elem_points.pop())
+                                    elem.Points = elem_points
+                                    for r in rest:
+                                        ifcopenshell.api.run(
+                                            "root.remove_product", ifcfile, product=r
+                                        )
+                                if len(points) == len(elem_points):
+                                    for i in range(len(points)):
+                                        v = FreeCAD.Vector(points[i]).multiply(scaling)
+                                        coord = tuple(v)[:psize]
+                                        ifcopenshell.api.run(
+                                            "attribute.edit_attributes",
+                                            ifcfile,
+                                            product=elem_points[i],
+                                            attributes={"Coordinates": coord},
+                                        )
+                                    changed = True
+
+    elif prop in [
+        "FilletRadius",
+        "FlangeEdgeRadius",
+        "FlangeSlope",
+        "FlangeThickness",
+        "OverallDepth",
+        "OverallWidth",
+        "WebThickness",
+    ]:
+        for rep in element.Representation.Representations:
+            if rep.RepresentationIdentifier == "Body":
+                if len(rep.Items) == 1:
+                    if rep.Items[0].SweptArea.is_a("IfcIShapeProfileDef"):
+                        elem = rep.Items[0].SweptArea
+                        value = getattr(obj, prop).Value * scaling
+                        if value == 0 and getattr(elem, prop) is None:
+                            value = None
+                        changed = set_attribute(ifcfile, elem, prop, value)
+
+    elif prop in ["ProfileName"]:
+        for rep in element.Representation.Representations:
+            if rep.RepresentationIdentifier == "Body":
+                if len(rep.Items) == 1:
+                    if rep.Items[0].SweptArea.is_a("IfcIShapeProfileDef"):
+                        elem = rep.Items[0].SweptArea
+                        value = obj.ProfileName
+                        changed = set_attribute(ifcfile, elem, prop, value)
+
+    if changed:
+        print("DEBUG: Changing prop", obj.Label, ":", prop, "to", getattr(obj, prop))
+    return changed
