@@ -861,6 +861,8 @@ def set_placement(obj):
     # This function can become pure IFC
 
     ifcfile = get_ifcfile(obj)
+    if not ifcfile:
+        print("DEBUG: No ifc file for object",obj.Label,"Aborting")
     element = get_ifc_element(obj)
     placement = FreeCAD.Placement(obj.Placement)
     scale = ifcopenshell.util.unit.calculate_unit_scale(ifcfile)
