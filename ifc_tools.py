@@ -31,6 +31,8 @@ from FreeCAD import Base
 import Part
 import Mesh
 from pivy import coin
+import exportIFC
+import exportIFCHelper
 
 import ifcopenshell
 from ifcopenshell import geom
@@ -508,8 +510,11 @@ def get_shape(elements, ifcfile, cached=False):
                     c = cache["Color"][e.id]
                 else:
                     c = (0.8, 0.8, 0.8)
-                for f in s.Faces:
-                    colors.append(c)
+                if len(c) <= 4:
+                    for f in s.Faces:
+                        colors.append(c)
+                else:
+                    colors = c
             else:
                 rest.append(e)
         elements = rest
@@ -531,14 +536,27 @@ def get_shape(elements, ifcfile, cached=False):
             shape.scale(SCALE)
             shape.transformShape(mat)
             shapes.append(shape)
-            color = item.geometry.surface_styles
+            sstyle = item.geometry.surface_styles
             # color = (color[0], color[1], color[2], 1.0 - color[3])
             # TODO temp workaround for tranparency bug
-            color = (color[0], color[1], color[2], 0.0)
-            for f in shape.Faces:
-                colors.append(color)
+            if (
+                (len(sstyle) > 4)
+                and len(shape.Solids) > 1
+                and len(sstyle) // 4 == len(shape.Solids)
+            ):
+                # multiple colors
+                colors = []
+                for i in range(len(shape.Solids)):
+                    for j in range(len(shape.Solids[i].Faces)):
+                        colors.append(
+                            (sstyle[i * 4], sstyle[i * 4 + 1], sstyle[i * 4 + 2], 0.0)
+                        )
+            else:
+                color = (sstyle[0], sstyle[1], sstyle[2], 0.0)
+                for f in shape.Faces:
+                    colors.append(color)
             cache["Shape"][item.id] = shape
-            cache["Color"][item.id] = color
+            cache["Color"][item.id] = colors
             progressbar.next(True)
         if not iterator.next():
             break
@@ -615,6 +633,7 @@ def get_coin(elements, ifcfile, cached=False):
                 mat.diffuseColor.setValue(color[:3])
                 # TODO treat transparency
                 # mat.transparency.setValue(0.8)
+                # TODO treat multiple materials
             else:
                 mat.diffuseColor.setValue(0.85, 0.85, 0.85)
             node.addChild(mat)
@@ -862,7 +881,7 @@ def set_placement(obj):
 
     ifcfile = get_ifcfile(obj)
     if not ifcfile:
-        print("DEBUG: No ifc file for object",obj.Label,"Aborting")
+        print("DEBUG: No ifc file for object", obj.Label, "Aborting")
     element = get_ifc_element(obj)
     placement = FreeCAD.Placement(obj.Placement)
     scale = ifcopenshell.util.unit.calculate_unit_scale(ifcfile)
@@ -928,11 +947,12 @@ def aggregate(obj, parent):
     product = get_ifc_element(obj)
     if product:
         # this object already has an associated IFC product
+        print("DEBUG:", obj.Label, "is already an IFC object")
         newobj = obj
     else:
         product = create_product(obj, parent, ifcfile)
         newobj = create_object(product, obj.Document, ifcfile, parent.ShapeMode)
-    rel = create_relationship(newobj, parent, product, ifcfile)
+    create_relationship(obj, newobj, parent, product, ifcfile)
     base = getattr(obj, "Base", None)
     if base:
         # make sure the base is used only by this object before deleting
@@ -958,13 +978,10 @@ def deaggregate(obj, parent):
     parent.Proxy.removeObject(parent, obj)
 
 
-def create_product(obj, parent, ifcfile):
+def create_product(obj, parent, ifcfile, ifctype=None):
     """Creates an IFC product out of a FreeCAD object"""
 
     uid = ifcopenshell.guid.new()
-    context = ifcfile[
-        get_body_context_ids(ifcfile)[-1]
-    ]  # TODO should this be different?
     history = get_ifc_element(parent).OwnerHistory  # TODO should this be changed?
     name = obj.Label
     description = getattr(obj, "Description", "")
@@ -976,9 +993,6 @@ def create_product(obj, parent, ifcfile):
     # https://blenderbim.org/docs-python/autoapi/ifcopenshell/api/geometry/index.html
     # that should contain all typical use cases one could have to convert FreeCAD geometry
     # to IFC.
-
-    import exportIFC
-    import exportIFCHelper
 
     # setup exporter - TODO do that in the module init
     exportIFC.clones = {}
@@ -993,12 +1007,9 @@ def create_product(obj, parent, ifcfile):
             "ERROR: You need a more recent version of FreeCAD >= 0.20.3\n"
         )
         return
-    ifctype = exportIFC.getIfcTypeFromObj(obj)
-    prefs = exportIFC.getPreferences()
-    prefs["SCHEMA"] = ifcfile.wrapped_data.schema_name()
-    s = ifcopenshell.util.unit.calculate_unit_scale(ifcfile)
-    # the above lines yields meter -> file unit scale factor. We need mm
-    prefs["SCALE_FACTOR"] = 0.001 / s
+    if not ifctype:
+        ifctype = exportIFC.getIfcTypeFromObj(obj)
+    prefs, context = get_export_preferences(ifcfile)
     # TODO migrate this to ifcopenshell api
     representation, placement, shapetype = exportIFC.getRepresentation(
         ifcfile, context, obj, preferences=prefs
@@ -1023,10 +1034,50 @@ def create_product(obj, parent, ifcfile):
     return product
 
 
-def create_relationship(obj, parent, element, ifcfile):
+def get_export_preferences(ifcfile):
+    """returns a preferences dict for exportIFC"""
+
+    prefs = exportIFC.getPreferences()
+    prefs["SCHEMA"] = ifcfile.wrapped_data.schema_name()
+    s = ifcopenshell.util.unit.calculate_unit_scale(ifcfile)
+    # the above lines yields meter -> file unit scale factor. We need mm
+    prefs["SCALE_FACTOR"] = 0.001 / s
+    context = ifcfile[
+        get_body_context_ids(ifcfile)[-1]
+    ]  # TODO should this be different?
+    return prefs, context
+
+
+def get_subvolume(obj):
+    """returns a subface + subvolume from a window object"""
+
+    tempface = None
+    tempobj = None
+    if hasattr(obj, "Proxy") and hasattr(obj.Proxy, "getSubVolume"):
+        tempshape = obj.Proxy.getSubVolume(obj)
+        if len(tempshape.Faces) == 6:
+            # We assume the standard output of ArchWindows
+            faces = sorted(tempshape.Faces, key=lambda f: f.CenterOfMass.z)
+            baseface = faces[0]
+            ext = faces[-1].CenterOfMass.sub(faces[0].CenterOfMass)
+            tempface = obj.Document.addObject("Part::Feature", "BaseFace")
+            tempface.Shape = baseface
+            tempobj = obj.Document.addObject("Part::Extrusion", "Opening")
+            tempobj.Base = tempface
+            tempobj.DirMode = "Custom"
+            tempobj.Dir = FreeCAD.Vector(ext).normalize()
+            tempobj.LengthFwd = ext.Length
+        else:
+            tempobj = obj.Document.addObject("Part::Feature", "Opening")
+            tempobj.Shape = tempshape
+    return tempface, tempobj
+
+
+def create_relationship(old_obj, obj, parent, element, ifcfile):
     """Creates a relationship between an IFC object and a parent IFC object"""
 
     parent_element = get_ifc_element(parent)
+    # case 1: element inside spatiual structure
     if parent_element.is_a("IfcSpatialStructureElement") and element.is_a("IfcElement"):
         ifcopenshell.api.run("spatial.unassign_container", ifcfile, product=element)
         uprel = ifcopenshell.api.run(
@@ -1035,6 +1086,43 @@ def create_relationship(obj, parent, element, ifcfile):
             product=element,
             relating_structure=parent_element,
         )
+    # case 2: dooe/window inside element
+    # https://standards.buildingsmart.org/IFC/RELEASE/IFC4/ADD2_TC1/HTML/annex/annex-e/wall-with-opening-and-window.htm
+    elif parent_element.is_a("IfcElement") and element.is_a() in [
+        "IfcDoor",
+        "IfcWindow",
+    ]:
+        tempface, tempobj = get_subvolume(old_obj)
+        if tempobj:
+            opening = create_product(tempobj, parent, ifcfile, "IfcOpeningElement")
+            old_obj.Document.removeObject(tempobj.Name)
+            if tempface:
+                old_obj.Document.removeObject(tempface.Name)
+            ifcopenshell.api.run(
+                "void.add_opening", ifcfile, opening=opening, element=parent_element
+            )
+            ifcopenshell.api.run(
+                "void.add_filling", ifcfile, opening=opening, element=element
+            )
+        # windows must also be part of a spatial container
+        ifcopenshell.api.run("spatial.unassign_container", ifcfile, product=element)
+        if parent_element.ContainedInStructure:
+            container = parent_element.ContainedInStructure[0].RelatingStructure
+            uprel = ifcopenshell.api.run(
+                "spatial.assign_container",
+                ifcfile,
+                product=element,
+                relating_structure=container,
+            )
+        elif parent_element.Decomposes:
+            container = parent_element.Decomposes[0].RelatingObject
+            uprel = ifcopenshell.api.run(
+                "aggregate.assign_object",
+                ifcfile,
+                product=element,
+                relating_object=container,
+            )
+    # case 3: element aggregated inside other element
     else:
         ifcopenshell.api.run("aggregate.unassign_object", ifcfile, product=element)
         uprel = ifcopenshell.api.run(

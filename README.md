@@ -71,7 +71,7 @@ The roadmap below will show you an overview of the current state of the implemen
 * [x] Support Arch walls
 * [x] Support Arch structures
 * [ ] Support Arch objects with subtractions and additions
-* [ ] Support Arch windows
+* [x] Support Arch windows
 * [ ] Support Draft 2D entitties
 * [ ] Support Draft dimensions
 * [ ] Support Part extrusions
