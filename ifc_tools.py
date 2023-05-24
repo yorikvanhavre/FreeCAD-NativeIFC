@@ -1064,8 +1064,12 @@ def get_subvolume(obj):
 
     tempface = None
     tempobj = None
+    subvolume = None
     if hasattr(obj, "Proxy") and hasattr(obj.Proxy, "getSubVolume"):
         tempshape = obj.Proxy.getSubVolume(obj)
+    elif hasattr(obj, "Subvolume") and obj.Subvolume:
+        tempshape = obj.Subvolume
+    if subvolume:
         if len(tempshape.Faces) == 6:
             # We assume the standard output of ArchWindows
             faces = sorted(tempshape.Faces, key=lambda f: f.CenterOfMass.z)
