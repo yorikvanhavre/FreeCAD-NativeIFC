@@ -143,7 +143,7 @@ def add_geom_properties(obj):
 def set_attribute(ifcfile, element, prop, value):
     """Sets an attribute. Returns True if the attribute was changed"""
 
-    if value != getattr(elem, prop):
+    if value != getattr(element, prop):
         ifcopenshell.api.run(
             "attribute.edit_attributes",
             ifcfile,

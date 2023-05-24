@@ -130,7 +130,9 @@ class ifc_vp_object:
             obj = self.Object
         ifcfile = ifc_tools.get_ifcfile(obj)
         if ifcfile:
-            ifc_tools.create_children(obj, ifcfile, recursive=False, assemblies=True)
+            ifc_tools.create_children(
+                obj, ifcfile, recursive=False, assemblies=True, expand=True
+            )
         obj.Document.recompute()
 
     def collapseChildren(self):

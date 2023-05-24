@@ -137,14 +137,20 @@ def create_object(ifcentity, document, ifcfile, shapemode=0):
     FreeCAD.Console.PrintLog(s)
     obj = add_object(document)
     add_properties(obj, ifcfile, ifcentity, shapemode=shapemode)
-    if ifcentity.is_a("IfcSpace") and FreeCAD.GuiUp:
-        obj.ViewObject.DisplayMode = "Wireframe"
+    if FreeCAD.GuiUp:
+        if ifcentity.is_a("IfcSpace") or ifcentity.is_a("IfcOpeningElement"):
+            obj.ViewObject.DisplayMode = "Wireframe"
     elements = [ifcentity]
     return obj
 
 
 def create_children(
-    obj, ifcfile=None, recursive=False, only_structure=False, assemblies=True
+    obj,
+    ifcfile=None,
+    recursive=False,
+    only_structure=False,
+    assemblies=True,
+    expand=False,
 ):
     """Creates a hierarchy of objects under an object"""
 
@@ -175,16 +181,18 @@ def create_children(
     if not ifcfile:
         ifcfile = get_ifcfile(obj)
     result = []
-    for child in get_children(obj, ifcfile, only_structure, assemblies):
+    for child in get_children(obj, ifcfile, only_structure, assemblies, expand):
         result.extend(create_child(obj, child))
     return result
 
 
-def get_children(obj, ifcfile, only_structure=False, assemblies=True):
+def get_children(
+    obj, ifcfile=None, only_structure=False, assemblies=True, expand=False
+):
     """Returns the direct descendants of an object"""
 
-    # This function can become pure IFC
-
+    if not ifcfile:
+        ifcfile = get_ifcfile(obj)
     ifcentity = ifcfile[obj.StepId]
     children = []
     if assemblies or not ifcentity.is_a("IfcElement"):
@@ -197,7 +205,7 @@ def get_children(obj, ifcfile, only_structure=False, assemblies=True):
             children.extend([rel.RelatedOpeningElement])
         for rel in getattr(ifcentity, "HasFillings", []):
             children.extend([rel.RelatedBuildingElement])
-    return filter_elements(children, ifcfile, expand=False, spaces=True)
+    return filter_elements(children, ifcfile, expand=expand, spaces=True)
 
 
 def get_ifcfile(obj):
@@ -229,10 +237,12 @@ def get_project(obj):
     return None
 
 
-def can_expand(obj, ifcfile):
+def can_expand(obj, ifcfile=None):
     """Returns True if this object can have any more child extracted"""
 
-    children = get_children(obj, ifcfile)
+    if not ifcfile:
+        ifcfile = get_ifcfile(obj)
+    children = get_children(obj, ifcfile, expand=True)
     group = [o.StepId for o in obj.Group if hasattr(o, "StepId")]
     for child in children:
         if child.id() not in group:
@@ -453,8 +463,9 @@ def filter_elements(elements, ifcfile, expand=True, spaces=False):
                     # the Polyline is the wall axis
                     # see https://github.com/yorikvanhavre/FreeCAD-NativeIFC/issues/28
                     elements = ifcopenshell.util.element.get_decomposition(elem)
-    # Never load feature elements, they can be lazy loaded
-    elements = [e for e in elements if not e.is_a("IfcFeatureElement")]
+    if not expand:
+        # Never load feature elements, they can be lazy loaded
+        elements = [e for e in elements if not e.is_a("IfcFeatureElement")]
     # do load spaces when required, otherwise skip computing their shapes
     if not spaces:
         elements = [e for e in elements if not e.is_a("IfcSpace")]
