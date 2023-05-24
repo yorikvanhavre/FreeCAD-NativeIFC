@@ -18,6 +18,12 @@ This is the documentation of the NativeIFC addon. It is made a of a series of co
 * [Inspecting the IFC structure of an object](#inspecting-the-ifc-structure-of-an-object)
 * [Add a new model structure](#add-a-new-model-structure)
 * [Add a new object](#add-a-new-object)
+* [How to add a wall](#how-to-add-a-wall)
+* [How to add a column or beam](#how-to-add-a-column-or-beam)
+* [How to add a door or window](#how-to-add-a-door-or-window)
+* [Modify the position of an element](#modify-the-position-of-an-element)
+* [Modify the shape of an element](#modify-the-shape-of-an-element)
+* [How to edit an opening](#how-to-edit-an-opening)
 * [Change the schema of an IFC document](#change-the-schema-of-an-ifc-document)
 * [Create 2D drawings (plans, sections) from an IFC file](#create-2d-drawings-plans-sections-from-an-ifc-file)
 
@@ -225,20 +231,87 @@ level = ifc_tools.aggregate(floor, building)
 #### From the UI
 
 * Create any desired object with other FreeCAD tools, ex. a wall with the BIM workbench
-* In the tree view, drag that wall onto an IFC project object or a building structure element (Building, storey,...)
+* In the tree view, drag that object onto an IFC project object or a building structure element (Building, storey,...)
 
 #### From Python
 
 ```python
 # create an object with any other workbench
-import Arch
-wall = Arch.makeWall(220,400,20)
+import Part
+shape = Part.makeBox(200,300,400)
+box = Part.show(shape)
 # get an existing IFC document object by its name
 project = FreeCAD.ActiveDocument.getObject("IfcObject")
 
 import ifc_tools
+ifc_tools.aggregate(box, project)
+```
+
+### How to add a wall
+
+#### From the UI
+
+* Create a wall using the [Wall](https://wiki.freecad.org/Arch_Wall) tool from the BIM or Arch workbenches
+* In the tree view, drag that wall onto an IFC project object or a building structure element (Building, storey,...)
+
+#### From Python
+
+```python
+import Arch
+import ifc_tools
+wall = Arch.makeWall(220,400,20)
 ifc_tools.aggregate(wall, project)
 ```
+
+### How to add a column or beam
+
+#### From the UI
+
+* Create a beam or a column using the [Structure](https://wiki.freecad.org/Arch_Structure) tool from the Arch workbench (or the Column or Beam tool from the BIM workbench)
+* In the tree view, drag that beam or column onto an IFC project object or a building structure element (Building, storey,...)
+
+#### From Python
+
+```python
+import Arch
+import ifc_tools
+wall = Arch.makeStructure(220,400,20)
+ifc_tools.aggregate(wall, project)
+```
+
+### How to add a door or window
+
+#### From the UI
+
+* Create a door or window using the [Window](https://wiki.freecad.org/Arch_Window) tool from the Arch workbench (or the Door or Window tool from the BIM workbench)
+* You can add that door/window to a wall or not. It does not matter, as the inclusion of the window into another IFC object will be done in the next step, and an opening will be created automatically
+* In the tree view, drag that windor or door onto a host element, such as a wall. The opening will be created automatically
+
+### Modify the position of an element
+
+#### From the UI
+
+You can move or rotate any object directly by editing its Pacement property or using the [Move](https://wiki.freecad.org/Draft_Move) or [Rotate](https://wiki.freecad.org/Draft_Rotate) tools
+
+### Modify the shape of an element
+
+#### From the UI
+
+* Right-click the element you wish to modify in the tree view
+* Select "Add geometry properties"
+* Edit the desired properties under the "Geometry" group
+
+### How to edit an opening
+
+#### From the UI
+
+* Select a wall or any object that has an opening
+* Right-click that object in the tree view, and select "Expand children"
+* The openings will be revealed in wireframe
+* You can move an opening
+* If the opening shape is editable, right-click the opening in the tree view and select "Add geometry properties"
+* Edit the available properties
+* When you are done, optionally, right-click the wall in the tree view and select "Collapse children"
 
 ### Change the schema of an IFC document
 
@@ -271,6 +344,5 @@ myProject.Schema = "IFC4"
 
 ### To be documented
 
-* [ ] **Modify the shape of an element**
 * [ ] **Extracting quantities from an IFC file**
 * [ ] **Creating renderings of an IFC file**
