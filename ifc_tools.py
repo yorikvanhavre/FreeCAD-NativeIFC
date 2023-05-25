@@ -776,7 +776,7 @@ def set_geometry(obj, elem, ifcfile, cached=False):
                 "IfcSpatialStructureElement"
             ):
                 print(
-                    "Debug: No Shape returned for object {}, {}, {}".format(
+                    "DEBUG: No Shape returned for object {}, {}, {}".format(
                         obj.StepId, obj.IfcType, obj.Label
                     )
                 )
@@ -943,13 +943,14 @@ def set_placement(obj):
     old_matrix = old_matrix.tolist()
     old_matrix = [[round(c, ROUND) for c in r] for r in old_matrix]
     if new_matrix != old_matrix:
-        print(
-            "DEBUG: placement changed for:",
-            obj.Label,
-            "old:",
-            old_matrix,
-            "new:",
-            new_matrix,
+        FreeCAD.Console.PrintLog(
+            "IFC: placement changed for "
+            + obj.Label
+            + " old: "
+            + str(old_matrix)
+            + " new: "
+            + str(new_matrix)
+            + "\n"
         )
         api = "geometry.edit_object_placement"
         ifcopenshell.api.run(
@@ -1215,7 +1216,7 @@ def get_elem_attribs(ifcentity):
             # print(e)
             value = "Error: {}".format(e)
             print(
-                "DEBUG: The entity #{} has a problem on attribut {}: {}".format(
+                "DEBUG: The entity #{} has a problem on attribute {}: {}".format(
                     ifcentity.id(), attr, e
                 )
             )
@@ -1428,22 +1429,22 @@ def edit_pset(obj, prop, value=None):
             if value == value_exist:
                 return False
             else:
-                print(
-                    "DEBUG: changed value of",
-                    obj.Label,
-                    "(",
-                    obj.StepId,
-                    ") /",
-                    target_prop,
-                    ":",
-                    value,
-                    "(",
-                    type(value),
-                    ") ->",
-                    value_exist,
-                    "(",
-                    type(value_exist),
-                    ")",
+                FreeCAD.Console.PrintLog(
+                    "IFC: property changed for "
+                    + obj.Label
+                    + " ("
+                    + str(obj.StepId)
+                    + ") : "
+                    + target_prop
+                    + " : "
+                    + str(value)
+                    + " ("
+                    + type(value)
+                    + ") -> "
+                    + str(value_exist)
+                    + " ("
+                    + type(value_exist)
+                    + ")\n"
                 )
         pset = get_pset(pset, element)
     else:
