@@ -173,7 +173,9 @@ def create_children(
             elif element.is_a("IfcOpeningElement"):
                 # force-create contained windows too if we just created an opening
                 windows = [
-                    o for o in get_children(child, ifcfile) if o.is_a() in ("IfcWindow","IfcDoor")
+                    o
+                    for o in get_children(child, ifcfile)
+                    if o.is_a() in ("IfcWindow", "IfcDoor")
                 ]
                 for window in windows:
                     subresult.extend(create_child(child, window))
@@ -819,8 +821,16 @@ def set_colors(obj, colors):
     """Sets the given colors to an object"""
 
     if FreeCAD.GuiUp and colors:
+        # ifcopenshell issues (-1,-1,-1) colors if not set
+        if isinstance(colors[0], (tuple, list)):
+            colors = [tuple([abs(d) for d in c]) for c in colors]
+        else:
+            colors = [abs(c) for c in colors]
         if hasattr(obj.ViewObject, "ShapeColor"):
-            obj.ViewObject.ShapeColor = colors[0][:3]
+            if isinstance(colors[0], (tuple, list)):
+                obj.ViewObject.ShapeColor = colors[0][:3]
+            else:
+                obj.ViewObject.ShapeColor = colors[:3]
         if hasattr(obj.ViewObject, "DiffuseColor"):
             obj.ViewObject.DiffuseColor = colors
 
