@@ -52,6 +52,9 @@ def get_geometry_tree(element, prefix=""):
     elif element.is_a("IfcBooleanClippingResult"):
         result.extend(get_geometry_tree(element.FirstOperand, prefix))
         result.extend(get_geometry_tree(element.SecondOperand, prefix))
+    elif element.is_a("IfcBooleanResult"):
+        result.extend(get_geometry_tree(element.FirstOperand, prefix))
+        result.extend(get_geometry_tree(element.SecondOperand, prefix))
     elif element.is_a("IfcHalfSpaceSolid"):
         result.extend(get_geometry_tree(element.BaseSurface, prefix))
     return result
