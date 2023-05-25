@@ -131,7 +131,10 @@ def create_ifcfile():
 def create_object(ifcentity, document, ifcfile, shapemode=0):
     """Creates a FreeCAD object from an IFC entity"""
 
-    s = "Created #{}: {}, '{}'\n".format(
+    exobj = get_object(ifcentity, document)
+    if exobj:
+        return exobj
+    s = "IFC: Created #{}: {}, '{}'\n".format(
         ifcentity.id(), ifcentity.is_a(), ifcentity.Name
     )
     FreeCAD.Console.PrintLog(s)
@@ -215,6 +218,22 @@ def get_children(
         for rel in getattr(ifcentity, "HasFillings", []):
             children.extend([rel.RelatedBuildingElement])
     return filter_elements(children, ifcfile, expand=expand, spaces=True)
+
+
+def get_object(element, document=None):
+    """Returns the object that references this element, if any"""
+
+    if document:
+        ldocs = {"document": document}
+    else:
+        ldocs = FreeCAD.listDocuments()
+    for n, d in ldocs.items():
+        for obj in d.Objects:
+            if hasattr(obj, "StepId"):
+                if obj.StepId == element.id():
+                    if get_ifc_element(obj) == element:
+                        return obj
+    return None
 
 
 def get_ifcfile(obj):
