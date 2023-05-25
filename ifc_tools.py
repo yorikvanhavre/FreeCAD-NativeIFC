@@ -170,6 +170,13 @@ def create_children(
                 ]
                 for building in buildings:
                     subresult.extend(create_child(child, building))
+            elif element.is_a("IfcOpeningElement"):
+                # force-create contained windows too if we just created an opening
+                windows = [
+                    o for o in get_children(child, ifcfile) if o.is_a() in ("IfcWindow","IfcDoor")
+                ]
+                for window in windows:
+                    subresult.extend(create_child(child, window))
             if recursive:
                 subresult.extend(
                     create_children(
