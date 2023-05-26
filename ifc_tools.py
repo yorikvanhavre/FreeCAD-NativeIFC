@@ -50,6 +50,7 @@ import ifc_import
 SCALE = 1000.0  # IfcOpenShell works in meters, FreeCAD works in mm
 SHORT = False  # If True, only Step ID attribute is created
 ROUND = 8  # rounding value for placements
+SHOW_GROUPS = False  # to see special groups by default or not in the tree
 
 
 def create_document(document, filename=None, shapemode=0, strategy=0, silent=False):
@@ -81,6 +82,7 @@ def create_document(document, filename=None, shapemode=0, strategy=0, silent=Fal
     obj.Proxy.ifcfile = ifcfile
     add_properties(obj, ifcfile, project, shapemode=shapemode)
     obj.addProperty("App::PropertyEnumeration", "Schema", "Base")
+    get_group(obj, "IfcOrphansGroup")
     obj.Schema = ifcopenshell.ifcopenshell_wrapper.schema_names()
     obj.Schema = ifcfile.wrapped_data.schema_name()
     # populate according to strategy
@@ -278,7 +280,7 @@ def can_expand(obj, ifcfile=None):
     return False
 
 
-def add_object(document, otype=None):
+def add_object(document, otype=None, oname="IfcObject"):
     """adds a new object to a FreeCAD document.
     otype can be 'project', 'group' or None (normal object)"""
 
@@ -294,7 +296,7 @@ def add_object(document, otype=None):
         vp = ifc_viewproviders.ifc_vp_group()
     else:
         vp = ifc_viewproviders.ifc_vp_object()
-    obj = document.addObject(ftype, "IfcObject", proxy, vp, False)
+    obj = document.addObject(ftype, oname, proxy, vp, False)
     return obj
 
 
@@ -1265,6 +1267,21 @@ def get_orphan_elements(ifcfile):
     return products
 
 
+def get_group(project, name):
+    """returns a group of the given type under the given IFC project. Creates it if needed"""
+
+    for c in project.Group:
+        if c.isDerivedFrom("App::DocumentObjectGroupPython"):
+            if c.Name == name:
+                return c
+    group = add_object(project.Document, otype="group", oname=name)
+    group.Label = "Orphan objects"
+    if FreeCAD.GuiUp:
+        group.ViewObject.ShowInTree = SHOW_GROUPS
+    project.Proxy.addObject(project, group)
+    return group
+
+
 def load_orphans(obj):
     """loads orphan objects from the given project object"""
 
@@ -1273,9 +1290,7 @@ def load_orphans(obj):
     shapemode = obj.ShapeMode
     elements = get_orphan_elements(ifcfile)
     if elements:
-        group = add_object(doc, otype="group")
-        group.Label = "Orphans"
-        obj.Proxy.addObject(obj, group)
+        group = get_group(obj, "IfcOrphansGroup")
         for element in elements:
             child = create_object(element, doc, ifcfile, shapemode)
             group.addObject(child)
