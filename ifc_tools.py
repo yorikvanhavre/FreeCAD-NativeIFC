@@ -583,24 +583,28 @@ def get_shape(elements, ifcfile, cached=False):
             sstyle = item.geometry.surface_styles
             # color = (color[0], color[1], color[2], 1.0 - color[3])
             # TODO temp workaround for tranparency bug
+            scolors = []
             if (
                 (len(sstyle) > 4)
                 and len(shape.Solids) > 1
                 and len(sstyle) // 4 == len(shape.Solids)
             ):
                 # multiple colors
-                colors = []
                 for i in range(len(shape.Solids)):
                     for j in range(len(shape.Solids[i].Faces)):
-                        colors.append(
+                        scolors.append(
                             (sstyle[i * 4], sstyle[i * 4 + 1], sstyle[i * 4 + 2], 0.0)
                         )
+                if len(colors) < len(shape.Faces):
+                    for i in range(len(shape.Faces)-len(colors)):
+                        scolors.append((sstyle[0], sstyle[1], sstyle[2], 0.0))
             else:
                 color = (sstyle[0], sstyle[1], sstyle[2], 0.0)
                 for f in shape.Faces:
-                    colors.append(color)
+                    scolors.append(color)
             cache["Shape"][item.id] = shape
-            cache["Color"][item.id] = colors
+            cache["Color"][item.id] = scolors
+            colors.extend(scolors)
             progressbar.next(True)
         if not iterator.next():
             break
