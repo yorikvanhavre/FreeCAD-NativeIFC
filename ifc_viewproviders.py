@@ -264,22 +264,7 @@ class ifc_vp_document(ifc_vp_object):
         iconpath = os.path.join(basepath, "icons", "IFC_document.svg")
         if self.Object.Modified:
             if not hasattr(self, "modicon"):
-                from PySide import QtCore, QtGui  # lazy load
-
-                # build an overlay "warning" icon
-                baseicon = QtGui.QImage(iconpath)
-                overlay = QtGui.QImage(":/icons/media-record.svg")
-                width = baseicon.width() / 2
-                overlay = overlay.scaled(width, width)
-                painter = QtGui.QPainter()
-                painter.begin(baseicon)
-                painter.drawImage(0, 0, overlay)
-                painter.end()
-                ba = QtCore.QByteArray()
-                b = QtCore.QBuffer(ba)
-                b.open(QtCore.QIODevice.WriteOnly)
-                baseicon.save(b, "XPM")
-                self.modicon = ba.data().decode("latin1")
+                self.modicon = overlay(iconpath, ":/icons/media-record.svg")
             return self.modicon
         else:
             return iconpath
@@ -384,6 +369,38 @@ class ifc_vp_group:
     """View provider for the IFC group object"""
 
     def getIcon(self):
-        path = os.path.dirname(os.path.dirname(__file__))
-        icom = "IFC_group.svg"
-        return os.path.join(path, "icons", icom)
+        from PySide2 import QtCore, QtGui  # lazy loading
+
+        if not hasattr(self, "modicon"):
+            self.modicon = overlay(
+                QtGui.QIcon.fromTheme("folder", QtGui.QIcon(":/icons/foler.svg")),
+                os.path.join(os.path.dirname(__file__), "icons", "IFC.svg"),
+            )
+        return self.modicon
+
+
+def overlay(icon1, icon2):
+    """Overlays icon2 onto icon1"""
+
+    from PySide2 import QtCore, QtGui  # lazy loading
+
+    if isinstance(icon1, QtGui.QIcon):
+        baseicon = icon1.pixmap(32, 32)
+        baseicon = QtGui.QImage(
+            baseicon.toImage().convertToFormat(QtGui.QImage.Format_ARGB32_Premultiplied)
+        )
+    elif isinstance(icon1, str):
+        baseicon = QtGui.QImage(icon1)
+    if isinstance(icon2, str):
+        overlay = QtGui.QImage(icon2)
+    width = baseicon.width() / 2
+    overlay = overlay.scaled(width, width)
+    painter = QtGui.QPainter()
+    painter.begin(baseicon)
+    painter.drawImage(1, 1, overlay)
+    painter.end()
+    ba = QtCore.QByteArray()
+    b = QtCore.QBuffer(ba)
+    b.open(QtCore.QIODevice.WriteOnly)
+    baseicon.save(b, "XPM")
+    return ba.data().decode("latin1")
