@@ -470,6 +470,9 @@ def filter_elements(elements, ifcfile, expand=True, spaces=False):
     # This function can become pure IFC
 
     # gather decomposition if needed
+    openings = False
+    if any([e.is_a("IfcOpeningElement") for e in elements]):
+        openings = True
     if expand and (len(elements) == 1):
         elem = elements[0]
         if elem.is_a("IfcSpace"):
@@ -493,8 +496,8 @@ def filter_elements(elements, ifcfile, expand=True, spaces=False):
                     # the Polyline is the wall axis
                     # see https://github.com/yorikvanhavre/FreeCAD-NativeIFC/issues/28
                     elements = ifcopenshell.util.element.get_decomposition(elem)
-    if not expand:
-        # Never load feature elements, they can be lazy loaded
+    if not openings:
+        # Never load feature elements by default, they can be lazy loaded
         elements = [e for e in elements if not e.is_a("IfcFeatureElement")]
     # do load spaces when required, otherwise skip computing their shapes
     if not spaces:
