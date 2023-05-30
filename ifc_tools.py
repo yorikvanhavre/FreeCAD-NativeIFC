@@ -219,7 +219,9 @@ def get_children(
             children.extend([rel.RelatedOpeningElement])
         for rel in getattr(ifcentity, "HasFillings", []):
             children.extend([rel.RelatedBuildingElement])
-    return filter_elements(children, ifcfile, expand=expand, spaces=True, assemblies=assemblies)
+    return filter_elements(
+        children, ifcfile, expand=expand, spaces=True, assemblies=assemblies
+    )
 
 
 def get_object(element, document=None):
@@ -596,7 +598,7 @@ def get_shape(elements, ifcfile, cached=False):
                             (sstyle[i * 4], sstyle[i * 4 + 1], sstyle[i * 4 + 2], 0.0)
                         )
                 if len(colors) < len(shape.Faces):
-                    for i in range(len(shape.Faces)-len(colors)):
+                    for i in range(len(shape.Faces) - len(colors)):
                         scolors.append((sstyle[0], sstyle[1], sstyle[2], 0.0))
             else:
                 color = (sstyle[0], sstyle[1], sstyle[2], 0.0)
