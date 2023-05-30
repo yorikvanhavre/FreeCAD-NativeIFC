@@ -219,7 +219,7 @@ def get_children(
             children.extend([rel.RelatedOpeningElement])
         for rel in getattr(ifcentity, "HasFillings", []):
             children.extend([rel.RelatedBuildingElement])
-    return filter_elements(children, ifcfile, expand=expand, spaces=True)
+    return filter_elements(children, ifcfile, expand=expand, spaces=True, assemblies=assemblies)
 
 
 def get_object(element, document=None):
@@ -464,14 +464,14 @@ def has_representation(element):
     return False
 
 
-def filter_elements(elements, ifcfile, expand=True, spaces=False):
+def filter_elements(elements, ifcfile, expand=True, spaces=False, assemblies=True):
     """Filter elements list of unwanted types"""
 
     # This function can become pure IFC
 
     # gather decomposition if needed
     openings = False
-    if any([e.is_a("IfcOpeningElement") for e in elements]):
+    if assemblies and any([e.is_a("IfcOpeningElement") for e in elements]):
         openings = True
     if expand and (len(elements) == 1):
         elem = elements[0]

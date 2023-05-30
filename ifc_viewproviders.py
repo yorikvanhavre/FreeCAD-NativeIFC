@@ -131,7 +131,7 @@ class ifc_vp_object:
         ifcfile = ifc_tools.get_ifcfile(obj)
         if ifcfile:
             ifc_tools.create_children(
-                obj, ifcfile, recursive=False, assemblies=True, expand=True
+                obj, ifcfile, recursive=False, assemblies=True, expand=False
             )
         obj.Document.recompute()
 
