@@ -50,7 +50,7 @@ import ifc_import
 SCALE = 1000.0  # IfcOpenShell works in meters, FreeCAD works in mm
 SHORT = False  # If True, only Step ID attribute is created
 ROUND = 8  # rounding value for placements
-SHOW_GROUPS = False  # to see special groups by default or not in the tree
+PARAMS = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Mod/NativeIFC")
 
 
 def create_document(document, filename=None, shapemode=0, strategy=0, silent=False):
@@ -1008,19 +1008,23 @@ def aggregate(obj, parent):
         # this object already has an associated IFC product
         print("DEBUG:", obj.Label, "is already an IFC object")
         newobj = obj
+        new = False
     else:
         product = create_product(obj, parent, ifcfile)
         newobj = create_object(product, obj.Document, ifcfile, parent.ShapeMode)
+        new = True
     create_relationship(obj, newobj, parent, product, ifcfile)
     base = getattr(obj, "Base", None)
     if base:
         # make sure the base is used only by this object before deleting
         if base.InList != [obj]:
             base = None
-    if base:
+    delete = not(PARAMS.GetBool("KeepAggregated", False))
+    if new and delete and base:
         obj.Document.removeObject(base.Name)
     label = obj.Label
-    obj.Document.removeObject(obj.Name)
+    if new and delete:
+        obj.Document.removeObject(obj.Name)
     newobj.Label = label  # to avoid 001-ing the Label...
     proj.Modified = True
     return newobj
@@ -1286,7 +1290,7 @@ def get_group(project, name):
     group = add_object(project.Document, otype="group", oname=name)
     group.Label = "Orphan objects"
     if FreeCAD.GuiUp:
-        group.ViewObject.ShowInTree = SHOW_GROUPS
+        group.ViewObject.ShowInTree = PARAMS.GetBool("ShowDataGroups", False)
     project.Proxy.addObject(project, group)
     return group
 

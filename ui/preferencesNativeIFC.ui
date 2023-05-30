@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>443</width>
-    <height>406</height>
+    <width>422</width>
+    <height>499</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -155,6 +155,38 @@
         </property>
         <property name="prefEntry" stdset="0">
          <cstring>AskAgain</cstring>
+        </property>
+        <property name="prefPath" stdset="0">
+         <cstring>Mod/NativeIFC</cstring>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="Gui::PrefCheckBox" name="checkBox_9">
+        <property name="toolTip">
+         <string>By default, groups containing non-geometrical data in an IFC document are hidden in the tree. You can show them by right-clicking the IFC document and selecting 'Shoiw hidden objects'. By enabling this setting, these groups will not be hidden by default anymore.</string>
+        </property>
+        <property name="text">
+         <string>Show data groups</string>
+        </property>
+        <property name="prefEntry" stdset="0">
+         <cstring>ShowDataGroups</cstring>
+        </property>
+        <property name="prefPath" stdset="0">
+         <cstring>Mod/NativeIFC</cstring>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="Gui::PrefCheckBox" name="checkBox_10">
+        <property name="toolTip">
+         <string>When enabling this, the original version of objects dropped onto an IFC project tree will not be deleted.</string>
+        </property>
+        <property name="text">
+         <string>Keep original version of aggregated objects</string>
+        </property>
+        <property name="prefEntry" stdset="0">
+         <cstring>KeepAggregated</cstring>
         </property>
         <property name="prefPath" stdset="0">
          <cstring>Mod/NativeIFC</cstring>
