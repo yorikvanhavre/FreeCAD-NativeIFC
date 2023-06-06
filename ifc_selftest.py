@@ -30,6 +30,8 @@ import unittest
 import requests
 import ifc_import
 import ifc_tools
+import ifc_geometry
+import ifcopenshell
 import difflib
 
 IFCOPENHOUSE_IFC4 = (
@@ -217,9 +219,47 @@ class ArchTest(unittest.TestCase):
         print(ifco, "IFC objects created")
         self.failUnless(fco == 8 and ifco == 12, "CreateDocument failed")
 
+    def test10_ChangePlacement(self):
+        FreeCAD.Console.PrintMessage("10. Changing Placement...")
+        clearObjects()
+        fp = getIfcFilePath()
+        ifc_import.insert(
+            fp, "IfcTest", strategy=2, shapemode=1, switchwb=0, silent=True
+        )
+        obj = FreeCAD.getDocument("IfcTest").getObject("IfcObject004")
+        elem = ifc_tools.get_ifc_element(obj)
+        obj.Placement.move(FreeCAD.Vector(100, 200, 300))
+        new_plac = ifcopenshell.util.placement.get_local_placement(elem.ObjectPlacement)
+        new_plac = str(new_plac).replace(" ", "").replace("\n", "")
+        target = "[[1.0.0.100.][0.1.0.200.][0.0.1.300.][0.0.0.1.]]"
+        self.failUnless(new_plac == target, "ChangePlacement failed")
 
-# test changing placement
-# test changing geometry
-# test remove object
+    def test11_ChangeGeometry(self):
+        FreeCAD.Console.PrintMessage("11. Changing Geometry...")
+        clearObjects()
+        fp = getIfcFilePath()
+        ifc_import.insert(
+            fp, "IfcTest", strategy=2, shapemode=0, switchwb=0, silent=True
+        )
+        obj = FreeCAD.getDocument("IfcTest").getObject("IfcObject004")
+        ifc_geometry.add_geom_properties(obj)
+        obj.ExtrusionDepth = "6000 mm"
+        FreeCAD.getDocument("IfcTest").recompute()
+        self.failUnless(obj.Shape.Volume > 1500000, "ChangeGeometry failed")
+
+    def test12_RemoveObject(self):
+        FreeCAD.Console.PrintMessage("12. Remove object...")
+        clearObjects()
+        fp = getIfcFilePath()
+        ifc_import.insert(
+            fp, "IfcTest", strategy=2, shapemode=0, switchwb=0, silent=True
+        )
+        ifcfile = ifc_tools.get_ifcfile(FreeCAD.getDocument("IfcTest").Objects[-1])
+        count1 = len(ifcfile.by_type("IfcProduct"))
+        FreeCAD.getDocument("IfcTest").removeObject("IfcObject004")
+        count2 = len(ifcfile.by_type("IfcProduct"))
+        self.failUnless(count2 < count1, "RemoveObject failed")
+
+
 # test psets
 # test materials
