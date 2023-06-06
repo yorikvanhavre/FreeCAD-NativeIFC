@@ -65,6 +65,8 @@ The roadmap below will show you an overview of the current state of the implemen
 * [x] Handle drag/drop
 * [ ] Handle undo/redo
 * [x] Allow to change the IFC schema
+* [ ] Support layers
+* [ ] Support groups
 
 #### 5. Full workflow (creation and edition) of different tools
 
@@ -75,7 +77,7 @@ The roadmap below will show you an overview of the current state of the implemen
 * [ ] Support custom openings and protrusions
 * [ ] Support Draft 2D entitties
 * [ ] Support Draft dimensions
-* [ ] Support Part extrusions
+* [x] Support Part extrusions
 * [ ] Support Part booleans
 
 #### Additionals
