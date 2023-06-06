@@ -62,6 +62,8 @@ def insert(
         ifc_tools.load_orphans(prj_obj)
     if params.GetBool("LoadPsets", False):
         ifc_tools.load_psets(prj_obj)
+    if params.GetBool("LoadMaterials", False):
+        ifc_tools.load_materials(prj_obj)
     document.recompute()
     if FreeCAD.GuiUp:
         FreeCADGui.doCommand(
@@ -94,6 +96,7 @@ def get_options(
 
     orphans = params.GetBool("LoadOrphans", False)
     psets = params.GetBool("LoadPsets", False)
+    materials = params.GetBool("LoadMaterials", False)
     if strategy is None:
         strategy = params.GetInt("ImportStrategy", 0)
     if shapemode is None:
@@ -117,6 +120,7 @@ def get_options(
         dlg.checkAskAgain.setChecked(ask)
         dlg.checkLoadOrphans.setChecked(orphans)
         dlg.checkLoadPsets.setChecked(psets)
+        dlg.checkLoadMaterials.setChecked(psets)
         result = dlg.exec_()
         if not result:
             return None, None, None
@@ -126,12 +130,14 @@ def get_options(
         ask = dlg.checkAskAgain.isChecked()
         orphans = dlg.checkLoadOrphans.isChecked()
         psets = dlg.checkLoadPsets.isChecked()
+        materials = dlg.checkLoadMaterials.isChecked()
         params.SetInt("ImportStrategy", strategy)
         params.SetInt("ShapeMode", shapemode)
         params.SetBool("SwitchWB", switchwb)
         params.SetBool("AskAgain", ask)
         params.SetBool("LoadOrphans", orphans)
         params.SetBool("LoadPsets", psets)
+        params.SetBool("LoadMaterials", materials)
     return strategy, shapemode, switchwb
 
 

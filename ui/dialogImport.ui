@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>353</width>
-    <height>266</height>
+    <height>297</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -103,6 +103,13 @@
     <widget class="QCheckBox" name="checkLoadPsets">
      <property name="text">
       <string>Load property sets</string>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <widget class="QCheckBox" name="checkLoadMaterials">
+     <property name="text">
+      <string>Load materials</string>
      </property>
     </widget>
    </item>

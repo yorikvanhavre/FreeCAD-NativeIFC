@@ -95,12 +95,13 @@ class ifc_object:
     def execute(self, obj):
         import ifc_tools  # lazy import
 
-        cached = getattr(self, "cached", False)
-        ifcfile = ifc_tools.get_ifcfile(obj)
-        element = ifc_tools.get_ifc_element(obj)
-        ifc_tools.set_geometry(obj, element, ifcfile, cached=cached)
-        self.cached = False
-        self.rebuild_classlist(obj)
+        if obj.isDerivedFrom("Part::Feature"):
+            cached = getattr(self, "cached", False)
+            ifcfile = ifc_tools.get_ifcfile(obj)
+            element = ifc_tools.get_ifc_element(obj)
+            ifc_tools.set_geometry(obj, element, ifcfile, cached=cached)
+            self.cached = False
+            self.rebuild_classlist(obj)
 
     def addObject(self, obj, child):
         if child not in obj.Group:

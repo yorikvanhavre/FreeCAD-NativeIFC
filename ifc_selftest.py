@@ -219,4 +219,7 @@ class ArchTest(unittest.TestCase):
 
 
 # test changing placement
+# test changing geometry
 # test remove object
+# test psets
+# test materials

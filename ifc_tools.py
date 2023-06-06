@@ -83,6 +83,8 @@ def create_document(document, filename=None, shapemode=0, strategy=0, silent=Fal
     add_properties(obj, ifcfile, project, shapemode=shapemode)
     obj.addProperty("App::PropertyEnumeration", "Schema", "Base")
     get_group(obj, "IfcOrphansGroup")
+    get_group(obj, "IfcMaterialsGroup")
+    get_group(obj, "IfcTypesGroup")
     obj.Schema = ifcopenshell.ifcopenshell_wrapper.schema_names()
     obj.Schema = ifcfile.wrapped_data.schema_name()
     # populate according to strategy
@@ -146,6 +148,33 @@ def create_object(ifcentity, document, ifcfile, shapemode=0):
         if ifcentity.is_a("IfcSpace") or ifcentity.is_a("IfcOpeningElement"):
             obj.ViewObject.DisplayMode = "Wireframe"
     elements = [ifcentity]
+    return obj
+
+
+def create_material(element, parent, recursive=False):
+    """Creates a material object in the given project or parent material"""
+
+    if not element:
+        return
+    if isinstance(element, (tuple, list)):
+        for e in element:
+            create_material(e, parent, recursive)
+        return
+    obj = add_object(parent.Document, otype="material")
+    ifcfile = get_ifcfile(parent)
+    add_properties(obj, ifcfile, element)
+    if parent.isDerivedFrom("App::MaterialObject"):
+        parent.Proxy.addObject(parent, obj)
+    else:
+        get_group(parent, "IfcMaterialsGroup").addObject(obj)
+    if recursive:
+        submat = get_material(obj)
+        if isinstance(submat, list):
+            for s in submat:
+                create_material(s, obj, recursive)
+        else:
+            create_material(submat, obj, recursive)
+    show_psets(obj)
     return obj
 
 
@@ -282,6 +311,44 @@ def can_expand(obj, ifcfile=None):
     return False
 
 
+def get_material(obj):
+    """Returns a material attched to this object"""
+
+    element = get_ifc_element(obj)
+    if not element:
+        return None
+    if element.is_a("IfcMaterialConstituentSet"):
+        return element.MaterialConstituents
+    elif element.is_a() in [
+        "IfcMaterialLayer",
+        "IfcMaterialConstituent",
+        "IfcMaterialProfile",
+    ]:
+        return element.Material
+    elif element.is_a("IfcMaterialLayerSet"):
+        return element.MaterialLayers
+    elif element.is_a("IfcMaterialProfileSet"):
+        return element.MaterialProfiles
+    else:
+        material = ifcopenshell.util.element.get_material(
+            element, should_skip_usage=True
+        )
+        return material
+
+
+def show_material(obj):
+    """Creates and links materials for the given object, if available"""
+
+    material = get_material(obj)
+    if not material:
+        return
+    if not hasattr(obj, "Material"):
+        obj.addProperty("App::PropertyLink", "Material", "IFC")
+    project = get_project(obj)
+    matobj = create_material(material, project, recursive=True)
+    obj.Material = matobj
+
+
 def add_object(document, otype=None, oname="IfcObject"):
     """adds a new object to a FreeCAD document.
     otype can be 'project', 'group' or None (normal object)"""
@@ -289,6 +356,9 @@ def add_object(document, otype=None, oname="IfcObject"):
     if otype == "group":
         proxy = None
         ftype = "App::DocumentObjectGroupPython"
+    elif otype == "material":
+        proxy = ifc_objects.ifc_object()
+        ftype = "App::MaterialObjectPython"
     else:
         proxy = ifc_objects.ifc_object()
         ftype = "Part::FeaturePython"
@@ -296,6 +366,8 @@ def add_object(document, otype=None, oname="IfcObject"):
         vp = ifc_viewproviders.ifc_vp_document()
     elif otype == "group":
         vp = ifc_viewproviders.ifc_vp_group()
+    elif otype == "material":
+        vp = ifc_viewproviders.ifc_vp_material()
     else:
         vp = ifc_viewproviders.ifc_vp_object()
     obj = document.addObject(ftype, oname, proxy, vp, False)
@@ -317,7 +389,7 @@ def add_properties(
         obj.Label = ifcentity.is_a()
     if "Group" not in obj.PropertiesList:
         obj.addProperty("App::PropertyLinkList", "Group", "Base")
-    if "ShapeMode" not in obj.PropertiesList:
+    if obj.isDerivedFrom("Part::Feature") and "ShapeMode" not in obj.PropertiesList:
         obj.addProperty("App::PropertyEnumeration", "ShapeMode", "Base")
         shapemodes = [
             "Shape",
@@ -373,6 +445,10 @@ def add_properties(
         elif data_type == "boolean":
             if attr not in obj.PropertiesList:
                 obj.addProperty("App::PropertyBool", attr, "IFC")
+            if not value:
+                value = False
+            elif not isinstance(value, bool):
+                print("DEBUG: attempting to set boolean value:", attr, value)
             setattr(obj, attr, value)  # will trigger error. TODO: Fix this
         elif isinstance(value, ifcopenshell.entity_instance):
             if links:
@@ -1019,7 +1095,7 @@ def aggregate(obj, parent):
         # make sure the base is used only by this object before deleting
         if base.InList != [obj]:
             base = None
-    delete = not(PARAMS.GetBool("KeepAggregated", False))
+    delete = not (PARAMS.GetBool("KeepAggregated", False))
     if new and delete and base:
         obj.Document.removeObject(base.Name)
     label = obj.Label
@@ -1288,7 +1364,7 @@ def get_group(project, name):
             if c.Name == name:
                 return c
     group = add_object(project.Document, otype="group", oname=name)
-    group.Label = "Orphan objects"
+    group.Label = name.strip("Ifc").strip("Group")
     if FreeCAD.GuiUp:
         group.ViewObject.ShowInTree = PARAMS.GetBool("ShowDataGroups", False)
     project.Proxy.addObject(project, group)
@@ -1494,3 +1570,11 @@ def load_psets(obj):
     show_psets(obj)
     for child in obj.Group:
         load_psets(child)
+
+
+def load_materials(obj):
+    """Recursively loads materials of child objects"""
+
+    show_material(obj)
+    for child in obj.Group:
+        load_materials(child)

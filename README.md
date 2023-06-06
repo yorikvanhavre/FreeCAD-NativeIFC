@@ -59,7 +59,7 @@ The roadmap below will show you an overview of the current state of the implemen
 * [x] Allow to edit placements
 * [x] Define a strategy for expanding non-IfcProduct elements
 * [ ] ~~Expand attributes~~ cancelled for now because only non-link attributes need to be shown so far
-* [ ] Expand materials
+* [x] Expand materials
 * [x] Expand properties
 * [ ] Allow to regroup elements
 * [x] Handle drag/drop

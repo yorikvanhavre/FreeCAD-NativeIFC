@@ -110,6 +110,10 @@ class ifc_vp_object:
             action_props = QtWidgets.QAction(icon, "Expand property sets", menu)
             action_props.triggered.connect(self.showProps)
             menu.addAction(action_props)
+        if ifc_tools.get_material(self.Object):
+            action_material = QtWidgets.QAction(icon, "Load material", menu)
+            action_material.triggered.connect(self.addMaterial)
+            menu.addAction(action_material)
 
     def hasChildren(self, obj):
         """Returns True if this IFC object can be decomposed"""
@@ -195,6 +199,14 @@ class ifc_vp_object:
         import ifc_geometry  # lazy loading
 
         ifc_geometry.add_geom_properties(self.Object)
+
+    def addMaterial(self):
+        """Adds a material to this object"""
+
+        import ifc_tools  # lazy loading
+
+        ifc_tools.show_material(self.Object)
+        self.Object.Document.recompute()
 
     def showTree(self):
         """Shows a dialog with a geometry tree for the object"""
@@ -373,10 +385,50 @@ class ifc_vp_group:
 
         if not hasattr(self, "modicon"):
             self.modicon = overlay(
-                QtGui.QIcon.fromTheme("folder", QtGui.QIcon(":/icons/foler.svg")),
+                QtGui.QIcon.fromTheme("folder", QtGui.QIcon(":/icons/folder.svg")),
                 os.path.join(os.path.dirname(__file__), "icons", "IFC.svg"),
             )
         return self.modicon
+
+
+class ifc_vp_material:
+
+    """View provider for the IFC group object"""
+
+    def attach(self, vobj):
+        self.Object = vobj.Object
+
+    def getDisplayModes(self, obj):
+        return []
+
+    def getDefaultDisplayMode(self):
+        return "Default"
+
+    def setDisplayMode(self, mode):
+        return mode
+
+    def __getstate__(self):
+        return None
+
+    def __setstate__(self, state):
+        return None
+
+    def getIcon(self):
+        from PySide2 import QtCore, QtGui  # lazy loading
+
+        if not hasattr(self, "modicon"):
+            self.modicon = overlay(
+                QtGui.QIcon.fromTheme(
+                    "package-x-generic", QtGui.QIcon(":/icons/Material.svg")
+                ),
+                os.path.join(os.path.dirname(__file__), "icons", "IFC.svg"),
+            )
+        return self.modicon
+
+    def claimChildren(self):
+        if hasattr(self.Object, "Group"):
+            return self.Object.Group
+        return []
 
 
 def overlay(icon1, icon2):
