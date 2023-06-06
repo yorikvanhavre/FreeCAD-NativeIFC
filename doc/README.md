@@ -162,12 +162,14 @@ ifc_tools.create_document(doc)
 
 ### Modifying the IFC type of an object
 
-Change the type directly from the object's properties
+A note of warning: The IFC format uses the term **Class** to describe the type of an object, such as a window or a wall. That is because many IFC objects can also have a type, which is a parent entity from which the object inherits some of its properties (this is also called "families" in some other BIM applications).
+
+Change the class directly from the object's properties
 
 ```python
 # From Python:
 
-myObject.Type = "IfcWall"
+myObject.Class = "IfcWall"
 ```
 
 ### Inspecting the IFC structure of an object
@@ -216,7 +218,7 @@ level = ifc_tools.aggregate(floor, building)
 
 * Create any desired object with other FreeCAD tools, for example a cube with the Part workbench
 * In the tree view, drag that object onto an IFC project object or a building structure element (building, storey,...)
-* Adjust the IFC type of the object
+* Adjust the IFC class of the object
 
 ```python
 # From Python:
@@ -235,7 +237,7 @@ project = FreeCAD.ActiveDocument.getObject("IfcObject")
 new_object = ifc_tools.aggregate(box, project)
 
 # change the type
-new_object.Type = "IFcWall"
+new_object.Class = "IFcWall"
 ```
 
 ### How to add a wall

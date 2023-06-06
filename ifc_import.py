@@ -62,7 +62,7 @@ def insert(
         ifc_tools.load_orphans(prj_obj)
     if params.GetBool("LoadPsets", False):
         ifc_tools.load_psets(prj_obj)
-    if params.GetBool("LoadMaterials", False):
+    if not silent and params.GetBool("LoadMaterials", False):
         ifc_tools.load_materials(prj_obj)
     document.recompute()
     if FreeCAD.GuiUp:

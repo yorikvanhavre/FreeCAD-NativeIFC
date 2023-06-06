@@ -103,7 +103,7 @@ class ArchTest(unittest.TestCase):
             fp, "IfcTest", strategy=0, shapemode=1, switchwb=0, silent=True
         )
         fco = len(FreeCAD.getDocument("IfcTest").Objects)
-        self.failUnless(fco == 2, "ImportCoinSingle failed")
+        self.failUnless(fco == 1, "ImportCoinSingle failed")
 
     def test02_ImportCoinStructure(self):
         FreeCAD.Console.PrintMessage(
@@ -115,7 +115,7 @@ class ArchTest(unittest.TestCase):
             fp, "IfcTest", strategy=1, shapemode=1, switchwb=0, silent=True
         )
         fco = len(FreeCAD.getDocument("IfcTest").Objects)
-        self.failUnless(fco == 5, "ImportCoinStructure failed")
+        self.failUnless(fco == 4, "ImportCoinStructure failed")
 
     def test03_ImportCoinFull(self):
         global FCSTD_FILE_PATH
@@ -129,7 +129,7 @@ class ArchTest(unittest.TestCase):
         d.saveAs(path)
         FCSTD_FILE_PATH = path
         fco = len(FreeCAD.getDocument("IfcTest").Objects)
-        self.failUnless(fco > 5, "ImportCoinFull failed")
+        self.failUnless(fco > 4, "ImportCoinFull failed")
 
     def test04_ImportShapeFull(self):
         FreeCAD.Console.PrintMessage("4.  NativeIFC import: Full model, shape mode...")
@@ -139,7 +139,7 @@ class ArchTest(unittest.TestCase):
             fp, "IfcTest", strategy=2, shapemode=0, switchwb=0, silent=True
         )
         fco = len(FreeCAD.getDocument("IfcTest").Objects)
-        self.failUnless(fco > 5, "ImportShapeFull failed")
+        self.failUnless(fco > 4, "ImportShapeFull failed")
 
     def test05_ImportFreeCAD(self):
         FreeCAD.Console.PrintMessage("5.  FreeCAD import: NativeIFC coin file...")
@@ -172,7 +172,7 @@ class ArchTest(unittest.TestCase):
         ifc_tools.create_document(doc, silent=True)
         fco = len(FreeCAD.getDocument("IfcTest").Objects)
         print(FreeCAD.getDocument("IfcTest").Objects[0])
-        self.failUnless(fco == 2, "CreateDocument failed")
+        self.failUnless(fco == 1, "CreateDocument failed")
 
     def test08_ChangeIFCSchema(self):
         FreeCAD.Console.PrintMessage("8.  Changing IFC schema...")
@@ -215,7 +215,7 @@ class ArchTest(unittest.TestCase):
         fco = len(FreeCAD.getDocument("IfcTest").Objects)
         ifco = len(proj.Proxy.ifcfile.by_type("IfcRoot"))
         print(ifco, "IFC objects created")
-        self.failUnless(fco == 9 and ifco == 12, "CreateDocument failed")
+        self.failUnless(fco == 8 and ifco == 12, "CreateDocument failed")
 
 
 # test changing placement

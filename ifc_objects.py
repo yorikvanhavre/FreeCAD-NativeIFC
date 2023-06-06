@@ -36,12 +36,12 @@ class ifc_object:
             self.old_placement = obj.Placement
 
     def onChanged(self, obj, prop):
-        # link Type property to its hidder IfcType counterpart
-        if prop == "IfcType" and hasattr(obj, "Type") and obj.Type != obj.IfcType:
-            obj.Type = obj.IfcType
+        # link class property to its hidder IfcClass counterpart
+        if prop == "IfcClass" and hasattr(obj, "Class") and obj.Class != obj.IfcClass:
+            obj.Class = obj.IfcClass
             self.rebuild_classlist(obj, setprops=True)
-        elif prop == "Type" and hasattr(obj, "IfcType") and obj.Type != obj.IfcType:
-            obj.IfcType = obj.Type
+        elif prop == "Class" and hasattr(obj, "IfcClass") and obj.Class != obj.IfcClass:
+            obj.IfcClass = obj.Class
             self.rebuild_classlist(obj, setprops=True)
         elif prop == "Schema":
             self.set_schema(obj, obj.Schema)
@@ -76,12 +76,12 @@ class ifc_object:
                     child.touch()
 
     def rebuild_classlist(self, obj, setprops=False):
-        """rebuilds the list of Type enum property according to current class"""
+        """rebuilds the list of Class enum property according to current class"""
 
         import ifc_tools  # lazy import
 
-        obj.Type = ifc_tools.get_ifc_classes(obj, obj.IfcType)
-        obj.Type = obj.IfcType
+        obj.Class = ifc_tools.get_ifc_classes(obj, obj.IfcClass)
+        obj.Class = obj.IfcClass
         if setprops:
             ifc_tools.remove_unused_properties(obj)
             ifc_tools.add_properties(obj)

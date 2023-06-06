@@ -82,9 +82,10 @@ def create_document(document, filename=None, shapemode=0, strategy=0, silent=Fal
     obj.Proxy.ifcfile = ifcfile
     add_properties(obj, ifcfile, project, shapemode=shapemode)
     obj.addProperty("App::PropertyEnumeration", "Schema", "Base")
-    get_group(obj, "IfcOrphansGroup")
-    get_group(obj, "IfcMaterialsGroup")
-    get_group(obj, "IfcTypesGroup")
+    # add default groups - can be done later when needed
+    # get_group(obj, "IfcOrphansGroup")
+    # get_group(obj, "IfcMaterialsGroup")
+    # get_group(obj, "IfcTypesGroup")
     obj.Schema = ifcopenshell.ifcopenshell_wrapper.schema_names()
     obj.Schema = ifcfile.wrapped_data.schema_name()
     # populate according to strategy
@@ -289,11 +290,11 @@ def get_project(obj):
     """Returns the ifcdocument this object belongs to"""
 
     proj_types = ("IfcProject", "IfcProjectLibrary")
-    if getattr(obj, "Type", None) in proj_types:
+    if getattr(obj, "Class", None) in proj_types:
         return obj
     if hasattr(obj, "InListRecursive"):
         for parent in obj.InListRecursive:
-            if getattr(parent, "Type", None) in proj_types:
+            if getattr(parent, "Class", None) in proj_types:
                 return parent
     return None
 
@@ -408,12 +409,12 @@ def add_properties(
         info_ifcentity = get_elem_attribs(ifcentity)
     for attr, value in info_ifcentity.items():
         if attr == "type":
-            attr = "Type"
+            attr = "Class"
         elif attr == "id":
             attr = "StepId"
         elif attr == "Name":
             continue
-        if short and attr not in ("Type", "StepId"):
+        if short and attr not in ("Class", "StepId"):
             continue
         attr_def = next((a for a in attr_defs if a.name() == attr), None)
         data_type = (
@@ -421,7 +422,7 @@ def add_properties(
             if attr_def
             else None
         )
-        if attr == "Type":
+        if attr == "Class":
             # main enum property, not saved to file
             if attr not in obj.PropertiesList:
                 obj.addProperty("App::PropertyEnumeration", attr, "IFC")
@@ -429,9 +430,9 @@ def add_properties(
             setattr(obj, attr, get_ifc_classes(obj, value))
             setattr(obj, attr, value)
             # companion hidden propertym that gets saved to file
-            obj.addProperty("App::PropertyString", "IfcType", "IFC")
-            obj.setPropertyStatus("IfcType", "Hidden")
-            setattr(obj, "IfcType", value)
+            obj.addProperty("App::PropertyString", "IfcClass", "IFC")
+            obj.setPropertyStatus("IfcClass", "Hidden")
+            setattr(obj, "IfcClass", value)
         elif isinstance(value, int):
             if attr not in obj.PropertiesList:
                 obj.addProperty("App::PropertyInteger", attr, "IFC")
@@ -493,7 +494,7 @@ def remove_unused_properties(obj):
     elt = get_ifc_element(obj)
     props = list(elt.get_info().keys())
     props[props.index("id")] = "StepId"
-    props[props.index("type")] = "Type"
+    props[props.index("type")] = "Class"
     for prop in obj.PropertiesList:
         if obj.getGroupOfProperty(prop) == "IFC":
             if prop not in props:
@@ -543,7 +544,7 @@ def has_representation(element):
 
 
 def filter_elements(elements, ifcfile, expand=True, spaces=False, assemblies=True):
-    """Filter elements list of unwanted types"""
+    """Filter elements list of unwanted classes"""
 
     # This function can become pure IFC
 
@@ -847,7 +848,7 @@ def set_geometry(obj, elem, ifcfile, cached=False):
             # Part VP has 4 nodes, we have added 1 more
             basenode.removeChild(4)
     allspaces = all(
-        [(not hasattr(ch, "Type") or ch.Type == "IfcSpace") for ch in obj.Group]
+        [(not hasattr(ch, "Class") or ch.Class == "IfcSpace") for ch in obj.Group]
     )
     if obj.Group and not (has_representation(get_ifc_element(obj))) and not allspaces:
         # workaround for group extension bug: add a dummy placeholder shape)
@@ -864,7 +865,7 @@ def set_geometry(obj, elem, ifcfile, cached=False):
             ):
                 print(
                     "DEBUG: No Shape returned for object {}, {}, {}".format(
-                        obj.StepId, obj.IfcType, obj.Label
+                        obj.StepId, obj.IfcClass, obj.Label
                     )
                 )
         else:
@@ -891,7 +892,7 @@ def set_attribute(ifcfile, element, attribute, value):
 
     # This function can become pure IFC
 
-    if attribute == "Type":
+    if attribute == "Class":
         if value != element.is_a():
             if value and value.startswith("Ifc"):
                 cmd = "root.reassign_class"
@@ -1117,7 +1118,7 @@ def deaggregate(obj, parent):
     parent.Proxy.removeObject(parent, obj)
 
 
-def create_product(obj, parent, ifcfile, ifctype=None):
+def create_product(obj, parent, ifcfile, ifcclass=None):
     """Creates an IFC product out of a FreeCAD object"""
 
     uid = ifcopenshell.guid.new()
@@ -1146,8 +1147,8 @@ def create_product(obj, parent, ifcfile, ifctype=None):
             "ERROR: You need a more recent version of FreeCAD >= 0.20.3\n"
         )
         return
-    if not ifctype:
-        ifctype = exportIFC.getIfcTypeFromObj(obj)
+    if not ifcclass:
+        ifcclass = exportIFC.getIfcTypeFromObj(obj)
     prefs, context = get_export_preferences(ifcfile)
     # TODO migrate this to ifcopenshell api
     representation, placement, shapetype = exportIFC.getRepresentation(
@@ -1156,7 +1157,7 @@ def create_product(obj, parent, ifcfile, ifctype=None):
     product = exportIFC.createProduct(
         ifcfile,
         obj,
-        ifctype,
+        ifcclass,
         uid,
         history,
         name,
@@ -1166,7 +1167,7 @@ def create_product(obj, parent, ifcfile, ifctype=None):
         prefs,
     )
     # TODO use api to create a product: ifcopenshell.api.run("root.create_entity", self.file, ifc_class="IfcWall")
-    # product = ifcopenshell.api.run("root.create_entity", ifcfile, ifc_class=ifctype, name=obj.Label)
+    # product = ifcopenshell.api.run("root.create_entity", ifcfile, ifc_class=ifcclass, name=obj.Label)
     # product.ObjectPlacement = placement
     # product.Description = getattr(obj, "Description", "")
     # ifcopenshell.api.run("geometry.assign_representation", ifcfile, product=product, representation=representation)
@@ -1287,7 +1288,7 @@ def get_elem_attribs(ifcentity):
     # see https://github.com/IfcOpenShell/IfcOpenShell/issues/2811
     # thus workaround
 
-    info_ifcentity = {"id": ifcentity.id(), "type": ifcentity.is_a()}
+    info_ifcentity = {"id": ifcentity.id(), "class": ifcentity.is_a()}
 
     # get attrib keys
     attribs = []
