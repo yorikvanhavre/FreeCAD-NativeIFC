@@ -93,5 +93,4 @@ class ifc_observer:
             return
         if getattr(obj.Proxy, "nodelete", False):
             return
-        if ifc_tools.remove_ifc_element(obj):
-            proj.Modified = True
+        ifc_tools.remove_ifc_element(obj)

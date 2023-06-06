@@ -144,7 +144,7 @@ def set_attribute(ifcfile, element, prop, value):
     """Sets an attribute. Returns True if the attribute was changed"""
 
     if value != getattr(element, prop):
-        ifcopenshell.api.run(
+        ifc_tools.api_run(
             "attribute.edit_attributes",
             ifcfile,
             product=element,
@@ -219,7 +219,7 @@ def set_geom_property(obj, prop):
                                 points = getattr(obj, prop)
                                 if len(points) > len(elem_points):
                                     for i in range(len(points) - len(elem_points)):
-                                        p = ifcopenshell.api.run(
+                                        p = ifc_tools.api_run(
                                             "root.create_entity",
                                             ifcfile,
                                             ifc_class="IfcCartesianPoint",
@@ -232,14 +232,14 @@ def set_geom_property(obj, prop):
                                         rest.append(elem_points.pop())
                                     elem.Points = elem_points
                                     for r in rest:
-                                        ifcopenshell.api.run(
+                                        ifc_tools.api_run(
                                             "root.remove_product", ifcfile, product=r
                                         )
                                 if len(points) == len(elem_points):
                                     for i in range(len(points)):
                                         v = FreeCAD.Vector(points[i]).multiply(scaling)
                                         coord = tuple(v)[:psize]
-                                        ifcopenshell.api.run(
+                                        ifc_tools.api_run(
                                             "attribute.edit_attributes",
                                             ifcfile,
                                             product=elem_points[i],

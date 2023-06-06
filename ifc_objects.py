@@ -127,8 +127,6 @@ class ifc_object:
         if elt:
             result = ifc_tools.set_attribute(ifcfile, elt, attribute, value)
             if result:
-                proj = ifc_tools.get_project(obj)
-                proj.Modified = True
                 if hasattr(result, "id") and (result.id() != obj.StepId):
                     obj.StepId = result.id()
 
@@ -141,8 +139,6 @@ class ifc_object:
         result = ifc_geometry.set_geom_property(obj, prop)
         if result:
             obj.touch()
-            proj = ifc_tools.get_project(obj)
-            proj.Modified = True
 
     def set_schema(self, obj, schema):
         """Changes the schema of an IFC document"""
@@ -161,7 +157,6 @@ class ifc_object:
                     return
             ifcfile, migration_table = ifc_tools.migrate_schema(ifcfile, schema)
             self.ifcfile = ifcfile
-            obj.Modified = True
             for old_id, new_id in migration_table.items():
                 child = [
                     o
@@ -176,17 +171,11 @@ class ifc_object:
 
         import ifc_tools  # lazy import
 
-        result = ifc_tools.set_placement(obj)
-        if result:
-            proj = ifc_tools.get_project(obj)
-            proj.Modified = True
+        ifc_tools.set_placement(obj)
 
     def edit_pset(self, obj, prop):
         """Edits a Pset value"""
 
         import ifc_tools  # lazy import
 
-        result = ifc_tools.edit_pset(obj, prop)
-        if result:
-            proj = ifc_tools.get_project(obj)
-            proj.Modified = True
+        ifc_tools.edit_pset(obj, prop)

@@ -133,6 +133,19 @@ def create_ifcfile():
     return ifcfile
 
 
+def api_run(*args, **kwargs):
+    """Runs an IfcOpenShell API call and flags the ifcfile as modified"""
+
+    ifcopenshell.api.run(*args, **kwargs)
+    # *args are command, ifcfile
+    ifcfile = args[1]
+    for d in FreeCAD.listDocuments().values():
+        for o in d.Objects:
+            if hasattr(o, "Proxy") and hasattr(o.Proxy, "ifcfile"):
+                if o.Proxy.ifcfile == ifcfile:
+                    o.Modified = True
+
+
 def create_object(ifcentity, document, ifcfile, shapemode=0):
     """Creates a FreeCAD object from an IFC entity"""
 
@@ -906,9 +919,7 @@ def set_attribute(ifcfile, element, attribute, value):
                     + str(value)
                     + "\n"
                 )
-                product = ifcopenshell.api.run(
-                    cmd, ifcfile, product=element, ifc_class=value
-                )
+                product = api_run(cmd, ifcfile, product=element, ifc_class=value)
                 # TODO fix attributes
                 return product
     cmd = "attribute.edit_attributes"
@@ -922,7 +933,7 @@ def set_attribute(ifcfile, element, attribute, value):
                 + str(value)
                 + "\n"
             )
-            ifcopenshell.api.run(cmd, ifcfile, product=element, attributes=attribs)
+            api_run(cmd, ifcfile, product=element, attributes=attribs)
             return True
     return False
 
@@ -1044,9 +1055,7 @@ def set_placement(obj):
             + "\n"
         )
         api = "geometry.edit_object_placement"
-        ifcopenshell.api.run(
-            api, ifcfile, product=element, matrix=new_matrix, is_si=False
-        )
+        api_run(api, ifcfile, product=element, matrix=new_matrix, is_si=False)
         return True
     return False
 
@@ -1106,6 +1115,7 @@ def aggregate(obj, parent):
     if new and delete:
         obj.Document.removeObject(obj.Name)
     newobj.Label = label  # to avoid 001-ing the Label...
+    # TODO the line below should be done automatically when using the api to create products
     proj.Modified = True
     return newobj
 
@@ -1117,7 +1127,7 @@ def deaggregate(obj, parent):
     element = get_ifc_element(obj)
     if not element:
         return
-    ifcopenshell.api.run("aggregate.unassign_object", ifcfile, product=element)
+    api_run("aggregate.unassign_object", ifcfile, product=element)
     parent.Proxy.removeObject(parent, obj)
 
 
@@ -1226,8 +1236,8 @@ def create_relationship(old_obj, obj, parent, element, ifcfile):
     parent_element = get_ifc_element(parent)
     # case 1: element inside spatiual structure
     if parent_element.is_a("IfcSpatialStructureElement") and element.is_a("IfcElement"):
-        ifcopenshell.api.run("spatial.unassign_container", ifcfile, product=element)
-        uprel = ifcopenshell.api.run(
+        api_run("spatial.unassign_container", ifcfile, product=element)
+        uprel = api_run(
             "spatial.assign_container",
             ifcfile,
             product=element,
@@ -1245,17 +1255,15 @@ def create_relationship(old_obj, obj, parent, element, ifcfile):
             old_obj.Document.removeObject(tempobj.Name)
             if tempface:
                 old_obj.Document.removeObject(tempface.Name)
-            ifcopenshell.api.run(
+            api_run(
                 "void.add_opening", ifcfile, opening=opening, element=parent_element
             )
-            ifcopenshell.api.run(
-                "void.add_filling", ifcfile, opening=opening, element=element
-            )
+            api_run("void.add_filling", ifcfile, opening=opening, element=element)
         # windows must also be part of a spatial container
-        ifcopenshell.api.run("spatial.unassign_container", ifcfile, product=element)
+        api_run("spatial.unassign_container", ifcfile, product=element)
         if parent_element.ContainedInStructure:
             container = parent_element.ContainedInStructure[0].RelatingStructure
-            uprel = ifcopenshell.api.run(
+            uprel = api_run(
                 "spatial.assign_container",
                 ifcfile,
                 product=element,
@@ -1263,7 +1271,7 @@ def create_relationship(old_obj, obj, parent, element, ifcfile):
             )
         elif parent_element.Decomposes:
             container = parent_element.Decomposes[0].RelatingObject
-            uprel = ifcopenshell.api.run(
+            uprel = api_run(
                 "aggregate.assign_object",
                 ifcfile,
                 product=element,
@@ -1271,8 +1279,8 @@ def create_relationship(old_obj, obj, parent, element, ifcfile):
             )
     # case 3: element aggregated inside other element
     else:
-        ifcopenshell.api.run("aggregate.unassign_object", ifcfile, product=element)
-        uprel = ifcopenshell.api.run(
+        api_run("aggregate.unassign_object", ifcfile, product=element)
+        uprel = api_run(
             "aggregate.assign_object",
             ifcfile,
             product=element,
@@ -1343,7 +1351,7 @@ def remove_ifc_element(obj):
     ifcfile = get_ifcfile(obj)
     element = get_ifc_element(obj)
     if ifcfile and element:
-        ifcopenshell.api.run("root.remove_product", ifcfile, product=element)
+        api_run("root.remove_product", ifcfile, product=element)
         return True
     return False
 
@@ -1556,14 +1564,10 @@ def edit_pset(obj, prop, value=None):
                 )
         pset = get_pset(pset, element)
     else:
-        pset = ifcopenshell.api.run(
-            "pset.add_pset", ifcfile, product=element, name=pset
-        )
+        pset = api_run("pset.add_pset", ifcfile, product=element, name=pset)
     if not target_prop:
         target_prop = prop
-    ifcopenshell.api.run(
-        "pset.edit_pset", ifcfile, pset=pset, properties={target_prop: value}
-    )
+    api_run("pset.edit_pset", ifcfile, pset=pset, properties={target_prop: value})
     # TODO manage quantities
     return True
 

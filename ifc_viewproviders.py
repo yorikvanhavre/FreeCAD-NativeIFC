@@ -263,8 +263,6 @@ class ifc_vp_object:
         ifc_tools.aggregate(incoming_object, parent)
         if self.hasChildren(parent):
             self.expandChildren(parent)
-        proj = ifc_tools.get_project(parent)
-        proj.Modified = True
 
 
 class ifc_vp_document(ifc_vp_object):
