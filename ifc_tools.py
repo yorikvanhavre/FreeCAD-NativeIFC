@@ -161,6 +161,9 @@ def create_material(element, parent, recursive=False):
         for e in element:
             create_material(e, parent, recursive)
         return
+    exobj = get_object(element, parent.Document)
+    if exobj:
+        return exobj
     obj = add_object(parent.Document, otype="material")
     ifcfile = get_ifcfile(parent)
     add_properties(obj, ifcfile, element)
