@@ -21,6 +21,7 @@
 # ***************************************************************************
 
 import os
+import FreeCADGui
 
 
 class ifc_vp_object:
@@ -79,6 +80,14 @@ class ifc_vp_object:
 
         path = os.path.dirname(os.path.dirname(__file__))
         icon = QtGui.QIcon(os.path.join(path, "icons", "IFC.svg"))
+        element = ifc_tools.get_ifc_element(vobj.Object)
+        if element.is_a("IfcSpatialElement"):
+            if FreeCADGui.ActiveDocument.ActiveView.getActiveObject("NativeIFC") == vobj.Object:
+                action_activate = QtWidgets.QAction(icon, "Deactivate container", menu)
+            else:
+                action_activate = QtWidgets.QAction(icon, "Make active container", menu)
+            action_activate.triggered.connect(self.activate)
+            menu.addAction(action_activate)
         if self.hasChildren(vobj.Object):
             action_expand = QtWidgets.QAction(icon, "Expand children", menu)
             action_expand.triggered.connect(self.expandChildren)
@@ -98,7 +107,6 @@ class ifc_vp_object:
             action_coin = QtWidgets.QAction(icon, "Load representation", menu)
             action_coin.triggered.connect(self.switchCoin)
             menu.addAction(action_coin)
-        element = ifc_tools.get_ifc_element(vobj.Object)
         if element and ifc_tools.has_representation(element):
             action_geom = QtWidgets.QAction(icon, "Add geometry properties", menu)
             action_geom.triggered.connect(self.addGeometryProperties)
@@ -263,6 +271,14 @@ class ifc_vp_object:
         ifc_tools.aggregate(incoming_object, parent)
         if self.hasChildren(parent):
             self.expandChildren(parent)
+
+    def activate(self):
+        """Marks this container as active"""
+
+        if FreeCADGui.ActiveDocument.ActiveView.getActiveObject("NativeIFC") == self.Object:
+            FreeCADGui.ActiveDocument.ActiveView.setActiveObject("NativeIFC", None)
+        else:
+            FreeCADGui.ActiveDocument.ActiveView.setActiveObject("NativeIFC", self.Object)
 
 
 class ifc_vp_document(ifc_vp_object):
