@@ -1612,3 +1612,36 @@ def load_materials(obj):
     show_material(obj)
     for child in obj.Group:
         load_materials(child)
+
+
+def set_material(material, obj):
+    """Attributes a material to an object"""
+
+    ifcfile = get_ifcfile(obj)
+    element = get_ifc_element(obj)
+    material_element = get_ifc_element(material)
+    if not ifcfile:
+        return
+    new = False
+    if not material_element or get_ifcfile(material) != ifcfile:
+        material_element = ifcopenshell.api.run(
+            "material.add_material", ifcfile, name=material.Label
+        )
+        new = True
+        delete = not (PARAMS.GetBool("KeepAggregated", False))
+        if delete and len(material.InList) == 1:
+            container = material.InList[0]
+            doc = material.Document
+            doc.removeObject(material.Name)
+            if not container.OutList:
+                doc.removeObject(container.Name)
+    if material_element:
+        api_run(
+            "material.assign_material",
+            ifcfile,
+            product=element,
+            type=material_element.is_a(),
+            material=material_element,
+        )
+        if new:
+            show_material(obj)
