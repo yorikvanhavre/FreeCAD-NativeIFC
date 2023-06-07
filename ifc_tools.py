@@ -571,9 +571,9 @@ def get_ifc_classes(obj, baseclass):
 def get_ifc_element(obj):
     """Returns the corresponding IFC element of an object"""
 
-    ifc_file = get_ifcfile(obj)
-    if ifc_file and hasattr(obj, "StepId"):
-        return ifc_file.by_id(obj.StepId)
+    ifcfile = get_ifcfile(obj)
+    if ifcfile and hasattr(obj, "StepId"):
+        return ifcfile.by_id(obj.StepId)
     return None
 
 
@@ -1112,18 +1112,24 @@ def save(obj, filepath=None):
 def aggregate(obj, parent):
     """Takes any FreeCAD object and aggregates it to an existing IFC object"""
 
-    if get_project(obj):
-        FreeCAD.Console.PrintError("This object is already part of an IFC project\n")
-        return
     proj = get_project(parent)
     if not proj:
         FreeCAD.Console.PrintError("The parent object is not part of an IFC project\n")
         return
     ifcfile = get_ifcfile(proj)
-    product = get_ifc_element(obj)
+    product = None
+    stepid = getattr(obj, "StepId", None)
+    if stepid:
+        # obj might be dragging at this point and has no project anymore
+        try:
+            elem = ifcfile[stepid]
+            if obj.GlobalId == elem.GlobalId:
+                product = elem
+        except:
+            pass
     if product:
         # this object already has an associated IFC product
-        print("DEBUG:", obj.Label, "is already an IFC object")
+        print("DEBUG:", obj.Label, "is already part of the IFC document")
         newobj = obj
         new = False
     else:
@@ -1142,9 +1148,8 @@ def aggregate(obj, parent):
     label = obj.Label
     if new and delete:
         obj.Document.removeObject(obj.Name)
-    newobj.Label = label  # to avoid 001-ing the Label...
-    # TODO the line below should be done automatically when using the api to create products
-    proj.Modified = True
+    if new:
+        newobj.Label = label  # to avoid 001-ing the Label...
     return newobj
 
 

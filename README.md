@@ -61,7 +61,7 @@ The roadmap below will show you an overview of the current state of the implemen
 * [ ] ~~Expand attributes~~ cancelled for now because only non-link attributes need to be shown so far
 * [x] Expand materials
 * [x] Expand properties
-* [ ] Allow to regroup elements
+* [x] Allow to regroup elements
 * [x] Handle drag/drop
 * [ ] Handle undo/redo
 * [x] Allow to change the IFC schema
