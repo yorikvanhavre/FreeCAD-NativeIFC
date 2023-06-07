@@ -82,7 +82,10 @@ class ifc_vp_object:
         icon = QtGui.QIcon(os.path.join(path, "icons", "IFC.svg"))
         element = ifc_tools.get_ifc_element(vobj.Object)
         if element.is_a("IfcSpatialElement"):
-            if FreeCADGui.ActiveDocument.ActiveView.getActiveObject("NativeIFC") == vobj.Object:
+            if (
+                FreeCADGui.ActiveDocument.ActiveView.getActiveObject("NativeIFC")
+                == vobj.Object
+            ):
                 action_activate = QtWidgets.QAction(icon, "Deactivate container", menu)
             else:
                 action_activate = QtWidgets.QAction(icon, "Make active container", menu)
@@ -275,10 +278,15 @@ class ifc_vp_object:
     def activate(self):
         """Marks this container as active"""
 
-        if FreeCADGui.ActiveDocument.ActiveView.getActiveObject("NativeIFC") == self.Object:
+        if (
+            FreeCADGui.ActiveDocument.ActiveView.getActiveObject("NativeIFC")
+            == self.Object
+        ):
             FreeCADGui.ActiveDocument.ActiveView.setActiveObject("NativeIFC", None)
         else:
-            FreeCADGui.ActiveDocument.ActiveView.setActiveObject("NativeIFC", self.Object)
+            FreeCADGui.ActiveDocument.ActiveView.setActiveObject(
+                "NativeIFC", self.Object
+            )
 
 
 class ifc_vp_document(ifc_vp_object):
@@ -431,10 +439,10 @@ class ifc_vp_material:
         from PySide2 import QtCore, QtGui  # lazy loading
 
         if not hasattr(self, "modicon"):
+            import Arch_rc
+
             self.modicon = overlay(
-                QtGui.QIcon.fromTheme(
-                    "package-x-generic", QtGui.QIcon(":/icons/Material.svg")
-                ),
+                QtGui.QIcon(":/icons/Arch_Material.svg"),
                 os.path.join(os.path.dirname(__file__), "icons", "IFC.svg"),
             )
         return self.modicon
