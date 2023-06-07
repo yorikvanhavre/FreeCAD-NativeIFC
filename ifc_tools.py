@@ -79,6 +79,8 @@ def create_document(document, filename=None, shapemode=0, strategy=0, silent=Fal
             full = ifc_import.get_project_type()
         ifcfile = create_ifcfile()
     project = ifcfile.by_type("IfcProject")[0]
+    # TODO configure version history
+    # https://blenderbim.org/docs-python/autoapi/ifcopenshell/api/owner/create_owner_history/index.html
     obj.Proxy.ifcfile = ifcfile
     add_properties(obj, ifcfile, project, shapemode=shapemode)
     obj.addProperty("App::PropertyEnumeration", "Schema", "Base")
@@ -97,7 +99,7 @@ def create_document(document, filename=None, shapemode=0, strategy=0, silent=Fal
         create_children(obj, ifcfile, recursive=True, assemblies=False)
     # create default structure
     if full:
-        import Arch
+        import Arch  # lazy loading
 
         site = aggregate(Arch.makeSite(), obj)
         building = aggregate(Arch.makeBuilding(), site)
@@ -108,42 +110,68 @@ def create_document(document, filename=None, shapemode=0, strategy=0, silent=Fal
 def create_ifcfile():
     """Creates a new, empty IFC document"""
 
-    # TODO do not rely on the template,
-    # and create a minimal file instead, with no person, no org, no
-    # nothing. These shold be populated later on by the user
-    # use api: https://blenderbim.org/docs-python/autoapi/ifcopenshell/api/project/create_file/
-
-    ifcfile = ifcopenshell.template.create()
+    ifcfile = api_run("project.create_file")
+    project = api_run("root.create_entity", ifcfile, ifc_class="IfcProject")
     param = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Document")
     user = param.GetString("prefAuthor", "")
     user = user.split("<")[0].strip()
     if user:
-        person = ifcfile.by_type("IfcPerson")[0]
-        set_attribute(ifcfile, person, "FamilyName", user)
+        person = api_run("owner.add_person", ifcfile, family_name=user)
     org = param.GetString("prefCompany", "")
     if org:
-        comp = ifcfile.by_type("IfcOrganization")[0]
-        set_attribute(ifcfile, comp, "Name", user)
+        organisation = api_run("owner.add_organisation", ifcfile, name=org)
+    if user and org:
+        api_run(
+            "owner.add_person_and_organisation",
+            ifcfile,
+            person=person,
+            organisation=organisation,
+        )
     application = "FreeCAD"
     version = FreeCAD.Version()
     version = ".".join([str(v) for v in version[0:3]])
-    app = ifcfile.by_type("IfcApplication")[0]
-    set_attribute(ifcfile, app, "ApplicationFullName", application)
-    set_attribute(ifcfile, app, "Version", version)
+    application = api_run(
+        "owner.add_application",
+        ifcfile,
+        application_full_name=application,
+        version=version,
+    )
+    # context
+    model3d = api_run("context.add_context", ifcfile, context_type="Model")
+    plan = api_run("context.add_context", ifcfile, context_type="Plan")
+    body = api_run(
+        "context.add_context",
+        ifcfile,
+        context_type="Model",
+        context_identifier="Body",
+        target_view="MODEL_VIEW",
+        parent=model3d,
+    )
+    api_run(
+        "context.add_context",
+        ifcfile,
+        context_type="Model",
+        context_identifier="Axis",
+        target_view="GRAPH_VIEW",
+        parent=model3d,
+    )
+
     return ifcfile
 
 
 def api_run(*args, **kwargs):
     """Runs an IfcOpenShell API call and flags the ifcfile as modified"""
 
-    ifcopenshell.api.run(*args, **kwargs)
-    # *args are command, ifcfile
-    ifcfile = args[1]
-    for d in FreeCAD.listDocuments().values():
-        for o in d.Objects:
-            if hasattr(o, "Proxy") and hasattr(o.Proxy, "ifcfile"):
-                if o.Proxy.ifcfile == ifcfile:
-                    o.Modified = True
+    result = ifcopenshell.api.run(*args, **kwargs)
+    # *args are typically command, ifcfile
+    if len(args) > 1:
+        ifcfile = args[1]
+        for d in FreeCAD.listDocuments().values():
+            for o in d.Objects:
+                if hasattr(o, "Proxy") and hasattr(o.Proxy, "ifcfile"):
+                    if o.Proxy.ifcfile == ifcfile:
+                        o.Modified = True
+    return result
 
 
 def create_object(ifcentity, document, ifcfile, shapemode=0):
@@ -1134,10 +1162,23 @@ def deaggregate(obj, parent):
 def create_product(obj, parent, ifcfile, ifcclass=None):
     """Creates an IFC product out of a FreeCAD object"""
 
-    uid = ifcopenshell.guid.new()
-    history = get_ifc_element(parent).OwnerHistory  # TODO should this be changed?
     name = obj.Label
-    description = getattr(obj, "Description", "")
+    description = getattr(obj, "Description", None)
+    if not ifcclass:
+        ifcclass = exportIFC.getIfcTypeFromObj(obj)
+    representation, placement = create_representation(obj, ifcfile)
+    product = api_run("root.create_entity", ifcfile, ifc_class=ifcclass, name=name)
+    set_attribute(ifcfile, product, "Description", description)
+    set_attribute(ifcfile, product, "ObjectPlacement", placement)
+    # TODO below cannot be used at the moment because the ArchIFC epporter returns an
+    # IfcProductDefinitionShape already and not an IfcShapeRepresentation
+    # api_run("geometry.assign_representation", ifcfile, product=product, representation=representation)
+    set_attribute(ifcfile, product, "Representation", representation)
+    return product
+
+
+def create_representation(obj, ifcfile):
+    """Creates a geometry representation for the given object"""
 
     # TEMPORARY use the Arch exporter
     # TODO this is temporary. We should rely on ifcopenshell for this with:
@@ -1160,31 +1201,11 @@ def create_product(obj, parent, ifcfile, ifcclass=None):
             "ERROR: You need a more recent version of FreeCAD >= 0.20.3\n"
         )
         return
-    if not ifcclass:
-        ifcclass = exportIFC.getIfcTypeFromObj(obj)
     prefs, context = get_export_preferences(ifcfile)
-    # TODO migrate this to ifcopenshell api
     representation, placement, shapetype = exportIFC.getRepresentation(
         ifcfile, context, obj, preferences=prefs
     )
-    product = exportIFC.createProduct(
-        ifcfile,
-        obj,
-        ifcclass,
-        uid,
-        history,
-        name,
-        description,
-        placement,
-        representation,
-        prefs,
-    )
-    # TODO use api to create a product: ifcopenshell.api.run("root.create_entity", self.file, ifc_class="IfcWall")
-    # product = ifcopenshell.api.run("root.create_entity", ifcfile, ifc_class=ifcclass, name=obj.Label)
-    # product.ObjectPlacement = placement
-    # product.Description = getattr(obj, "Description", "")
-    # ifcopenshell.api.run("geometry.assign_representation", ifcfile, product=product, representation=representation)
-    return product
+    return representation, placement
 
 
 def get_export_preferences(ifcfile):
