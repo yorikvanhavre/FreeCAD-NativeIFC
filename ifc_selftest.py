@@ -260,6 +260,24 @@ class ArchTest(unittest.TestCase):
         count2 = len(ifcfile.by_type("IfcProduct"))
         self.failUnless(count2 < count1, "RemoveObject failed")
 
+    def test13_Materials(self):
+        FreeCAD.Console.PrintMessage("13. Materials...")
+        clearObjects()
+        fp = getIfcFilePath()
+        ifc_import.insert(
+            fp, "IfcTest", strategy=2, shapemode=0, switchwb=0, silent=True
+        )
+        proj = FreeCAD.getDocument("IfcTest").Objects[0]
+        ifc_tools.load_materials(proj)
+        prod = FreeCAD.getDocument("IfcTest").getObject("IfcObject006")
+        ifcfile = ifc_tools.get_ifcfile(prod)
+        mats_before = ifcfile.by_type("IfcMaterialDefinition")
+        mat = Arch.makeMaterial("Red")
+        ifc_tools.set_material(mat, prod)
+        elem = ifc_tools.get_ifc_element(prod)
+        res = ifcopenshell.util.element.get_material(elem)
+        mats_after = ifcfile.by_type("IfcMaterialDefinition")
+        self.failUnless(len(mats_after) == len(mats_before) + 1, "Materials failed")
+
 
 # test psets
-# test materials
