@@ -60,10 +60,10 @@ def insert(
     prj_obj = ifc_tools.create_document(document, filename, shapemode, strategy)
     if params.GetBool("LoadOrphans", False):
         ifc_tools.load_orphans(prj_obj)
-    if params.GetBool("LoadPsets", False):
-        ifc_tools.load_psets(prj_obj)
     if not silent and params.GetBool("LoadMaterials", False):
         ifc_tools.load_materials(prj_obj)
+    if params.GetBool("LoadPsets", False):
+        ifc_tools.load_psets(prj_obj)
     document.recompute()
     if FreeCAD.GuiUp:
         FreeCADGui.doCommand(

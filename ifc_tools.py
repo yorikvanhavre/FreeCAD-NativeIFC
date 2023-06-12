@@ -219,7 +219,6 @@ def create_material(element, parent, recursive=False):
                 create_material(s, obj, recursive)
         else:
             create_material(submat, obj, recursive)
-    show_psets(obj)
     return obj
 
 
@@ -490,10 +489,11 @@ def add_properties(
         elif data_type == "boolean":
             if attr not in obj.PropertiesList:
                 obj.addProperty("App::PropertyBool", attr, "IFC")
-            if not value:
+            if not value or value in ["UNKNOWN", "FALSE"]:
                 value = False
             elif not isinstance(value, bool):
                 print("DEBUG: attempting to set boolean value:", attr, value)
+                value = bool(value)
             setattr(obj, attr, value)  # will trigger error. TODO: Fix this
         elif isinstance(value, ifcopenshell.entity_instance):
             if links:
@@ -1428,8 +1428,11 @@ def has_psets(obj):
 
     element = get_ifc_element(obj)
     psets = getattr(element, "IsDefinedBy", [])
-    if [p for p in psets if p.is_a("IfcRelDefinesByProperties")]:
+    if psets and [p for p in psets if p.is_a("IfcRelDefinesByProperties")]:
         # TODO verify too if these psets are not already there
+        return True
+    psets = getattr(element, "HasProperties", [])
+    if psets:
         return True
     return False
 
@@ -1443,10 +1446,15 @@ def get_psets(element):
     psets = getattr(element, "IsDefinedBy", [])
     psets = [p for p in psets if p.is_a("IfcRelDefinesByProperties")]
     psets = [p.RelatingPropertyDefinition for p in psets]
+    if not psets:
+        psets = getattr(element, "HasProperties", [])
     for pset in psets:
         pset_dict = {}
         if pset.is_a("IfcPropertySet"):
             for prop in pset.HasProperties:
+                pset_dict[prop.Name] = str(prop.NominalValue)
+        if pset.is_a("IfcMaterialProperties"):
+            for prop in pset.Properties:
                 pset_dict[prop.Name] = str(prop.NominalValue)
         elif pset.is_a("IfcElementQuantity"):
             # TODO implement quantities
@@ -1500,6 +1508,9 @@ def show_psets(obj):
                 obj.addProperty("App::PropertyVolume", pname, gname, ttip)
             elif ptype in ["IfcPositivePlaneAngleMeasure", "IfcPlaneAngleMeasure"]:
                 obj.addProperty("App::PropertyAngle", pname, gname, ttip)
+                value = float(value)
+                while value > 360:
+                    value = value - 360
             elif ptype in ["IfcMassMeasure"]:
                 obj.addProperty("App::PropertyMass", pname, gname, ttip)
             elif ptype in ["IfcAreaMeasure"]:
@@ -1567,6 +1578,10 @@ def edit_pset(obj, prop, value=None):
             elif isinstance(value, float):
                 value_exist = float(value_exist)
             elif isinstance(value, FreeCAD.Units.Quantity):
+                if value.Unit.Type == "Angle":
+                    value_exist = float(value_exist)
+                    while value_exist > 360:
+                        value_exist = value_exist - 360
                 value_exist = FreeCAD.Units.Quantity(float(value_exist), value.Unit)
             if value == value_exist:
                 return False
@@ -1577,15 +1592,15 @@ def edit_pset(obj, prop, value=None):
                     + " ("
                     + str(obj.StepId)
                     + ") : "
-                    + target_prop
+                    + str(target_prop)
                     + " : "
                     + str(value)
                     + " ("
-                    + type(value)
+                    + str(type(value))
                     + ") -> "
                     + str(value_exist)
                     + " ("
-                    + type(value_exist)
+                    + str(type(value_exist))
                     + ")\n"
                 )
         pset = get_pset(pset, element)

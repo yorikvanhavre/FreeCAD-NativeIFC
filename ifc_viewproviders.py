@@ -436,21 +436,69 @@ class ifc_vp_material:
         return None
 
     def getIcon(self):
-        from PySide2 import QtCore, QtGui  # lazy loading
-
-        if not hasattr(self, "modicon"):
+        if hasattr(self, "icondata"):
+            return self.icondata
+        else:
             import Arch_rc
 
-            self.modicon = overlay(
-                QtGui.QIcon(":/icons/Arch_Material.svg"),
-                os.path.join(os.path.dirname(__file__), "icons", "IFC.svg"),
-            )
-        return self.modicon
+            return ":/icons/Arch_Material.svg"
+
+    def updateData(self, obj, prop):
+        from PySide2 import QtCore, QtGui  # lazy loading
+
+        if hasattr(self.Object, "Color"):
+            c = self.Object.Color
+            matcolor = QtGui.QColor(int(c[0] * 255), int(c[1] * 255), int(c[2] * 255))
+            darkcolor = QtGui.QColor(int(c[0] * 125), int(c[1] * 125), int(c[2] * 125))
+        else:
+            matcolor = QtGui.QColor(200, 200, 200)
+            darkcolor = QtGui.QColor(120, 120, 120)
+        im = QtGui.QImage(48, 48, QtGui.QImage.Format_ARGB32)
+        im.fill(QtCore.Qt.transparent)
+        pt = QtGui.QPainter(im)
+        pt.setPen(
+            QtGui.QPen(QtCore.Qt.black, 2, QtCore.Qt.SolidLine, QtCore.Qt.FlatCap)
+        )
+        gradient = QtGui.QLinearGradient(0, 0, 48, 48)
+        gradient.setColorAt(0, matcolor)
+        gradient.setColorAt(1, darkcolor)
+        pt.setBrush(QtGui.QBrush(gradient))
+        pt.drawEllipse(6, 6, 36, 36)
+        pt.setPen(
+            QtGui.QPen(QtCore.Qt.white, 1, QtCore.Qt.SolidLine, QtCore.Qt.FlatCap)
+        )
+        pt.setBrush(QtGui.QBrush(QtCore.Qt.white, QtCore.Qt.SolidPattern))
+        pt.drawEllipse(12, 12, 12, 12)
+        pt.end()
+        ba = QtCore.QByteArray()
+        b = QtCore.QBuffer(ba)
+        b.open(QtCore.QIODevice.WriteOnly)
+        im.save(b, "XPM")
+        self.icondata = ba.data().decode("latin1")
 
     def claimChildren(self):
         if hasattr(self.Object, "Group"):
             return self.Object.Group
         return []
+
+    def setupContextMenu(self, vobj, menu):
+        import ifc_tools  # lazy import
+        from PySide2 import QtCore, QtGui, QtWidgets  # lazy import
+
+        path = os.path.dirname(os.path.dirname(__file__))
+        icon = QtGui.QIcon(os.path.join(path, "icons", "IFC.svg"))
+        if ifc_tools.has_psets(self.Object):
+            action_props = QtWidgets.QAction(icon, "Expand property sets", menu)
+            action_props.triggered.connect(self.showProps)
+            menu.addAction(action_props)
+
+    def showProps(self):
+        """Expands property sets"""
+
+        import ifc_tools  # lazy loading
+
+        ifc_tools.show_psets(self.Object)
+        self.Object.Document.recompute()
 
 
 def overlay(icon1, icon2):
