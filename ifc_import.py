@@ -62,6 +62,8 @@ def insert(
         ifc_tools.load_orphans(prj_obj)
     if not silent and params.GetBool("LoadMaterials", False):
         ifc_tools.load_materials(prj_obj)
+    if params.GetBool("LoadLayers", False):
+        ifc_tools.load_layers(prj_obj)
     if params.GetBool("LoadPsets", False):
         ifc_tools.load_psets(prj_obj)
     document.recompute()
@@ -97,6 +99,7 @@ def get_options(
     orphans = params.GetBool("LoadOrphans", False)
     psets = params.GetBool("LoadPsets", False)
     materials = params.GetBool("LoadMaterials", False)
+    layers = params.GetBool("LoadLayers", False)
     if strategy is None:
         strategy = params.GetInt("ImportStrategy", 0)
     if shapemode is None:
@@ -120,7 +123,8 @@ def get_options(
         dlg.checkAskAgain.setChecked(ask)
         dlg.checkLoadOrphans.setChecked(orphans)
         dlg.checkLoadPsets.setChecked(psets)
-        dlg.checkLoadMaterials.setChecked(psets)
+        dlg.checkLoadMaterials.setChecked(materials)
+        dlg.checkLoadLayers.setChecked(layers)
         result = dlg.exec_()
         if not result:
             return None, None, None
@@ -131,6 +135,7 @@ def get_options(
         orphans = dlg.checkLoadOrphans.isChecked()
         psets = dlg.checkLoadPsets.isChecked()
         materials = dlg.checkLoadMaterials.isChecked()
+        layers = dlg.checkLoadLayers.isChecked()
         params.SetInt("ImportStrategy", strategy)
         params.SetInt("ShapeMode", shapemode)
         params.SetBool("SwitchWB", switchwb)
@@ -138,6 +143,7 @@ def get_options(
         params.SetBool("LoadOrphans", orphans)
         params.SetBool("LoadPsets", psets)
         params.SetBool("LoadMaterials", materials)
+        params.SetBool("LoadLayers", layers)
     return strategy, shapemode, switchwb
 
 

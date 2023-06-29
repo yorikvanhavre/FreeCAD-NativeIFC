@@ -101,15 +101,31 @@
    </item>
    <item>
     <widget class="QCheckBox" name="checkLoadPsets">
+     <property name="toolTip">
+      <string>Preload property sets of all objects. It is advised to leave this unchecked and load property sets later, only when needed</string>
+     </property>
      <property name="text">
-      <string>Load property sets</string>
+      <string>Preload property sets</string>
      </property>
     </widget>
    </item>
    <item>
     <widget class="QCheckBox" name="checkLoadMaterials">
+     <property name="toolTip">
+      <string>Preload all materials fo the file. It is advised to leave this unchecked and load materials later, only when needed</string>
+     </property>
      <property name="text">
-      <string>Load materials</string>
+      <string>Preload materials</string>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <widget class="QCheckBox" name="checkLoadLayers">
+     <property name="toolTip">
+      <string>Preload all layers of the file. It is advised to leave this unchecked and load layers later, only when needed</string>
+     </property>
+     <property name="text">
+      <string>Preload layers</string>
      </property>
     </widget>
    </item>

@@ -30,6 +30,7 @@ import FreeCAD
 from FreeCAD import Base
 import Part
 import Mesh
+import Draft
 from pivy import coin
 import exportIFC
 import exportIFCHelper
@@ -72,9 +73,11 @@ def create_document(document, filename=None, shapemode=0, strategy=0, silent=Fal
     obj.addProperty("App::PropertyBool", "Modified", "Base")
     obj.setPropertyStatus("Modified", "Hidden")
     if filename:
+        # opening existing file
         obj.FilePath = filename
         ifcfile = ifcopenshell.open(filename)
     else:
+        # creating a new file
         if not silent:
             full = ifc_import.get_project_type()
         ifcfile = create_ifcfile()
@@ -84,10 +87,6 @@ def create_document(document, filename=None, shapemode=0, strategy=0, silent=Fal
     obj.Proxy.ifcfile = ifcfile
     add_properties(obj, ifcfile, project, shapemode=shapemode)
     obj.addProperty("App::PropertyEnumeration", "Schema", "Base")
-    # add default groups - can be done later when needed
-    # get_group(obj, "IfcOrphansGroup")
-    # get_group(obj, "IfcMaterialsGroup")
-    # get_group(obj, "IfcTypesGroup")
     obj.Schema = ifcopenshell.ifcopenshell_wrapper.schema_names()
     obj.Schema = ifcfile.wrapped_data.schema_name()
     # populate according to strategy
@@ -189,6 +188,7 @@ def create_object(ifcentity, document, ifcfile, shapemode=0):
     FreeCAD.Console.PrintLog(s)
     obj = add_object(document)
     add_properties(obj, ifcfile, ifcentity, shapemode=shapemode)
+    add_layers(obj, ifcentity, ifcfile)
     if FreeCAD.GuiUp:
         if ifcentity.is_a("IfcSpace") or ifcentity.is_a("IfcOpeningElement"):
             obj.ViewObject.DisplayMode = "Wireframe"
@@ -333,9 +333,19 @@ def get_ifcfile(obj):
 
 
 def get_project(obj):
-    """Returns the ifcdocument this object belongs to"""
+    """Returns the ifc document this object belongs to.
+    obj can be either a document object, an ifcfile or ifc element instance"""
 
     proj_types = ("IfcProject", "IfcProjectLibrary")
+    if isinstance(obj, ifcopenshell.file):
+        for d in FreeCAD.listDocuments().values():
+            for o in d.Objects:
+                if hasattr(o, "Proxy") and hasattr(o.Proxy, "ifcfile"):
+                    if o.Proxy.ifcfile == obj:
+                        return o
+        return None
+    if isinstance(obj, ifcopenshell.entity_instance):
+        obj = get_object(obj)
     if getattr(obj, "Class", None) in proj_types:
         return obj
     if hasattr(obj, "InListRecursive"):
@@ -398,16 +408,17 @@ def show_material(obj):
 
 def add_object(document, otype=None, oname="IfcObject"):
     """adds a new object to a FreeCAD document.
-    otype can be 'project', 'group' or None (normal object)"""
+    otype can be 'project', 'group', 'material', 'layer' or None (normal object)"""
 
+    proxy = ifc_objects.ifc_object(otype)
     if otype == "group":
         proxy = None
         ftype = "App::DocumentObjectGroupPython"
     elif otype == "material":
-        proxy = ifc_objects.ifc_object()
         ftype = "App::MaterialObjectPython"
+    elif otype == "layer":
+        ftype = "App::FeaturePython"
     else:
-        proxy = ifc_objects.ifc_object()
         ftype = "Part::FeaturePython"
     if otype == "project":
         vp = ifc_viewproviders.ifc_vp_document()
@@ -415,9 +426,15 @@ def add_object(document, otype=None, oname="IfcObject"):
         vp = ifc_viewproviders.ifc_vp_group()
     elif otype == "material":
         vp = ifc_viewproviders.ifc_vp_material()
+    elif otype == "layer":
+        vp = None
     else:
         vp = ifc_viewproviders.ifc_vp_object()
     obj = document.addObject(ftype, oname, proxy, vp, False)
+    if obj.ViewObject and otype == "layer":
+        from draftviewproviders import view_layer
+
+        view_layer.ViewProviderLayer(obj.ViewObject)
     return obj
 
 
@@ -1145,6 +1162,17 @@ def aggregate(obj, parent):
         # make sure the base is used only by this object before deleting
         if base.InList != [obj]:
             base = None
+    # handle layer
+    if FreeCAD.GuiUp:
+        import FreeCADGui
+
+        autogroup = getattr(
+            getattr(FreeCADGui, "draftToolBar", None), "autogroup", None
+        )
+        if autogroup is not None:
+            layer = FreeCAD.ActiveDocument.getObject(autogroup)
+            if hasattr(layer, "StepId"):
+                add_to_layer(newobj, layer)
     delete = not (PARAMS.GetBool("KeepAggregated", False))
     if new and delete and base:
         obj.Document.removeObject(base.Name)
@@ -1663,3 +1691,121 @@ def set_material(material, obj):
         )
         if new:
             show_material(obj)
+
+
+def load_layers(obj):
+    """Loads all the layers of an IFC file"""
+
+    proj = get_project(obj)
+    ifcfile = get_ifcfile(obj)
+    layers = ifcfile.by_type("IfcPresentationLayerAssignment")
+    for layer in layers:
+        obj = get_layer(layer, proj)
+        populate_layer(obj)
+
+
+def has_layers(obj):
+    """Returns true if the given project has layers"""
+
+    ifcfile = get_ifcfile(obj)
+    layers = ifcfile.by_type("IfcPresentationLayerAssignment")
+    if layers:
+        return True
+    return False
+
+
+def get_layer(layer, project):
+    """Returns (creates if necessary) a layer object in the given project"""
+
+    group = get_group(project, "IfcLayersGroup")
+    exobj = get_object(layer, project.Document)
+    if exobj:
+        return exobj
+    obj = add_object(project.Document, otype="layer")
+    ifcfile = get_ifcfile(project)
+    add_properties(obj, ifcfile, layer)
+    group.addObject(obj)
+    return obj
+
+
+def populate_layer(obj):
+    """Attaches all the possible objects to this layer"""
+
+    g = []
+    element = get_ifc_element(obj)
+    for shape in getattr(element, "AssignedItems", []):
+        rep = getattr(shape, "OfProductRepresentation", None)
+        for prod in getattr(rep, "ShapeOfProduct", []):
+            obj = get_object(prod)
+            if obj:
+                g.append(obj)
+    obj.Group = g
+
+
+def add_layers(obj, element=None, ifcfile=None, proj=None):
+    """Creates necessary layers for the given object"""
+
+    if not ifcfile:
+        ifcfile = get_ifcfile(obj)
+    if not element:
+        element = get_ifc_element(obj)
+    if not proj:
+        proj = get_project(ifcfile)
+    layers = ifcopenshell.util.element.get_layers(ifcfile, element)
+    for layer in layers:
+        lay = get_layer(layer, proj)
+        if not obj in lay.Group:
+            lay.Proxy.addObject(lay, obj)
+
+
+def add_to_layer(obj, layer):
+    """Adds the given object to the given layer"""
+
+    if hasattr(obj, "StepId"):
+        obj_element = get_ifc_element(obj)
+    elif hasattr(obj, "id"):
+        obj_element = obj
+        obj = get_object(obj_element)
+    else:
+        return
+    if hasattr(layer, "StepId"):
+        layer_element = get_ifc_element(layer)
+    elif hasattr(layer, "id"):
+        layer_element = layer
+        layer = get_object(layer_element)
+    else:
+        return
+    ifcfile = get_ifcfile(obj)
+    if not ifcfile:
+        return
+    items = ()
+    if layer_element.AssignedItems:
+        items = layer_element.AssignedItems
+    if not obj_element in items:
+        cmd = "attribute.edit_attributes"
+        attribs = {"AssignedItems": items + (obj_element,)}
+        api_run(cmd, ifcfile, product=layer_element, attributes=attribs)
+    if not obj in layer.Group:
+        layer.Proxy.addObject(layer, obj)
+
+
+def create_layer(name, project):
+    """Adds a new layer to the given project"""
+
+    group = get_group(project, "IfcLayersGroup")
+    ifcfile = get_ifcfile(project)
+    layer = api_run("layer.add_layer", ifcfile, Name=name)
+    return get_layer(layer, project)
+
+
+def transfer_layer(layer, project):
+    """Transfer a non-NativeIFC layer to a project"""
+
+    label = layer.Label
+    ifclayer = create_layer(label, project)
+    delete = not (PARAMS.GetBool("KeepAggregated", False))
+    # delete the old one if empty and delete param allows
+    if delete and not layer.Group:
+        layer.Document.removeObject(layer.Name)
+    ifclayer.Label = label  # to avoid 001-ing the Label...
+    return ifclayer

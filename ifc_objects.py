@@ -25,9 +25,13 @@ class ifc_object:
 
     """Base class for all IFC-based objects"""
 
-    def __init__(self):
+    def __init__(self, otype=None):
         self.cached = True  # this marks that the object is freshly created and its shape should be taken from cache
         self.virgin_placement = True  # this allows to set the initial placement without triggering any placement change
+        if otype:
+            self.Type = (
+                otype[0].upper() + otype[1:]
+            )  # capitalize to match Draft standard
 
     def onBeforeChange(self, obj, prop):
         if prop == "Schema":
@@ -44,7 +48,9 @@ class ifc_object:
             obj.IfcClass = obj.Class
             self.rebuild_classlist(obj, setprops=True)
         elif prop == "Schema":
-            self.set_schema(obj, obj.Schema)
+            self.edit_schema(obj, obj.Schema)
+        elif prop == "Group":
+            self.edit_group(obj)
         elif obj.getGroupOfProperty(prop) == "IFC":
             if prop not in ["StepId"]:
                 self.edit_attribute(obj, prop)
@@ -87,9 +93,11 @@ class ifc_object:
             ifc_tools.add_properties(obj)
 
     def __getstate__(self):
-        return None
+        return getattr(self, "Type", None)
 
     def __setstate__(self, state):
+        if state and hasattr(state, "Type"):
+            self.Type = state
         return None
 
     def execute(self, obj):
@@ -140,7 +148,7 @@ class ifc_object:
         if result:
             obj.touch()
 
-    def set_schema(self, obj, schema):
+    def edit_schema(self, obj, schema):
         """Changes the schema of an IFC document"""
 
         import ifc_tools  # lazy import
@@ -179,3 +187,34 @@ class ifc_object:
         import ifc_tools  # lazy import
 
         ifc_tools.edit_pset(obj, prop)
+
+    def edit_group(self, obj):
+        """Edits the children list"""
+
+        import ifc_tools  # lazy import
+
+        if obj.Class in [
+            "IfcPresentationLayerAssignment",
+            "IfcPresentationLayerWithStyle",
+        ]:
+            ifcfile = ifc_tools.get_ifcfile(obj)
+            if not ifcfile:
+                return
+            newlist = []
+            for child in obj.Group:
+                if (
+                    not getattr(child, "StepId", None)
+                    or ifc_tools.get_ifcfile(child) != ifcfile
+                ):
+                    print(
+                        "DEBUG: Not an IFC object. Removing",
+                        child.Label,
+                        "from layer",
+                        obj.Label,
+                    )
+                else:
+                    print("DEBUG: adding", child.Label, "to layer", obj.Label)
+                    newlist.append(child)
+                    ifc_tools.add_to_layer(child, obj)
+            if newlist != obj.Group:
+                obj.Group = newlist

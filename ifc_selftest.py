@@ -144,7 +144,9 @@ class ArchTest(unittest.TestCase):
         self.failUnless(fco > 4, "ImportShapeFull failed")
 
     def test05_ImportFreeCAD(self):
-        FreeCAD.Console.PrintMessage("5.  FreeCAD import: NativeIFC coin file...")
+        FreeCAD.Console.PrintMessage(
+            "5.  NativeIFC FreeCAD import: NativeIFC coin file..."
+        )
         clearObjects()
         doc = FreeCAD.open(FCSTD_FILE_PATH)
         obj = doc.Objects[-1]
@@ -154,7 +156,7 @@ class ArchTest(unittest.TestCase):
         self.failUnless(ifcfile, "ImportFreeCAD failed")
 
     def test06_ModifyObjects(self):
-        FreeCAD.Console.PrintMessage("6.  Modifying IFC document...")
+        FreeCAD.Console.PrintMessage("6.  NativeIFC Modifying IFC document...")
         doc = FreeCAD.open(FCSTD_FILE_PATH)
         obj = doc.Objects[-1]
         obj.Label = obj.Label + "Modified"
@@ -169,7 +171,7 @@ class ArchTest(unittest.TestCase):
         )
 
     def test07_CreateDocument(self):
-        FreeCAD.Console.PrintMessage("7.  Creating new IFC document...")
+        FreeCAD.Console.PrintMessage("7.  NativeIFC Creating new IFC document...")
         doc = FreeCAD.ActiveDocument
         ifc_tools.create_document(doc, silent=True)
         fco = len(FreeCAD.getDocument("IfcTest").Objects)
@@ -177,7 +179,7 @@ class ArchTest(unittest.TestCase):
         self.failUnless(fco == 1, "CreateDocument failed")
 
     def test08_ChangeIFCSchema(self):
-        FreeCAD.Console.PrintMessage("8.  Changing IFC schema...")
+        FreeCAD.Console.PrintMessage("8.  NativeIFC Changing IFC schema...")
         clearObjects()
         fp = getIfcFilePath()
         ifc_import.insert(
@@ -192,7 +194,7 @@ class ArchTest(unittest.TestCase):
         self.failUnless(obj.StepId != oldid, "ChangeIFCSchema failed")
 
     def test09_CreateBIMObjects(self):
-        FreeCAD.Console.PrintMessage("9.  Creating BIM objects...")
+        FreeCAD.Console.PrintMessage("9.  NativeIFC Creating BIM objects...")
         doc = FreeCAD.ActiveDocument
         proj = ifc_tools.create_document(doc, silent=True)
         site = Arch.makeSite()
@@ -220,7 +222,7 @@ class ArchTest(unittest.TestCase):
         self.failUnless(fco == 8 and ifco == 12, "CreateDocument failed")
 
     def test10_ChangePlacement(self):
-        FreeCAD.Console.PrintMessage("10. Changing Placement...")
+        FreeCAD.Console.PrintMessage("10. NativeIFC Changing Placement...")
         clearObjects()
         fp = getIfcFilePath()
         ifc_import.insert(
@@ -235,7 +237,7 @@ class ArchTest(unittest.TestCase):
         self.failUnless(new_plac == target, "ChangePlacement failed")
 
     def test11_ChangeGeometry(self):
-        FreeCAD.Console.PrintMessage("11. Changing Geometry...")
+        FreeCAD.Console.PrintMessage("11. NativeIFC Changing Geometry...")
         clearObjects()
         fp = getIfcFilePath()
         ifc_import.insert(
@@ -248,7 +250,7 @@ class ArchTest(unittest.TestCase):
         self.failUnless(obj.Shape.Volume > 1500000, "ChangeGeometry failed")
 
     def test12_RemoveObject(self):
-        FreeCAD.Console.PrintMessage("12. Remove object...")
+        FreeCAD.Console.PrintMessage("12. NativeIFC Remove object...")
         clearObjects()
         fp = getIfcFilePath()
         ifc_import.insert(
@@ -261,7 +263,7 @@ class ArchTest(unittest.TestCase):
         self.failUnless(count2 < count1, "RemoveObject failed")
 
     def test13_Materials(self):
-        FreeCAD.Console.PrintMessage("13. Materials...")
+        FreeCAD.Console.PrintMessage("13. NativeIFC Materials...")
         clearObjects()
         fp = getIfcFilePath()
         ifc_import.insert(
@@ -278,6 +280,22 @@ class ArchTest(unittest.TestCase):
         res = ifcopenshell.util.element.get_material(elem)
         mats_after = ifcfile.by_type("IfcMaterialDefinition")
         self.failUnless(len(mats_after) == len(mats_before) + 1, "Materials failed")
+
+    def test14_Layers(self):
+        FreeCAD.Console.PrintMessage("14. NativeIFC Layers...")
+        clearObjects()
+        fp = getIfcFilePath()
+        ifc_import.insert(
+            fp, "IfcTest", strategy=2, shapemode=0, switchwb=0, silent=True
+        )
+        proj = FreeCAD.getDocument("IfcTest").Objects[0]
+        ifcfile = ifc_tools.get_ifcfile(proj)
+        lays_before = ifcfile.by_type("IfcPresentationLayerAssignment")
+        layer = ifc_tools.create_layer("My Layer", proj)
+        prod = FreeCAD.getDocument("IfcTest").getObject("IfcObject006")
+        ifc_tools.add_to_layer(prod, layer)
+        lays_after = ifcfile.by_type("IfcPresentationLayerAssignment")
+        self.failUnless(len(lays_after) == len(lays_before) + 1, "Layers failed")
 
 
 # test psets
