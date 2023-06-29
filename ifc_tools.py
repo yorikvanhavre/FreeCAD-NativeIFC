@@ -155,7 +155,10 @@ def create_ifcfile():
         target_view="GRAPH_VIEW",
         parent=model3d,
     )
-
+    # unit
+    # for now, assign a default metre unit, as per https://blenderbim.org/docs-python/autoapi/ifcopenshell/api/unit/assign_unit/index.html
+    # TODO allow to set this at creation, from the current FreeCAD units schema
+    api_run("unit.assign_unit", ifcfile)
     return ifcfile
 
 
