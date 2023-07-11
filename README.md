@@ -65,7 +65,7 @@ The roadmap below will show you an overview of the current state of the implemen
 * [x] Handle drag/drop
 * [ ] Handle undo/redo
 * [x] Allow to change the IFC schema
-* [ ] Support layers
+* [x] Support layers
 * [ ] Support groups
 
 #### 5. Full workflow (creation and edition) of different tools
@@ -86,6 +86,7 @@ The roadmap below will show you an overview of the current state of the implemen
 * [ ] Add to BIM WB dependencies/ reorganize addon
 * [ ] Verify and adapt 2D view generation workflow
 * [ ] Verify and adapt quantifying workflow
+* [ ] Verify and adapt cost/surveying workflow
 * [ ] Document everything
 * [ ] Upstream all pure ifcopenshell functionality to ifcopenshell.utils
 * [ ] Transfer Arch exportIFC.getRepresentation() functionality to ifcopenshell.api.geometry
