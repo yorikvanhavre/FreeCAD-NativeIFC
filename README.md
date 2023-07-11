@@ -66,7 +66,7 @@ The roadmap below will show you an overview of the current state of the implemen
 * [ ] Handle undo/redo
 * [x] Allow to change the IFC schema
 * [x] Support layers
-* [ ] Support groups
+* [x] Support groups
 
 #### 5. Full workflow (creation and edition) of different tools
 

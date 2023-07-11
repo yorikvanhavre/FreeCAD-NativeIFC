@@ -63,7 +63,10 @@ class ifc_vp_object:
 
     def getIcon(self):
         path = os.path.dirname(os.path.dirname(__file__))
-        if self.Object.ShapeMode == "Shape":
+        if self.Object.IfcClass == "IfcGroup":
+            from PySide2 import QtGui
+            return QtGui.QIcon.fromTheme("folder", QtGui.QIcon(":/icons/folder.svg"))
+        elif self.Object.ShapeMode == "Shape":
             i = "IFC_object.svg"
         else:
             i = "IFC_mesh.svg"
@@ -125,6 +128,10 @@ class ifc_vp_object:
             action_material = QtWidgets.QAction(icon, "Load material", menu)
             action_material.triggered.connect(self.addMaterial)
             menu.addAction(action_material)
+        ficon = QtGui.QIcon.fromTheme("folder", QtGui.QIcon(":/icons/folder.svg"))
+        action_group = QtWidgets.QAction(ficon, "Create group...", menu)
+        action_group.triggered.connect(self.createGroup)
+        menu.addAction(action_group)
 
     def hasChildren(self, obj):
         """Returns True if this IFC object can be decomposed"""
@@ -288,6 +295,15 @@ class ifc_vp_object:
                 "NativeIFC", self.Object
             )
 
+    def createGroup(self):
+        """Creates a group under this object"""
+
+        import ifc_tools  # lazy import
+
+        group = self.Object.Document.addObject("App::DocumentObjectGroup","Group")
+        ifc_tools.aggregate(group, self.Object)
+        self.Object.Document.recompute()
+
 
 class ifc_vp_document(ifc_vp_object):
 
@@ -311,10 +327,10 @@ class ifc_vp_document(ifc_vp_object):
         path = os.path.dirname(os.path.dirname(__file__))
         icon = QtGui.QIcon(os.path.join(path, "icons", "IFC.svg"))
         if vobj.Object.Modified:
+            action_diff = QtWidgets.QAction(icon, "View diff...", menu)
+            action_diff.triggered.connect(self.diff)
+            menu.addAction(action_diff)
             if vobj.Object.FilePath:
-                action_diff = QtWidgets.QAction(icon, "View diff...", menu)
-                action_diff.triggered.connect(self.diff)
-                menu.addAction(action_diff)
                 action_save = QtWidgets.QAction(icon, "Save IFC file", menu)
                 action_save.triggered.connect(self.save)
                 menu.addAction(action_save)
@@ -329,6 +345,7 @@ class ifc_vp_document(ifc_vp_object):
 
         ifc_tools.save_ifc(self.Object)
         self.Object.Modified = False
+        self.Object.Document.recompute()
 
     def saveas(self):
         """Saves the associated IFC file to another file"""
@@ -348,6 +365,7 @@ class ifc_vp_document(ifc_vp_object):
                 sf += ".ifc"
             ifc_tools.save_ifc(self.Object, sf)
             self.replace_file(self.Object, sf)
+            self.Object.Document.recompute()
 
     def replace_file(self, obj, newfile):
         """Asks the user if the attached file path needs to be replaced"""
