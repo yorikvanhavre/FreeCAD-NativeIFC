@@ -22,7 +22,7 @@
 
 """This module contains all the tools to create FreeCAD geometry from IFC objects"""
 
-
+import time
 import FreeCAD
 from FreeCAD import Base
 import Part
@@ -88,7 +88,7 @@ def generate_shape(obj, cached=False):
     ifcfile = ifc_tools.get_ifcfile(obj)
     elements = get_decomposition(obj)
     if not elements:
-        return None, None  # This can happen on empty storeys
+        return None, None
     shapes = []
     colors = []
     cache = get_cache(ifcfile)
@@ -190,6 +190,8 @@ def generate_coin(obj, cached=False):
     elements = get_decomposition(obj)
     # strip out elements without representation, as they can't generate a node anyway
     elements = [e for e in elements if getattr(e, "Representation", None)]
+    if not elements:
+        return None, None, None
     # if we have more than one element, placements will need to be applied on subnodes
     grouping = bool(len(elements) > 1)
     nodes = coin.SoSeparator()
@@ -320,21 +322,26 @@ def get_decomposition(obj):
             element, is_recursive=False
         ):
             if child.id() not in child_ids:
-                for el in get_decomposed_elements(child, obj):
+                if not child in result:
+                    result.append(child)
+                #for el in get_decomposed_elements(child, obj):
+                for el in ifcopenshell.util.element.get_decomposition(child):
                     if el not in result:
                         result.append(el)
         return result
 
+    #stime = time.time()
     obj_ids = [c.StepId for c in obj.OutListRecursive if hasattr(c, "StepId")]
     element = ifc_tools.get_ifc_element(obj)
     elements = get_decomposed_elements(element, obj)
-    elements = [e for e in elements if e.is_a("IfcElement")]
+    elements = [e for e in elements if e.is_a("IfcProduct")]
     elements = [e for e in elements if not e.is_a("IfcFeatureElement")]
     elements = [e for e in elements if not e.is_a("IfcOpeningElement")]
     elements = [e for e in elements if not e.is_a("IfcSpace")]
     elements = [e for e in elements if not e.is_a("IfcFurnishingElement")]
     elements = [e for e in elements if not e.is_a("IfcAnnotation")]
     elements = [e for e in elements if not e.id() in obj_ids]
+    #print("decomposition:", "%02d:%02d" % (divmod(round(time.time() - stime, 1), 60)))
     return elements
 
 
