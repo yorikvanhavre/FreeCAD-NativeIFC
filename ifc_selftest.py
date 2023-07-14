@@ -81,7 +81,7 @@ def compare(file1, file2):
     return res
 
 
-class ArchTest(unittest.TestCase):
+class NativeIFCTest(unittest.TestCase):
     def setUp(self):
         # setting a new document to hold the tests
         if FreeCAD.ActiveDocument:

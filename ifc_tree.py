@@ -20,6 +20,8 @@
 # *                                                                         *
 # ***************************************************************************
 
+"""This NativeIFC module handles the retrieval and display of geometry compositions of objects"""
+
 import os
 import FreeCAD
 

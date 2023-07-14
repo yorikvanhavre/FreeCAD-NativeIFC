@@ -101,13 +101,11 @@ class ifc_object:
         return None
 
     def execute(self, obj):
-        import ifc_tools  # lazy import
+        import ifc_generator  # lazy import
 
         if obj.isDerivedFrom("Part::Feature"):
             cached = getattr(self, "cached", False)
-            ifcfile = ifc_tools.get_ifcfile(obj)
-            element = ifc_tools.get_ifc_element(obj)
-            ifc_tools.set_geometry(obj, element, ifcfile, cached=cached)
+            ifc_generator.generate_geometry(obj, cached=cached)
             self.cached = False
             self.rebuild_classlist(obj)
 
@@ -213,7 +211,7 @@ class ifc_object:
                         obj.Label,
                     )
                 else:
-                    print("DEBUG: adding", child.Label, "to layer", obj.Label)
+                    # print("DEBUG: adding", child.Label, "to layer", obj.Label)
                     newlist.append(child)
                     ifc_tools.add_to_layer(child, obj)
             if newlist != obj.Group:

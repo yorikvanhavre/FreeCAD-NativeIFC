@@ -65,6 +65,7 @@ class ifc_vp_object:
         path = os.path.dirname(os.path.dirname(__file__))
         if self.Object.IfcClass == "IfcGroup":
             from PySide2 import QtGui
+
             return QtGui.QIcon.fromTheme("folder", QtGui.QIcon(":/icons/folder.svg"))
         elif self.Object.ShapeMode == "Shape":
             i = "IFC_object.svg"
@@ -300,7 +301,7 @@ class ifc_vp_object:
 
         import ifc_tools  # lazy import
 
-        group = self.Object.Document.addObject("App::DocumentObjectGroup","Group")
+        group = self.Object.Document.addObject("App::DocumentObjectGroup", "Group")
         ifc_tools.aggregate(group, self.Object)
         self.Object.Document.recompute()
 
