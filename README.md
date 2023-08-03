@@ -113,6 +113,8 @@ The roadmap below will show you an overview of the current state of the implemen
 
 ### Performance
 
+Tests performed on a AMD Ryzen 9 5900HX
+
 | File                                                                                                                                                    | File size | Import time (shape) | Import time (coin) | BlenderBIM |
 | ------------------------------------------------------------------------------------------------------------------------------------------------------- | --------- | ------------------- | ------------------ | ---------- |
 | [IfcOpenHouse](https://github.com/aothms/IfcOpenHouse)                                                                                                  | 0.1Mb     | < 1s                | < 1s               | < 1s       |

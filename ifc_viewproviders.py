@@ -80,6 +80,8 @@ class ifc_vp_object:
 
     def setupContextMenu(self, vobj, menu):
         import ifc_tools  # lazy import
+        import ifc_psets
+        import ifc_materials
         from PySide2 import QtCore, QtGui, QtWidgets  # lazy import
 
         path = os.path.dirname(os.path.dirname(__file__))
@@ -121,11 +123,11 @@ class ifc_vp_object:
         action_tree = QtWidgets.QAction(icon, "Show geometry tree", menu)
         action_tree.triggered.connect(self.showTree)
         menu.addAction(action_tree)
-        if ifc_tools.has_psets(self.Object):
+        if ifc_psets.has_psets(self.Object):
             action_props = QtWidgets.QAction(icon, "Expand property sets", menu)
             action_props.triggered.connect(self.showProps)
             menu.addAction(action_props)
-        if ifc_tools.get_material(self.Object):
+        if ifc_materials.get_material(self.Object):
             action_material = QtWidgets.QAction(icon, "Load material", menu)
             action_material.triggered.connect(self.addMaterial)
             menu.addAction(action_material)
@@ -222,9 +224,9 @@ class ifc_vp_object:
     def addMaterial(self):
         """Adds a material to this object"""
 
-        import ifc_tools  # lazy loading
+        import ifc_materials  # lazy loading
 
-        ifc_tools.show_material(self.Object)
+        ifc_materials.show_material(self.Object)
         self.Object.Document.recompute()
 
     def showTree(self):
@@ -240,9 +242,9 @@ class ifc_vp_object:
     def showProps(self):
         """Expands property sets"""
 
-        import ifc_tools  # lazy loading
+        import ifc_psets  # lazy loading
 
-        ifc_tools.show_psets(self.Object)
+        ifc_psets.show_psets(self.Object)
         self.Object.Document.recompute()
 
     def canDragObjects(self):
@@ -502,11 +504,12 @@ class ifc_vp_material:
 
     def setupContextMenu(self, vobj, menu):
         import ifc_tools  # lazy import
+        import ifc_psets
         from PySide2 import QtCore, QtGui, QtWidgets  # lazy import
 
         path = os.path.dirname(os.path.dirname(__file__))
         icon = QtGui.QIcon(os.path.join(path, "icons", "IFC.svg"))
-        if ifc_tools.has_psets(self.Object):
+        if ifc_psets.has_psets(self.Object):
             action_props = QtWidgets.QAction(icon, "Expand property sets", menu)
             action_props.triggered.connect(self.showProps)
             menu.addAction(action_props)
@@ -514,9 +517,9 @@ class ifc_vp_material:
     def showProps(self):
         """Expands property sets"""
 
-        import ifc_tools  # lazy loading
+        import ifc_psets  # lazy loading
 
-        ifc_tools.show_psets(self.Object)
+        ifc_psets.show_psets(self.Object)
         self.Object.Document.recompute()
 
 

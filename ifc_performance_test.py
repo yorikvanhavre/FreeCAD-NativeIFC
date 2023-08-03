@@ -21,6 +21,7 @@
 # ***************************************************************************
 
 import os
+import time
 import FreeCAD
 import unittest
 import ifc_import
@@ -36,8 +37,11 @@ FILES = [
     "king_arch_full.ifc",
 ]
 
+BBIM = ["00:00", "00:01", "00:04", "00:05", "00:05", "00:14", "00:36"]
 
 class NativeIFCTest(unittest.TestCase):
+    results = []
+
     def setUp(self):
         # setting a new document to hold the tests
         if FreeCAD.ActiveDocument:
@@ -49,59 +53,92 @@ class NativeIFCTest(unittest.TestCase):
 
     def tearDown(self):
         FreeCAD.closeDocument("IfcTest")
-        pass
 
     def test01_IfcOpenHouse_coin(self):
         print("COIN MODE")
-        f = FILES[0]
-        ifc_import.insert(
-            f, "IfcTest", strategy=0, shapemode=1, switchwb=0, silent=True
-        )
-        self.failUnless(True, "import failed")
+        n = 0
+        t = import_file(n)
+        self.results.append(register(n, t))
 
     def test02_IfcOpenHouse_coin(self):
-        f = FILES[1]
-        ifc_import.insert(
-            f, "IfcTest", strategy=0, shapemode=1, switchwb=0, silent=True
-        )
-        self.failUnless(True, "import failed")
+        n = 1
+        t = import_file(n)
+        self.results.append(register(n, t))
 
     def test03_IfcOpenHouse_coin(self):
-        f = FILES[2]
-        ifc_import.insert(
-            f, "IfcTest", strategy=0, shapemode=1, switchwb=0, silent=True
-        )
-        self.failUnless(True, "import failed")
+        n = 2
+        t = import_file(n)
+        self.results.append(register(n, t))
 
     def test04_IfcOpenHouse_coin(self):
-        f = FILES[3]
-        ifc_import.insert(
-            f, "IfcTest", strategy=0, shapemode=1, switchwb=0, silent=True
-        )
-        self.failUnless(True, "import failed")
+        n = 3
+        t = import_file(n)
+        self.results.append(register(n, t))
 
     def test05_IfcOpenHouse_coin(self):
-        f = FILES[4]
-        ifc_import.insert(
-            f, "IfcTest", strategy=0, shapemode=1, switchwb=0, silent=True
-        )
-        self.failUnless(True, "import failed")
+        n = 4
+        t = import_file(n)
+        self.results.append(register(n, t))
 
     def test06_IfcOpenHouse_coin(self):
-        f = FILES[5]
-        ifc_import.insert(
-            f, "IfcTest", strategy=0, shapemode=1, switchwb=0, silent=True
-        )
-        self.failUnless(True, "import failed")
+        n = 5
+        t = import_file(n)
+        self.results.append(register(n, t))
 
-    # def test07_IfcOpenHouse_coin(self):
-    #    f = FILES[6]
-    #    ifc_import.insert(f, "IfcTest", strategy=0, shapemode=1, switchwb=0, silent=True)
-    #    self.failUnless(True, "import failed")
+    def test07_IfcOpenHouse_coin(self):
+        n = 6
+        t = import_file(n)
+        self.results.append(register(n, t))
+        
+    def test08_IfcOpenHouse_coin(self):
+        print("SHAPE MODE")
+        n = 0
+        t = import_file(n, shape=True)
+        self.results.append(register(n, t, "shape"))
 
+    def test09_IfcOpenHouse_coin(self):
+        n = 1
+        t = import_file(n, shape=True)
+        self.results.append(register(n, t, "shape"))
+
+    def test10_IfcOpenHouse_coin(self):
+        n = 2
+        t = import_file(n, shape=True)
+        self.results.append(register(n, t, "shape"))
+
+    def test11_IfcOpenHouse_coin(self):
+        n = 3
+        t = import_file(n, shape=True)
+        self.results.append(register(n, t, "shape"))
+
+    def test12_IfcOpenHouse_coin(self):
+        n = 4
+        t = import_file(n, shape=True)
+        self.results.append(register(n, t, "shape"))
+
+    #def test13_IfcOpenHouse_coin(self):
+    #    n = 5
+    #    t = import_file(n, shape=True)
+    #    self.results.append(register(n, t, "shape"))
+
+    #def test14_IfcOpenHouse_coin(self):
+    #    n = 6
+    #    t = import_file(n, shape=True)
+    #    self.results.append(register(n, t, "shape"))
+
+    def testfinal(self):
+        print("| File | File size | Import time (shape) | Import time (coin) | BlenderBIM |")
+        print("| ---- | --------- | ------------------- | ------------------ | ---------- |")
+        for i in range(len(self.results)):
+            if self.results[i][0] == "coin":
+                l = [self.results[i][1], self.results[i][2], self.results[i][3], "Failed", self.results[i][4]]
+                b = [j for j in range(len(self.results)) if self.results[j][0] == "shape" and self.results[j][1] == self.results[i][1]]
+                if b:
+                    l[3] = self.results[b[0]][3]
+                print(" | ".join(l))
 
 def test():
-    "Thius is meant to be used from a terminal, to run the tests without the GUI"
+    "This is meant to be used from a terminal, to run the tests without the GUI"
 
     print("COIN MODE")
     for f in FILES:
@@ -114,3 +151,18 @@ def test():
             switchwb=0,
             silent=True,
         )
+
+def import_file(n, shape=False):
+    if shape:
+        shapemode = 0
+    else:
+        shapemode = 1
+    stime = time.time()
+    f = os.path.join(os.path.expanduser('~'),FILES[n])
+    ifc_import.insert(f, "IfcTest", strategy=0, shapemode=shapemode, switchwb=0, silent=True)
+    return "%02d:%02d" % (divmod(round(time.time() - stime, 1), 60))
+
+def register(n, t, mode="coin"):
+    f = os.path.join(os.path.expanduser('~'),FILES[n])
+    fsize = round(os.path.getsize(f) / 1048576, 2)
+    return([mode,FILES[n],str(fsize)+" Mb",t, BBIM[n]])

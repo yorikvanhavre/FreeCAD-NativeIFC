@@ -182,14 +182,15 @@ class ifc_object:
     def edit_pset(self, obj, prop):
         """Edits a Pset value"""
 
-        import ifc_tools  # lazy import
+        import ifc_psets  # lazy import
 
-        ifc_tools.edit_pset(obj, prop)
+        ifc_psets.edit_pset(obj, prop)
 
     def edit_group(self, obj):
         """Edits the children list"""
 
         import ifc_tools  # lazy import
+        import ifc_layers
 
         if obj.Class in [
             "IfcPresentationLayerAssignment",
@@ -213,6 +214,6 @@ class ifc_object:
                 else:
                     # print("DEBUG: adding", child.Label, "to layer", obj.Label)
                     newlist.append(child)
-                    ifc_tools.add_to_layer(child, obj)
+                    ifc_layers.add_to_layer(child, obj)
             if newlist != obj.Group:
                 obj.Group = newlist
