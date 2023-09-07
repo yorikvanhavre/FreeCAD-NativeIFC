@@ -324,13 +324,13 @@ def get_decomposition(obj):
             if child.id() not in child_ids:
                 if not child in result:
                     result.append(child)
-                #for el in get_decomposed_elements(child, obj):
+                # for el in get_decomposed_elements(child, obj):
                 for el in ifcopenshell.util.element.get_decomposition(child):
                     if el not in result:
                         result.append(el)
         return result
 
-    #stime = time.time()
+    # stime = time.time()
     obj_ids = [c.StepId for c in obj.OutListRecursive if hasattr(c, "StepId")]
     element = ifc_tools.get_ifc_element(obj)
     elements = get_decomposed_elements(element, obj)
@@ -341,7 +341,7 @@ def get_decomposition(obj):
     elements = [e for e in elements if not e.is_a("IfcFurnishingElement")]
     elements = [e for e in elements if not e.is_a("IfcAnnotation")]
     elements = [e for e in elements if not e.id() in obj_ids]
-    #print("decomposition:", "%02d:%02d" % (divmod(round(time.time() - stime, 1), 60)))
+    # print("decomposition:", "%02d:%02d" % (divmod(round(time.time() - stime, 1), 60)))
     return elements
 
 

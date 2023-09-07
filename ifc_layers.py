@@ -144,4 +144,3 @@ def transfer_layer(layer, project):
         layer.Document.removeObject(layer.Name)
     ifclayer.Label = label  # to avoid 001-ing the Label...
     return ifclayer
-
