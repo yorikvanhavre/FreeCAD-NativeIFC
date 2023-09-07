@@ -333,7 +333,7 @@ class ifc_vp_document(ifc_vp_object):
             action_diff = QtWidgets.QAction(icon, "View diff...", menu)
             action_diff.triggered.connect(self.diff)
             menu.addAction(action_diff)
-            if vobj.Object.FilePath:
+            if vobj.Object.IfcFilePath:
                 action_save = QtWidgets.QAction(icon, "Save IFC file", menu)
                 action_save.triggered.connect(self.save)
                 menu.addAction(action_save)
@@ -359,7 +359,7 @@ class ifc_vp_document(ifc_vp_object):
         sf = QtWidgets.QFileDialog.getSaveFileName(
             None,
             "Save an IFC file",
-            self.Object.FilePath,
+            self.Object.IfcFilePath,
             "Industry Foundation Classes (*.ifc)",
         )
         if sf and sf[0]:
@@ -387,7 +387,7 @@ class ifc_vp_document(ifc_vp_object):
             QtWidgets.QMessageBox.No,
         )
         if dlg == QtWidgets.QMessageBox.Yes:
-            self.Object.FilePath = newfile
+            self.Object.IfcFilePath = newfile
             self.Object.Modified = False
             return True
         else:

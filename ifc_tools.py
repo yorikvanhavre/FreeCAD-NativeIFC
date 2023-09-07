@@ -72,12 +72,12 @@ def create_document(document, filename=None, shapemode=0, strategy=0, silent=Fal
     obj = add_object(document, otype="project")
     full = False
     d = "The path to the linked IFC file"
-    obj.addProperty("App::PropertyFile", "FilePath", "Base", d)
+    obj.addProperty("App::PropertyFile", "IfcFilePath", "Base", d)
     obj.addProperty("App::PropertyBool", "Modified", "Base")
     obj.setPropertyStatus("Modified", "Hidden")
     if filename:
         # opening existing file
-        obj.FilePath = filename
+        obj.IfcFilePath = filename
         ifcfile = ifcopenshell.open(filename)
     else:
         # creating a new file
@@ -298,8 +298,8 @@ def get_ifcfile(obj):
         if hasattr(project, "Proxy"):
             if hasattr(project.Proxy, "ifcfile"):
                 return project.Proxy.ifcfile
-        if project.FilePath:
-            ifcfile = ifcopenshell.open(project.FilePath)
+        if project.IfcFilePath:
+            ifcfile = ifcopenshell.open(project.IfcFilePath)
             if hasattr(project, "Proxy"):
                 project.Proxy.ifcfile = ifcfile
             return ifcfile
@@ -753,8 +753,8 @@ def save_ifc(obj, filepath=None):
     """Saves the linked IFC file of a project, but does not mark it as saved"""
 
     if not filepath:
-        if hasattr(obj, "FilePath") and obj.FilePath:
-            filepath = obj.FilePath
+        if getattr(obj, "IfcFilePath", None):
+            filepath = obj.IfcFilePath
     if filepath:
         ifcfile = get_ifcfile(obj)
         if not ifcfile:

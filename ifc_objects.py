@@ -74,7 +74,7 @@ class ifc_object:
 
     def onDocumentRestored(self, obj):
         self.rebuild_classlist(obj)
-        if hasattr(obj, "FilePath"):
+        if hasattr(obj, "IfcFilePath"):
             # once we have loaded the project, recalculate child coin nodes
             for child in obj.OutListRecursive:
                 if getattr(child, "ShapeMode", None) == "Coin":

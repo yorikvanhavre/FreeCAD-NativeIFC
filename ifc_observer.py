@@ -58,7 +58,7 @@ class ifc_observer:
         doc = FreeCAD.getDocument(self.docname)
         objs = []
         for obj in doc.findObjects(Type="Part::FeaturePython"):
-            if hasattr(obj, "FilePath") and hasattr(obj, "Modified"):
+            if hasattr(obj, "IfcFilePath") and hasattr(obj, "Modified"):
                 if obj.Modified:
                     objs.append(obj)
         if objs:
@@ -78,7 +78,7 @@ class ifc_observer:
                 params.SetBool("AskBeforeSaving", ask)
 
             for obj in objs:
-                if obj.FilePath and getattr(obj.Proxy, "ifcfile", None):
+                if obj.IfcFilePath and getattr(obj.Proxy, "ifcfile", None):
                     obj.ViewObject.Proxy.save()
                 else:
                     obj.ViewObject.Proxy.save_as()

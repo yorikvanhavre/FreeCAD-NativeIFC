@@ -31,12 +31,12 @@ import ifcopenshell
 def get_diff(proj):
     """Obtains a diff between the current version and the saved version of a project"""
 
-    if not proj.FilePath:
+    if not getattr(proj, IfcFilePath, None):
         old = []
     else:
         # cannot use open() here as it gives different encoding
         # than ifcopenshell and diff does not work
-        f = ifcopenshell.open(proj.FilePath)
+        f = ifcopenshell.open(proj.IfcFilePath)
         old = f.wrapped_data.to_string().split("\n")
     new = proj.Proxy.ifcfile.wrapped_data.to_string().split("\n")
     # diff = difflib.HtmlDiff().make_file(old,new) # UGLY

@@ -163,9 +163,9 @@ class NativeIFCTest(unittest.TestCase):
         obj = doc.Objects[-1]
         obj.Label = obj.Label + "Modified"
         proj = ifc_tools.get_project(obj)
-        proj.FilePath = proj.FilePath[:-4] + "_modified.ifc"
+        proj.IfcFilePath = proj.IfcFilePath[:-4] + "_modified.ifc"
         ifc_tools.save_ifc(proj)
-        ifc_diff = compare(IFC_FILE_PATH, proj.FilePath)
+        ifc_diff = compare(IFC_FILE_PATH, proj.IfcFilePath)
         obj.ShapeMode = 0
         obj.Proxy.execute(obj)
         self.failUnless(
