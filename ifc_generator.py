@@ -59,8 +59,10 @@ def generate_geometry(obj, cached=False):
     obj.Shape = Part.makeBox(1, 1, 1)
 
     # generate the shape or coin node
+    ifcfile = ifc_tools.get_ifcfile(obj)
+    elements = get_decomposition(obj)
     if obj.ShapeMode == "Shape":
-        shape, colors = generate_shape(obj, cached)
+        shape, colors = generate_shape(ifcfile, elements, cached)
         if shape:
             placement = shape.Placement
             obj.Shape = shape
@@ -68,7 +70,7 @@ def generate_geometry(obj, cached=False):
         else:
             print_debug(obj)
     elif basenode and obj.ShapeMode == "Coin":
-        node, colors, placement = generate_coin(obj, cached)
+        node, colors, placement = generate_coin(ifcfile, elements, cached)
         if node:
             basenode.addChild(node)
         else:
@@ -81,12 +83,10 @@ def generate_geometry(obj, cached=False):
         ifc_tools.set_colors(obj, colors)  # TODO migrate here?
 
 
-def generate_shape(obj, cached=False):
-    """Returns a Part shape for an object"""
+def generate_shape(ifcfile, elements, cached=False):
+    """Returns a Part shape for a list of elements"""
 
     # setup
-    ifcfile = ifc_tools.get_ifcfile(obj)
-    elements = get_decomposition(obj)
     if not elements:
         return None, None
     shapes = []
@@ -182,12 +182,10 @@ def generate_shape(obj, cached=False):
     return shape, colors
 
 
-def generate_coin(obj, cached=False):
-    """Returns a Coin node for an object"""
+def generate_coin(ifcfile, elements, cached=False):
+    """Returns a Coin node for a list of elements"""
 
     # setup
-    ifcfile = ifc_tools.get_ifcfile(obj)
-    elements = get_decomposition(obj)
     # strip out elements without representation, as they can't generate a node anyway
     elements = [e for e in elements if getattr(e, "Representation", None)]
     if not elements:
