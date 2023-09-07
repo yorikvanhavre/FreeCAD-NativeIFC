@@ -213,7 +213,9 @@ def edit_pset(obj, prop, value=None):
         pset = ifc_tools.api_run("pset.add_pset", ifcfile, product=element, name=pset)
     if not target_prop:
         target_prop = prop
-    ifc_tools.api_run("pset.edit_pset", ifcfile, pset=pset, properties={target_prop: value})
+    ifc_tools.api_run(
+        "pset.edit_pset", ifcfile, pset=pset, properties={target_prop: value}
+    )
     # TODO manage quantities
     return True
 
@@ -226,3 +228,21 @@ def load_psets(obj):
         load_psets(child)
 
 
+def add_pset(obj, psetname):
+    """Adds a pset with the given name to the given object"""
+
+    ifcfile = ifc_tools.get_ifcfile(obj)
+    element = ifc_tools.get_ifc_element(obj)
+    if ifcfile and element:
+        pset = ifc_tools.api_run(
+            "pset.add_pset", ifcfile, product=element, name=psetname
+        )
+        return pset
+
+
+def add_property(ifcfile, pset, name, value=""):
+    """Adds a property with the given name to the given pset. The type is deduced from
+    the value: string is IfcLabel, True/False is IfcBoolean, number is IfcLengthMeasure.
+    To force a certain type, value can also be an IFC element such as IfcLabel"""
+
+    ifc_tools.api_run("pset.edit_pset", ifcfile, pset=pset, properties={name: value})

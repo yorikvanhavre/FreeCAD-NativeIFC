@@ -33,6 +33,7 @@ import ifc_tools
 import ifc_geometry
 import ifc_materials
 import ifc_layers
+import ifc_psets
 import ifcopenshell
 import difflib
 
@@ -298,6 +299,19 @@ class NativeIFCTest(unittest.TestCase):
         ifc_layers.add_to_layer(prod, layer)
         lays_after = ifcfile.by_type("IfcPresentationLayerAssignment")
         self.failUnless(len(lays_after) == len(lays_before) + 1, "Layers failed")
+
+    def test15_Psets(self):
+        FreeCAD.Console.PrintMessage("15. NativeIFC Psets...")
+        clearObjects()
+        fp = getIfcFilePath()
+        ifc_import.insert(
+            fp, "IfcTest", strategy=2, shapemode=0, switchwb=0, silent=True
+        )
+        obj = FreeCAD.getDocument("IfcTest").getObject("IfcObject004")
+        ifcfile = ifc_tools.get_ifcfile(obj)
+        pset = ifc_psets.add_pset(obj, "Pset_Custom")
+        ifc_psets.add_property(ifcfile, pset, "MyMessageToTheWorld", "Hello, World!")
+        self.failUnless(ifc_psets.has_psets(obj), "Psets failed")
 
 
 # test psets
