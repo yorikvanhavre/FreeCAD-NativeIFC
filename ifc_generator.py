@@ -308,12 +308,12 @@ def get_decomposition(obj):
     obj_ids = [c.StepId for c in obj.OutListRecursive if hasattr(c, "StepId")]
     element = ifc_tools.get_ifc_element(obj)
     elements = get_decomposed_elements(element, obj)
-    elements = filter_types(elements)
+    elements = filter_types(elements, obj_ids)
     # print("decomposition:", "%02d:%02d" % (divmod(round(time.time() - stime, 1), 60)))
     return elements
 
 
-def filter_types(elements):
+def filter_types(elements, obj_ids=[]):
     """Remove unrenderable elements from the given list"""
     
     elements = [e for e in elements if e.is_a("IfcProduct")]
