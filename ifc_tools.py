@@ -215,9 +215,12 @@ def create_children(
         if not element.id() in [
             getattr(c, "StepId", 0) for c in getattr(parent, "Group", [])
         ]:
-            child = create_object(element, parent.Document, ifcfile, parent.ShapeMode)
+            doc = getattr(parent, "Document", parent)
+            mode = getattr(parent, "ShapeMode", "Coin")
+            child = create_object(element, doc, ifcfile, mode)
             subresult.append(child)
-            parent.Proxy.addObject(parent, child)
+            if isinstance(parent, FreeCAD.DocumentObject):
+                parent.Proxy.addObject(parent, child)
             if element.is_a("IfcSite"):
                 # force-create contained buildings too if we just created a site
                 buildings = [
@@ -320,6 +323,10 @@ def get_project(obj):
         return None
     if isinstance(obj, ifcopenshell.entity_instance):
         obj = get_object(obj)
+    if hasattr(obj, "IfcFilePath"):
+        return obj
+    if hasattr(getattr(obj, "Document", None), "IfcFilePath"):
+        return obj.Document
     if getattr(obj, "Class", None) in proj_types:
         return obj
     if hasattr(obj, "InListRecursive"):
@@ -597,6 +604,8 @@ def set_attribute(ifcfile, element, attribute, value):
 
     # This function can become pure IFC
 
+    if not ifcfile or not element:
+        return False
     if attribute == "Class":
         if value != element.is_a():
             if value and value.startswith("Ifc"):

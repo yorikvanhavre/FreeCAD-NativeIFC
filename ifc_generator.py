@@ -315,7 +315,7 @@ def get_decomposition(obj):
 
 def filter_types(elements, obj_ids=[]):
     """Remove unrenderable elements from the given list"""
-    
+
     elements = [e for e in elements if e.is_a("IfcProduct")]
     elements = [e for e in elements if not e.is_a("IfcFeatureElement")]
     elements = [e for e in elements if not e.is_a("IfcOpeningElement")]

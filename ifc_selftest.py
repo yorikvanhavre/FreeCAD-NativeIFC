@@ -316,19 +316,24 @@ class NativeIFCTest(unittest.TestCase):
 
     def test16_Singledoc(self):
         FreeCAD.Console.PrintMessage("16. Single document paradigm...")
-        doc = FreeCAD.newDocument("SingleDoc")
-        doc.addProperty("App::PropertyPythonObject","IfcFile")
+        doc = FreeCAD.ActiveDocument
+        doc.addProperty("App::PropertyPythonObject", "IfcFile")
         doc.setPropertyStatus("IfcFile", "Transient")
+        doc.addProperty("App::PropertyFile", "IfcFilePath", "Base")
         fp = getIfcFilePath()
+        doc.IfcFilePath = fp
         ifcfile = ifcopenshell.open(fp)
         doc.IfcFile = ifcfile
         import FreeCADGui
-        sg = FreeCADGui.getDocument("SingleDoc").ActiveView.getSceneGraph()
-        proj = doc.IfcFile.by_type("IfcProject")[0]
-        doc.addProperty("App::PropertyInteger","StepId", "IFC")
+
+        sg = FreeCADGui.getDocument(doc.Name).ActiveView.getSceneGraph()
+        proj = ifcfile.by_type("IfcProject")[0]
+        doc.addProperty("App::PropertyInteger", "StepId", "IFC")
         doc.StepId = proj.id()
         elements = ifc_generator.get_decomposed_elements(proj)
         elements = ifc_generator.filter_types(elements)
         node = ifc_generator.generate_coin(ifcfile, elements)[0]
         sg.addChild(node)
-        self.failUnless(True, "Singledoc failed")
+        ifc_tools.create_children(doc, ifcfile, recursive=False, assemblies=False)
+        sg.removeChild(node)
+        self.failUnless(len(doc.Objects) == 2, "Singledoc failed")
