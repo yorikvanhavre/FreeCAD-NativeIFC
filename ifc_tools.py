@@ -436,8 +436,9 @@ def add_properties(
             setattr(obj, attr, get_ifc_classes(obj, value))
             setattr(obj, attr, value)
             # companion hidden propertym that gets saved to file
-            obj.addProperty("App::PropertyString", "IfcClass", "IFC")
-            obj.setPropertyStatus("IfcClass", "Hidden")
+            if "IfcClass" not in obj.PropertiesList:
+                obj.addProperty("App::PropertyString", "IfcClass", "IFC")
+                obj.setPropertyStatus("IfcClass", "Hidden")
             setattr(obj, "IfcClass", value)
         elif isinstance(value, int):
             if attr not in obj.PropertiesList:
@@ -531,10 +532,11 @@ def get_ifc_classes(obj, baseclass):
     return classes
 
 
-def get_ifc_element(obj):
+def get_ifc_element(obj, ifcfile=None):
     """Returns the corresponding IFC element of an object"""
 
-    ifcfile = get_ifcfile(obj)
+    if not ifcfile:
+        ifcfile = get_ifcfile(obj)
     if ifcfile and hasattr(obj, "StepId"):
         return ifcfile.by_id(obj.StepId)
     return None

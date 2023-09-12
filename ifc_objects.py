@@ -129,7 +129,7 @@ class ifc_object:
         if not value:
             value = obj.getPropertyByName(attribute)
         ifcfile = ifc_tools.get_ifcfile(obj)
-        elt = ifc_tools.get_ifc_element(obj)
+        elt = ifc_tools.get_ifc_element(obj, ifcfile)
         if elt:
             result = ifc_tools.set_attribute(ifcfile, elt, attribute, value)
             if result:

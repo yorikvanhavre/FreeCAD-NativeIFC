@@ -325,7 +325,6 @@ class NativeIFCTest(unittest.TestCase):
         ifcfile = ifcopenshell.open(fp)
         doc.IfcFile = ifcfile
         import FreeCADGui
-
         sg = FreeCADGui.getDocument(doc.Name).ActiveView.getSceneGraph()
         proj = ifcfile.by_type("IfcProject")[0]
         doc.addProperty("App::PropertyInteger", "StepId", "IFC")
@@ -336,4 +335,5 @@ class NativeIFCTest(unittest.TestCase):
         sg.addChild(node)
         ifc_tools.create_children(doc, ifcfile, recursive=False, assemblies=False)
         sg.removeChild(node)
+        print([obj.Label for obj in doc.Objects])
         self.failUnless(len(doc.Objects) == 2, "Singledoc failed")
