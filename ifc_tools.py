@@ -481,14 +481,18 @@ def add_properties(
             if attr not in obj.PropertiesList:
                 obj.addProperty("App::PropertyEnumeration", attr, "IFC")
             items = ifcopenshell.util.attribute.get_enum_items(attr_def)
-            setattr(obj, attr, items)
             if value not in items:
                 for v in ("UNDEFINED", "NOTDEFINED", "USERDEFINED"):
                     if v in items:
                         value = v
                         break
             if value in items:
+                # to prevent bug/crash, we first need to populate the
+                # enum with the value about to be used, then
+                # add the alternatives
+                setattr(obj, attr, [value])
                 setattr(obj, attr, value)
+                setattr(obj, attr, items)
         else:
             if attr not in obj.PropertiesList:
                 obj.addProperty("App::PropertyString", attr, "IFC")
