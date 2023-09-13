@@ -31,7 +31,7 @@ import ifcopenshell
 def get_diff(proj):
     """Obtains a diff between the current version and the saved version of a project"""
 
-    if not getattr(proj, IfcFilePath, None):
+    if not getattr(proj, "IfcFilePath", None):
         old = []
     else:
         # cannot use open() here as it gives different encoding
