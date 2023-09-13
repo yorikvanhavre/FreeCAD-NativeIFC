@@ -83,7 +83,7 @@ def add_layers(obj, element=None, ifcfile=None, proj=None):
     if not ifcfile:
         ifcfile = ifc_tools.get_ifcfile(obj)
     if not element:
-        element = ifc_tools.get_ifc_element(obj)
+        element = ifc_tools.get_ifc_element(obj, ifcfile)
     if not proj:
         proj = ifc_tools.get_project(ifcfile)
     layers = ifcopenshell.util.element.get_layers(ifcfile, element)

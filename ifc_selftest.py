@@ -34,6 +34,7 @@ import ifc_geometry
 import ifc_materials
 import ifc_layers
 import ifc_psets
+import ifc_objects
 import ifc_generator
 import ifcopenshell
 import difflib
@@ -325,6 +326,7 @@ class NativeIFCTest(unittest.TestCase):
         ifcfile = ifcopenshell.open(fp)
         doc.IfcFile = ifcfile
         import FreeCADGui
+
         sg = FreeCADGui.getDocument(doc.Name).ActiveView.getSceneGraph()
         proj = ifcfile.by_type("IfcProject")[0]
         doc.addProperty("App::PropertyInteger", "StepId", "IFC")

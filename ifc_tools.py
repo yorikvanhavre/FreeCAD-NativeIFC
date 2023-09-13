@@ -298,12 +298,12 @@ def get_ifcfile(obj):
 
     project = get_project(obj)
     if project:
-        if hasattr(project, "Proxy"):
+        if getattr(project, "Proxy", None):
             if hasattr(project.Proxy, "ifcfile"):
                 return project.Proxy.ifcfile
         if project.IfcFilePath:
             ifcfile = ifcopenshell.open(project.IfcFilePath)
-            if hasattr(project, "Proxy"):
+            if getattr(project, "Proxy", None):
                 project.Proxy.ifcfile = ifcfile
             return ifcfile
     return None
@@ -433,8 +433,11 @@ def add_properties(
             if attr not in obj.PropertiesList:
                 obj.addProperty("App::PropertyEnumeration", attr, "IFC")
                 obj.setPropertyStatus(attr, "Transient")
-            setattr(obj, attr, get_ifc_classes(obj, value))
+            # to avoid bug/crash: we populate first the property with only the
+            # class, then we add the sibling classes
+            setattr(obj, attr, [value])
             setattr(obj, attr, value)
+            setattr(obj, attr, get_ifc_classes(obj, value))
             # companion hidden propertym that gets saved to file
             if "IfcClass" not in obj.PropertiesList:
                 obj.addProperty("App::PropertyString", "IfcClass", "IFC")

@@ -217,3 +217,11 @@ class ifc_object:
                     ifc_layers.add_to_layer(child, obj)
             if newlist != obj.Group:
                 obj.Group = newlist
+
+
+class document_object:
+
+    """Holder for the document's IFC objects"""
+
+    def __init__(self):
+        pass
