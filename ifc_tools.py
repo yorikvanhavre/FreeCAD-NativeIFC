@@ -23,17 +23,14 @@
 """This is the main NativeIFC module"""
 
 import os
-import multiprocessing  # obsolete?
 import re
 
 # heavyweight libraries - ifc_tools should always be lazy loaded
 
 import FreeCAD
-from FreeCAD import Base  # obsolete?
 import Part
 import Mesh
 import Draft
-from pivy import coin
 import exportIFC
 import exportIFCHelper
 
@@ -54,10 +51,30 @@ import ifc_layers
 SCALE = 1000.0  # IfcOpenShell works in meters, FreeCAD works in mm
 SHORT = False  # If True, only Step ID attribute is created
 ROUND = 8  # rounding value for placements
+SINGLEDOC = False # single doc paradigm
 PARAMS = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Mod/NativeIFC")
 
 
 def create_document(document, filename=None, shapemode=0, strategy=0, silent=False):
+    """Creates a IFC document object in the given FreeCAD document or converts that
+    document into an IFC document, depending on the value of SINGLEDOC.
+
+    filename:  If not given, a blank IFC document is created
+    shapemode: 0 = full shape
+               1 = coin only
+               2 = no representation
+    strategy:  0 = only root object
+               1 = only bbuilding structure,
+               2 = all children
+    """
+
+    if SINGLEDOC:
+        return convert_document(document, filename, shapemode, strategy, silent)
+    else:
+        return create_document_object(document, filename, shapemode, strategy, silent)
+
+
+def create_document_object(document, filename=None, shapemode=0, strategy=0, silent=False):
     """Creates a IFC document object in the given FreeCAD document.
 
     filename:  If not given, a blank IFC document is created
@@ -70,28 +87,7 @@ def create_document(document, filename=None, shapemode=0, strategy=0, silent=Fal
     """
 
     obj = add_object(document, otype="project")
-    full = False
-    d = "The path to the linked IFC file"
-    obj.addProperty("App::PropertyFile", "IfcFilePath", "Base", d)
-    obj.addProperty("App::PropertyBool", "Modified", "Base")
-    obj.setPropertyStatus("Modified", "Hidden")
-    if filename:
-        # opening existing file
-        obj.IfcFilePath = filename
-        ifcfile = ifcopenshell.open(filename)
-    else:
-        # creating a new file
-        if not silent:
-            full = ifc_import.get_project_type()
-        ifcfile = create_ifcfile()
-    project = ifcfile.by_type("IfcProject")[0]
-    # TODO configure version history
-    # https://blenderbim.org/docs-python/autoapi/ifcopenshell/api/owner/create_owner_history/index.html
-    obj.Proxy.ifcfile = ifcfile
-    add_properties(obj, ifcfile, project, shapemode=shapemode)
-    obj.addProperty("App::PropertyEnumeration", "Schema", "Base")
-    obj.Schema = ifcopenshell.ifcopenshell_wrapper.schema_names()
-    obj.Schema = ifcfile.wrapped_data.schema_name()
+    ifcfile, project, full = setup_project(obj, filename, shapemode, silent)
     # populate according to strategy
     if strategy == 0:
         pass
@@ -102,11 +98,77 @@ def create_document(document, filename=None, shapemode=0, strategy=0, silent=Fal
     # create default structure
     if full:
         import Arch  # lazy loading
-
         site = aggregate(Arch.makeSite(), obj)
         building = aggregate(Arch.makeBuilding(), site)
         storey = aggregate(Arch.makeFloor(), building)
     return obj
+
+
+def convert_document(document, filename=None, shapemode=0, strategy=0, silent=False):
+    """Converts the given FreeCAD document to an IFC document.
+
+    filename:  If not given, a blank IFC document is created
+    shapemode: 0 = full shape
+               1 = coin only
+               2 = no representation
+    strategy:  0 = only root object
+               1 = only bbuilding structure,
+               2 = all children
+    """
+
+    document.addProperty("App::PropertyPythonObject", "Proxy")
+    document.setPropertyStatus("Proxy", "Transient")
+    document.Proxy = ifc_objects.document_object()
+    ifcfile, project, full = setup_project(document, filename, shapemode, silent)
+    if strategy == 0 and FreeCAD.GuiUp:
+        import FreeCADGui # lazy loading
+        sg = FreeCADGui.getDocument(doc.Name).ActiveView.getSceneGraph()
+        elements = ifc_generator.get_decomposed_elements(proj)
+        elements = ifc_generator.filter_types(elements)
+        node = ifc_generator.generate_coin(ifcfile, elements)[0]
+        sg.addChild(node)
+    elif strategy == 1:
+        create_children(document, ifcfile, recursive=True, only_structure=True)
+    elif strategy == 2:
+        create_children(document, ifcfile, recursive=True, assemblies=False)
+    # create default structure
+    if full:
+        import Arch  # lazy loading
+        site = aggregate(Arch.makeSite(), document)
+        building = aggregate(Arch.makeBuilding(), site)
+        storey = aggregate(Arch.makeFloor(), building)
+    return document
+
+
+def setup_project(proj, filename, shapemode, silent):
+    """Setups a project (common operations between signle doc/not single doc modes)
+    Returns the ifcfile object, the project ifc entity, and full (True/False)"""
+
+    full = False
+    d = "The path to the linked IFC file"
+    proj.addProperty("App::PropertyFile", "IfcFilePath", "Base", d)
+    proj.addProperty("App::PropertyBool", "Modified", "Base")
+    proj.setPropertyStatus("Modified", "Hidden")
+    if filename:
+        # opening existing file
+        proj.IfcFilePath = filename
+        ifcfile = ifcopenshell.open(filename)
+    else:
+        # creating a new file
+        if not silent:
+            full = ifc_import.get_project_type()
+        ifcfile = create_ifcfile()
+    project = ifcfile.by_type("IfcProject")[0]
+    # TODO configure version history
+    # https://blenderbim.org/docs-python/autoapi/ifcopenshell/api/owner/create_owner_history/index.html
+    proj.Proxy.ifcfile = ifcfile
+    add_properties(proj, ifcfile, project, shapemode=shapemode)
+    proj.addProperty("App::PropertyEnumeration", "Schema", "Base")
+    # bug in FreeCAD - to avoid a crash, pre-populate the enum with one value
+    proj.Schema = [ifcfile.wrapped_data.schema_name()]
+    proj.Schema = ifcfile.wrapped_data.schema_name()
+    proj.Schema = ifcopenshell.ifcopenshell_wrapper.schema_names()
+    return ifcfile, project, full
 
 
 def create_ifcfile():
