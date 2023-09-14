@@ -140,7 +140,7 @@ class NativeIFCTest(unittest.TestCase):
                     self.results[i][1],
                     self.results[i][2],
                     self.results[i][3],
-                    "Failed",
+                    "Timed out",
                     self.results[i][4],
                 ]
                 b = [
@@ -151,7 +151,7 @@ class NativeIFCTest(unittest.TestCase):
                 ]
                 if b:
                     l[3] = self.results[b[0]][3]
-                print(" | ".join(l))
+                print("| " + " | ".join(l) + " |")
 
 
 def test():
