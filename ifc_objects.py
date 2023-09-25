@@ -86,6 +86,7 @@ class ifc_object:
 
         import ifc_tools  # lazy import
 
+        obj.Class = [obj.IfcClass]
         obj.Class = ifc_tools.get_ifc_classes(obj, obj.IfcClass)
         obj.Class = obj.IfcClass
         if setprops:

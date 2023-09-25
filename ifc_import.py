@@ -69,12 +69,17 @@ def insert(
     if params.GetBool("LoadPsets", False):
         ifc_psets.load_psets(prj_obj)
     document.recompute()
+    # print a reference to the IFC file on the console
     if FreeCAD.GuiUp:
-        FreeCADGui.doCommand(
-            "ifcfile = FreeCAD.ActiveDocument.{}.Proxy.ifcfile #warning: make sure you know what you are doing when using this!".format(
-                prj_obj.Name
-            )
-        )
+        if isinstance(prj_obj, FreeCAD.DocumentObject):
+            pstr = "FreeCAD.getDocument('{}').{}.Proxy.ifcfile"
+            pstr = pstr.format(prj_obj.Document.Name, prj_obj.Name)
+        else:
+            pstr = "FreeCAD.getDocument('{}').Proxy.ifcfile"
+            pstr = pstr.format(prj_obj.Name)
+        pstr = "ifcfile = " + pstr
+        pstr += " # warning: make sure you know what you are doing when using this!"
+        FreeCADGui.doCommand(pstr)
     endtime = "%02d:%02d" % (divmod(round(time.time() - stime, 1), 60))
     fsize = round(os.path.getsize(filename) / 1048576, 2)
     print("Imported", os.path.basename(filename), "(", fsize, "Mb ) in", endtime)

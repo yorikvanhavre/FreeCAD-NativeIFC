@@ -25,3 +25,7 @@ FreeCAD.addImportType("Industry Foundation Classes - Native (*.ifc)", "ifc_impor
 
 # add unit tests
 FreeCAD.__unit_test__ += ["ifc_selftest"]
+
+# add NativeIFC document observer
+import ifc_observer
+ifc_observer.add_observer()

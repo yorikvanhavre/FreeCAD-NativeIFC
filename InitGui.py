@@ -22,10 +22,4 @@
 
 # add NativeIFC preferences page
 import ifc_preferences
-
 ifc_preferences.add_preferences_page()
-
-# add NativeIFC document observer
-import ifc_observer
-
-ifc_observer.add_observer()

@@ -37,10 +37,14 @@ def create_material(element, parent, recursive=False):
         for e in element:
             create_material(e, parent, recursive)
         return
-    exobj = ifc_tools.get_object(element, parent.Document)
+    if hasattr(parent,"Document"):
+        doc = parent.Document
+    else:
+        doc = parent
+    exobj = ifc_tools.get_object(element, doc)
     if exobj:
         return exobj
-    obj = ifc_tools.add_object(parent.Document, otype="material")
+    obj = ifc_tools.add_object(doc, otype="material")
     ifcfile = ifc_tools.get_ifcfile(parent)
     ifc_tools.add_properties(obj, ifcfile, element)
     if parent.isDerivedFrom("App::MaterialObject"):

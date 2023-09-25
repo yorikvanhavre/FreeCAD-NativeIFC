@@ -52,6 +52,7 @@ SCALE = 1000.0  # IfcOpenShell works in meters, FreeCAD works in mm
 SHORT = False  # If True, only Step ID attribute is created
 ROUND = 8  # rounding value for placements
 SINGLEDOC = False # single doc paradigm
+DEFAULT_SHAPEMODE = "Coin"  # Can be Shape, Coin or None
 PARAMS = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Mod/NativeIFC")
 
 
@@ -121,12 +122,14 @@ def convert_document(document, filename=None, shapemode=0, strategy=0, silent=Fa
     document.Proxy = ifc_objects.document_object()
     ifcfile, project, full = setup_project(document, filename, shapemode, silent)
     if strategy == 0 and FreeCAD.GuiUp:
-        import FreeCADGui # lazy loading
-        sg = FreeCADGui.getDocument(doc.Name).ActiveView.getSceneGraph()
-        elements = ifc_generator.get_decomposed_elements(proj)
-        elements = ifc_generator.filter_types(elements)
-        node = ifc_generator.generate_coin(ifcfile, elements)[0]
-        sg.addChild(node)
+        # TODO PROVISORY - for testing only
+        #import FreeCADGui # lazy loading
+        #sg = FreeCADGui.getDocument(document.Name).ActiveView.getSceneGraph()
+        #elements = ifc_generator.get_decomposed_elements(proj)
+        #elements = ifc_generator.filter_types(elements)
+        #node = ifc_generator.generate_coin(ifcfile, elements)[0]
+        #sg.addChild(node)
+        pass
     elif strategy == 1:
         create_children(document, ifcfile, recursive=True, only_structure=True)
     elif strategy == 2:
@@ -365,6 +368,10 @@ def get_ifcfile(obj):
                 return project.Proxy.ifcfile
         if project.IfcFilePath:
             ifcfile = ifcopenshell.open(project.IfcFilePath)
+            if hasattr(project,"Proxy"):
+                if project.Proxy is None:
+                    if not isinstance(project, FreeCAD.DocumentObject):
+                        project.Proxy = ifc_objects.document_object()
             if getattr(project, "Proxy", None):
                 project.Proxy.ifcfile = ifcfile
             return ifcfile
@@ -437,7 +444,7 @@ def add_object(document, otype=None, oname="IfcObject"):
         vp = ifc_viewproviders.ifc_vp_object()
     obj = document.addObject(ftype, oname, proxy, vp, False)
     if obj.ViewObject and otype == "layer":
-        from draftviewproviders import view_layer
+        from draftviewproviders import view_layer # lazy import
 
         view_layer.ViewProviderLayer(obj.ViewObject)
     return obj
@@ -455,10 +462,10 @@ def add_properties(
     if getattr(ifcentity, "Name", None):
         obj.Label = ifcentity.Name
     else:
-        obj.Label = ifcentity.is_a()
-    if "Group" not in obj.PropertiesList:
+        obj.Label = "_" + ifcentity.is_a()
+    if isinstance(obj, FreeCAD.DocumentObject) and "Group" not in obj.PropertiesList:
         obj.addProperty("App::PropertyLinkList", "Group", "Base")
-    if obj.isDerivedFrom("Part::Feature") and "ShapeMode" not in obj.PropertiesList:
+    if "ShapeMode" not in obj.PropertiesList:
         obj.addProperty("App::PropertyEnumeration", "ShapeMode", "Base")
         shapemodes = [
             "Shape",
@@ -561,7 +568,7 @@ def add_properties(
             if value is not None:
                 setattr(obj, attr, str(value))
     # link Label2 and Description
-    if "Description" in obj.PropertiesList:
+    if "Description" in obj.PropertiesList and hasattr(obj,"setExpression"):
         obj.setExpression("Label2", "Description")
 
 
@@ -588,12 +595,14 @@ def get_ifc_classes(obj, baseclass):
     ifcfile = get_ifcfile(obj)
     if not ifcfile:
         return [baseclass]
+    classes = []
     schema = ifcfile.wrapped_data.schema_name()
     schema = ifcopenshell.ifcopenshell_wrapper.schema_by_name(schema)
     declaration = schema.declaration_by_name(baseclass)
     if "StandardCase" in baseclass:
         declaration = declaration.supertype()
-    classes = [sub.name() for sub in declaration.supertype().subtypes()]
+    if declaration.supertype():
+        classes = [sub.name() for sub in declaration.supertype().subtypes()]
     # also include subtypes of the current class (ex, StandardCases)
     classes.extend([sub.name() for sub in declaration.subtypes()])
     if baseclass not in classes:
@@ -694,6 +703,9 @@ def set_attribute(ifcfile, element, attribute, value):
     cmd = "attribute.edit_attributes"
     attribs = {attribute: value}
     if hasattr(element, attribute):
+        if attribute == "Name" and getattr(element, attribute) is None and value.startswith("_"):
+            # do not consider default FreeCAD names given to unnamed alements
+            return False
         if getattr(element, attribute) != value:
             FreeCAD.Console.PrintLog(
                 "Changing IFC attribute value of "
@@ -875,7 +887,8 @@ def aggregate(obj, parent):
         new = False
     else:
         product = create_product(obj, parent, ifcfile)
-        newobj = create_object(product, obj.Document, ifcfile, parent.ShapeMode)
+        shapemode = getattr(parent, "ShapeMode", DEFAULT_SHAPEMODE)
+        newobj = create_object(product, obj.Document, ifcfile, shapemode)
         new = True
     create_relationship(obj, newobj, parent, product, ifcfile)
     base = getattr(obj, "Base", None)
@@ -1064,7 +1077,8 @@ def create_relationship(old_obj, obj, parent, element, ifcfile):
             product=element,
             relating_object=parent_element,
         )
-    parent.Proxy.addObject(parent, obj)
+    if hasattr(parent.Proxy, "addObject"):
+        parent.Proxy.addObject(parent, obj)
     return uprel
 
 
@@ -1149,15 +1163,26 @@ def get_orphan_elements(ifcfile):
 def get_group(project, name):
     """returns a group of the given type under the given IFC project. Creates it if needed"""
 
-    for c in project.Group:
+    if hasattr(project, "Group"):
+        group = project.Group
+    elif hasattr(project, "Objects"):
+        group = project.Objects
+    else:
+        group = []
+    for c in group:
         if c.isDerivedFrom("App::DocumentObjectGroupPython"):
             if c.Name == name:
                 return c
-    group = add_object(project.Document, otype="group", oname=name)
+    if hasattr(project, "Document"):
+        doc = project.Document
+    else:
+        doc = project
+    group = add_object(doc, otype="group", oname=name)
     group.Label = name.strip("Ifc").strip("Group")
     if FreeCAD.GuiUp:
         group.ViewObject.ShowInTree = PARAMS.GetBool("ShowDataGroups", False)
-    project.Proxy.addObject(project, group)
+    if hasattr(project.Proxy, "addObject"):
+        project.Proxy.addObject(project, group)
     return group
 
 

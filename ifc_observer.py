@@ -24,7 +24,6 @@
 
 import os
 import FreeCAD
-import FreeCADGui
 
 
 def add_observer():
@@ -53,7 +52,7 @@ class ifc_observer:
 
         if not hasattr(self, "docname"):
             return
-        if not self.docname in FreeCAD.listDocuments():
+        if self.docname not in FreeCAD.listDocuments():
             return
         doc = FreeCAD.getDocument(self.docname)
         objs = []
@@ -67,7 +66,8 @@ class ifc_observer:
             ppath = "User parameter:BaseApp/Preferences/Mod/NativeIFC"
             params = FreeCAD.ParamGet(ppath)
             ask = params.GetBool("AskBeforeSaving", True)
-            if ask:
+            if ask and FreeCAD.GuiUp:
+                import FreeCADGui
                 moddir = os.path.dirname(__file__)
                 uifile = os.path.join(moddir, "ui", "dialogExport.ui")
                 dlg = FreeCADGui.PySideUic.loadUi(uifile)
@@ -94,3 +94,27 @@ class ifc_observer:
         if getattr(obj.Proxy, "nodelete", False):
             return
         ifc_tools.remove_ifc_element(obj)
+
+    def slotChangedDocument(self, doc, prop):
+        """Watch document IFC properties"""
+
+        if prop == "Schema" and "IfcFilePath" in doc.PropertiesList:
+
+            import ifc_tools  # lazy import
+
+            schema = doc.Schema
+            ifcfile = ifc_tools.get_ifcfile(doc)
+            if ifcfile:
+                if schema != ifcfile.wrapped_data.schema_name():
+                    # TODO display warming
+                    ifcfile, migration_table = ifc_tools.migrate_schema(ifcfile, schema)
+                    doc.Proxy.ifcfile = ifcfile
+                    # migrate children
+                    for old_id, new_id in migration_table.items():
+                        child = [
+                            o
+                            for o in doc.Objects
+                            if getattr(o, "StepId", None) == old_id
+                        ]
+                        if len(child) == 1:
+                            child[0].StepId = new_id

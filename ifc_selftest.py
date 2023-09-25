@@ -44,7 +44,7 @@ IFCOPENHOUSE_IFC4 = (
 )
 IFC_FILE_PATH = None  # downloaded IFC file path
 FCSTD_FILE_PATH = None  # saved FreeCAD file
-
+SDU = int(ifc_tools.SINGLEDOC)
 
 """
 unit tests for the NativeIFC functionality. To run the tests, either:
@@ -110,7 +110,7 @@ class NativeIFCTest(unittest.TestCase):
             fp, "IfcTest", strategy=0, shapemode=1, switchwb=0, silent=True
         )
         fco = len(FreeCAD.getDocument("IfcTest").Objects)
-        self.failUnless(fco == 1, "ImportCoinSingle failed")
+        self.failUnless(fco == 1-SDU, "ImportCoinSingle failed")
 
     def test02_ImportCoinStructure(self):
         FreeCAD.Console.PrintMessage(
@@ -122,7 +122,7 @@ class NativeIFCTest(unittest.TestCase):
             fp, "IfcTest", strategy=1, shapemode=1, switchwb=0, silent=True
         )
         fco = len(FreeCAD.getDocument("IfcTest").Objects)
-        self.failUnless(fco == 4, "ImportCoinStructure failed")
+        self.failUnless(fco == 4-SDU, "ImportCoinStructure failed")
 
     def test03_ImportCoinFull(self):
         global FCSTD_FILE_PATH
@@ -136,7 +136,7 @@ class NativeIFCTest(unittest.TestCase):
         d.saveAs(path)
         FCSTD_FILE_PATH = path
         fco = len(FreeCAD.getDocument("IfcTest").Objects)
-        self.failUnless(fco > 4, "ImportCoinFull failed")
+        self.failUnless(fco > 4-SDU, "ImportCoinFull failed")
 
     def test04_ImportShapeFull(self):
         FreeCAD.Console.PrintMessage("4.  NativeIFC import: Full model, shape mode...")
@@ -146,7 +146,7 @@ class NativeIFCTest(unittest.TestCase):
             fp, "IfcTest", strategy=2, shapemode=0, switchwb=0, silent=True
         )
         fco = len(FreeCAD.getDocument("IfcTest").Objects)
-        self.failUnless(fco > 4, "ImportShapeFull failed")
+        self.failUnless(fco > 4-SDU, "ImportShapeFull failed")
 
     def test05_ImportFreeCAD(self):
         FreeCAD.Console.PrintMessage(
@@ -164,7 +164,7 @@ class NativeIFCTest(unittest.TestCase):
         FreeCAD.Console.PrintMessage("6.  NativeIFC Modifying IFC document...")
         doc = FreeCAD.open(FCSTD_FILE_PATH)
         obj = doc.Objects[-1]
-        obj.Label = obj.Label + "Modified"
+        obj.Label = "Modified name"
         proj = ifc_tools.get_project(obj)
         proj.IfcFilePath = proj.IfcFilePath[:-4] + "_modified.ifc"
         ifc_tools.save_ifc(proj)
@@ -180,8 +180,8 @@ class NativeIFCTest(unittest.TestCase):
         doc = FreeCAD.ActiveDocument
         ifc_tools.create_document(doc, silent=True)
         fco = len(FreeCAD.getDocument("IfcTest").Objects)
-        print(FreeCAD.getDocument("IfcTest").Objects[0])
-        self.failUnless(fco == 1, "CreateDocument failed")
+        print(FreeCAD.getDocument("IfcTest").Objects)
+        self.failUnless(fco == 1-SDU, "CreateDocument failed")
 
     def test08_ChangeIFCSchema(self):
         FreeCAD.Console.PrintMessage("8.  NativeIFC Changing IFC schema...")
@@ -224,7 +224,7 @@ class NativeIFCTest(unittest.TestCase):
         fco = len(FreeCAD.getDocument("IfcTest").Objects)
         ifco = len(proj.Proxy.ifcfile.by_type("IfcRoot"))
         print(ifco, "IFC objects created")
-        self.failUnless(fco == 8 and ifco == 12, "CreateDocument failed")
+        self.failUnless(fco == 8-SDU and ifco == 12, "CreateDocument failed")
 
     def test10_ChangePlacement(self):
         FreeCAD.Console.PrintMessage("10. NativeIFC Changing Placement...")
@@ -233,7 +233,7 @@ class NativeIFCTest(unittest.TestCase):
         ifc_import.insert(
             fp, "IfcTest", strategy=2, shapemode=1, switchwb=0, silent=True
         )
-        obj = FreeCAD.getDocument("IfcTest").getObject("IfcObject004")
+        obj = FreeCAD.getDocument("IfcTest").getObject("IfcObject00" +str(4-SDU))
         elem = ifc_tools.get_ifc_element(obj)
         obj.Placement.move(FreeCAD.Vector(100, 200, 300))
         new_plac = ifcopenshell.util.placement.get_local_placement(elem.ObjectPlacement)
