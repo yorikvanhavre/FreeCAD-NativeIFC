@@ -51,7 +51,7 @@ import ifc_layers
 SCALE = 1000.0  # IfcOpenShell works in meters, FreeCAD works in mm
 SHORT = False  # If True, only Step ID attribute is created
 ROUND = 8  # rounding value for placements
-SINGLEDOC = False # single doc paradigm
+SINGLEDOC = False  # single doc paradigm
 DEFAULT_SHAPEMODE = "Coin"  # Can be Shape, Coin or None
 PARAMS = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Mod/NativeIFC")
 
@@ -75,7 +75,9 @@ def create_document(document, filename=None, shapemode=0, strategy=0, silent=Fal
         return create_document_object(document, filename, shapemode, strategy, silent)
 
 
-def create_document_object(document, filename=None, shapemode=0, strategy=0, silent=False):
+def create_document_object(
+    document, filename=None, shapemode=0, strategy=0, silent=False
+):
     """Creates a IFC document object in the given FreeCAD document.
 
     filename:  If not given, a blank IFC document is created
@@ -99,6 +101,7 @@ def create_document_object(document, filename=None, shapemode=0, strategy=0, sil
     # create default structure
     if full:
         import Arch  # lazy loading
+
         site = aggregate(Arch.makeSite(), obj)
         building = aggregate(Arch.makeBuilding(), site)
         storey = aggregate(Arch.makeFloor(), building)
@@ -123,12 +126,12 @@ def convert_document(document, filename=None, shapemode=0, strategy=0, silent=Fa
     ifcfile, project, full = setup_project(document, filename, shapemode, silent)
     if strategy == 0 and FreeCAD.GuiUp:
         # TODO PROVISORY - for testing only
-        #import FreeCADGui # lazy loading
-        #sg = FreeCADGui.getDocument(document.Name).ActiveView.getSceneGraph()
-        #elements = ifc_generator.get_decomposed_elements(proj)
-        #elements = ifc_generator.filter_types(elements)
-        #node = ifc_generator.generate_coin(ifcfile, elements)[0]
-        #sg.addChild(node)
+        # import FreeCADGui # lazy loading
+        # sg = FreeCADGui.getDocument(document.Name).ActiveView.getSceneGraph()
+        # elements = ifc_generator.get_decomposed_elements(proj)
+        # elements = ifc_generator.filter_types(elements)
+        # node = ifc_generator.generate_coin(ifcfile, elements)[0]
+        # sg.addChild(node)
         pass
     elif strategy == 1:
         create_children(document, ifcfile, recursive=True, only_structure=True)
@@ -137,6 +140,7 @@ def convert_document(document, filename=None, shapemode=0, strategy=0, silent=Fa
     # create default structure
     if full:
         import Arch  # lazy loading
+
         site = aggregate(Arch.makeSite(), document)
         building = aggregate(Arch.makeBuilding(), site)
         storey = aggregate(Arch.makeFloor(), building)
@@ -368,7 +372,7 @@ def get_ifcfile(obj):
                 return project.Proxy.ifcfile
         if project.IfcFilePath:
             ifcfile = ifcopenshell.open(project.IfcFilePath)
-            if hasattr(project,"Proxy"):
+            if hasattr(project, "Proxy"):
                 if project.Proxy is None:
                     if not isinstance(project, FreeCAD.DocumentObject):
                         project.Proxy = ifc_objects.document_object()
@@ -444,7 +448,7 @@ def add_object(document, otype=None, oname="IfcObject"):
         vp = ifc_viewproviders.ifc_vp_object()
     obj = document.addObject(ftype, oname, proxy, vp, False)
     if obj.ViewObject and otype == "layer":
-        from draftviewproviders import view_layer # lazy import
+        from draftviewproviders import view_layer  # lazy import
 
         view_layer.ViewProviderLayer(obj.ViewObject)
     return obj
@@ -568,7 +572,7 @@ def add_properties(
             if value is not None:
                 setattr(obj, attr, str(value))
     # link Label2 and Description
-    if "Description" in obj.PropertiesList and hasattr(obj,"setExpression"):
+    if "Description" in obj.PropertiesList and hasattr(obj, "setExpression"):
         obj.setExpression("Label2", "Description")
 
 
@@ -703,7 +707,11 @@ def set_attribute(ifcfile, element, attribute, value):
     cmd = "attribute.edit_attributes"
     attribs = {attribute: value}
     if hasattr(element, attribute):
-        if attribute == "Name" and getattr(element, attribute) is None and value.startswith("_"):
+        if (
+            attribute == "Name"
+            and getattr(element, attribute) is None
+            and value.startswith("_")
+        ):
             # do not consider default FreeCAD names given to unnamed alements
             return False
         if getattr(element, attribute) != value:

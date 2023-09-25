@@ -68,6 +68,7 @@ class ifc_observer:
             ask = params.GetBool("AskBeforeSaving", True)
             if ask and FreeCAD.GuiUp:
                 import FreeCADGui
+
                 moddir = os.path.dirname(__file__)
                 uifile = os.path.join(moddir, "ui", "dialogExport.ui")
                 dlg = FreeCADGui.PySideUic.loadUi(uifile)
@@ -99,7 +100,6 @@ class ifc_observer:
         """Watch document IFC properties"""
 
         if prop == "Schema" and "IfcFilePath" in doc.PropertiesList:
-
             import ifc_tools  # lazy import
 
             schema = doc.Schema

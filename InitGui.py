@@ -22,4 +22,5 @@
 
 # add NativeIFC preferences page
 import ifc_preferences
+
 ifc_preferences.add_preferences_page()
