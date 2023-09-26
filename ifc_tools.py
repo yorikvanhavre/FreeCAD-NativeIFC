@@ -479,6 +479,8 @@ def add_properties(
             shapemode = shapemodes[shapemode]
         obj.ShapeMode = shapemodes
         obj.ShapeMode = shapemode
+        if not obj.isDerivedFrom("Part::Feature"):
+            obj.setPropertyStatus("ShapeMode", "Hidden")
     attr_defs = ifcentity.wrapped_data.declaration().as_entity().all_attributes()
     try:
         info_ifcentity = ifcentity.get_info()

@@ -53,10 +53,14 @@ def get_layer(layer, project):
     """Returns (creates if necessary) a layer object in the given project"""
 
     group = ifc_tools.get_group(project, "IfcLayersGroup")
-    exobj = ifc_tools.get_object(layer, project.Document)
+    if hasattr(project, "Document"):
+        doc = project.Document
+    else:
+        doc = project
+    exobj = ifc_tools.get_object(layer, doc)
     if exobj:
         return exobj
-    obj = ifc_tools.add_object(project.Document, otype="layer")
+    obj = ifc_tools.add_object(doc, otype="layer")
     ifcfile = ifc_tools.get_ifcfile(project)
     ifc_tools.add_properties(obj, ifcfile, layer)
     group.addObject(obj)
@@ -85,7 +89,7 @@ def add_layers(obj, element=None, ifcfile=None, proj=None):
     if not element:
         element = ifc_tools.get_ifc_element(obj, ifcfile)
     if not proj:
-        proj = ifc_tools.get_project(ifcfile)
+        proj = ifc_tools.get_project(obj)
     layers = ifcopenshell.util.element.get_layers(ifcfile, element)
     for layer in layers:
         lay = get_layer(layer, proj)

@@ -23,6 +23,7 @@
 """This NativeIFC module deals with materials"""
 
 
+import FreeCAD
 import ifc_tools
 import ifcopenshell
 from ifcopenshell import util
@@ -78,7 +79,11 @@ def load_materials(obj):
     """Recursively loads materials of child objects"""
 
     show_material(obj)
-    for child in obj.Group:
+    if isinstance(obj, FreeCAD.DocumentObject):
+        group = obj.Group
+    else:
+        group = obj.Objects
+    for child in group:
         load_materials(child)
 
 

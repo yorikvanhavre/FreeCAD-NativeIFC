@@ -28,6 +28,7 @@ import FreeCAD
 import ifc_tools
 import ifc_psets
 import ifc_materials
+import ifc_layers
 
 if FreeCAD.GuiUp:
     import FreeCADGui
@@ -68,7 +69,7 @@ def insert(
     if not silent and params.GetBool("LoadMaterials", False):
         ifc_materials.load_materials(prj_obj)
     if params.GetBool("LoadLayers", False):
-        ifc_tools.load_layers(prj_obj)
+        ifc_layers.load_layers(prj_obj)
     if params.GetBool("LoadPsets", False):
         ifc_psets.load_psets(prj_obj)
     document.recompute()
