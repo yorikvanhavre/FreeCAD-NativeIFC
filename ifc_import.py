@@ -59,7 +59,10 @@ def insert(
         return
     stime = time.time()
     document = FreeCAD.getDocument(docname)
-    prj_obj = ifc_tools.create_document(document, filename, shapemode, strategy)
+    if params.GetBool("SingleDoc", False):
+        prj_obj = ifc_tools.convert_document(document, filename, shapemode, strategy)
+    else:
+        prj_obj = ifc_tools.create_document_object(document, filename, shapemode, strategy)
     if params.GetBool("LoadOrphans", False):
         ifc_tools.load_orphans(prj_obj)
     if not silent and params.GetBool("LoadMaterials", False):
@@ -107,6 +110,7 @@ def get_options(
     psets = params.GetBool("LoadPsets", False)
     materials = params.GetBool("LoadMaterials", False)
     layers = params.GetBool("LoadLayers", False)
+    singledoc = params.GetBool("SingleDoc", False)
     if strategy is None:
         strategy = params.GetInt("ImportStrategy", 0)
     if shapemode is None:
@@ -132,6 +136,7 @@ def get_options(
         dlg.checkLoadPsets.setChecked(psets)
         dlg.checkLoadMaterials.setChecked(materials)
         dlg.checkLoadLayers.setChecked(layers)
+        dlg.checkSingleDoc.setChecked(singledoc)
         result = dlg.exec_()
         if not result:
             return None, None, None
@@ -143,6 +148,7 @@ def get_options(
         psets = dlg.checkLoadPsets.isChecked()
         materials = dlg.checkLoadMaterials.isChecked()
         layers = dlg.checkLoadLayers.isChecked()
+        singledoc = dlg.checkSingleDoc.isChecked()
         params.SetInt("ImportStrategy", strategy)
         params.SetInt("ShapeMode", shapemode)
         params.SetBool("SwitchWB", switchwb)
@@ -151,6 +157,7 @@ def get_options(
         params.SetBool("LoadPsets", psets)
         params.SetBool("LoadMaterials", materials)
         params.SetBool("LoadLayers", layers)
+        params.SetBool("SingleDoc", singledoc)
     return strategy, shapemode, switchwb
 
 

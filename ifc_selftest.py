@@ -44,7 +44,8 @@ IFCOPENHOUSE_IFC4 = (
 )
 IFC_FILE_PATH = None  # downloaded IFC file path
 FCSTD_FILE_PATH = None  # saved FreeCAD file
-SDU = int(ifc_tools.SINGLEDOC)
+PARAMS = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Mod/NativeIFC")
+SDU = int(PARAMS.GetBool("SingleDoc", False)) # number of created objects is different if singledoc
 
 """
 unit tests for the NativeIFC functionality. To run the tests, either:

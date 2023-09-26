@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>353</width>
-    <height>297</height>
+    <height>328</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -126,6 +126,16 @@
      </property>
      <property name="text">
       <string>Preload layers</string>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <widget class="QCheckBox" name="checkSingleDoc">
+     <property name="toolTip">
+      <string>If this is checked, a FreeCAD document corresponds to one IFC document, and does not allow to contain multiple projects. This is still experimental.</string>
+     </property>
+     <property name="text">
+      <string>Single document paradigm</string>
      </property>
     </widget>
    </item>

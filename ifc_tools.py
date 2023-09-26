@@ -51,14 +51,13 @@ import ifc_layers
 SCALE = 1000.0  # IfcOpenShell works in meters, FreeCAD works in mm
 SHORT = False  # If True, only Step ID attribute is created
 ROUND = 8  # rounding value for placements
-SINGLEDOC = False  # single doc paradigm
 DEFAULT_SHAPEMODE = "Coin"  # Can be Shape, Coin or None
 PARAMS = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Mod/NativeIFC")
 
 
 def create_document(document, filename=None, shapemode=0, strategy=0, silent=False):
     """Creates a IFC document object in the given FreeCAD document or converts that
-    document into an IFC document, depending on the value of SINGLEDOC.
+    document into an IFC document, depending on the value of SingleDoc preference.
 
     filename:  If not given, a blank IFC document is created
     shapemode: 0 = full shape
@@ -69,7 +68,7 @@ def create_document(document, filename=None, shapemode=0, strategy=0, silent=Fal
                2 = all children
     """
 
-    if SINGLEDOC:
+    if PARAMS.GetBool("SingleDoc", False):
         return convert_document(document, filename, shapemode, strategy, silent)
     else:
         return create_document_object(document, filename, shapemode, strategy, silent)
