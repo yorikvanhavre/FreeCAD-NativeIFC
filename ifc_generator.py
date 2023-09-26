@@ -123,11 +123,13 @@ def generate_shape(ifcfile, elements, cached=False):
     total = len(elements)
     progressbar = Base.ProgressIndicator()
     progressbar.start("Generating " + str(total) + " shapes...", total)
+    done = []
 
     # iterate
     while True:
         item = iterator.get()
-        if item:
+        if item and item.id not in done:
+            done.append(item.id)
             # get and transfer brep data
             brep = item.geometry.brep_data
             shape = Part.Shape()
@@ -232,11 +234,13 @@ def generate_coin(ifcfile, elements, cached=False):
     total = len(elements)
     progressbar = Base.ProgressIndicator()
     progressbar.start("Generating " + str(total) + " shapes...", total)
+    done = []
 
     # iterate
     while True:
         item = iterator.get()
-        if item:
+        if item and item.id not in done:
+            done.append(item.id)
             node = coin.SoSeparator()
 
             # get colors
