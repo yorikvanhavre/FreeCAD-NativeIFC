@@ -1198,7 +1198,10 @@ def get_group(project, name):
 def load_orphans(obj):
     """loads orphan objects from the given project object"""
 
-    doc = obj.Document
+    if isinstance(obj, FreeCAD.DocumentObject):
+        doc = obj.Document
+    else:
+        doc = obj
     ifcfile = get_ifcfile(obj)
     shapemode = obj.ShapeMode
     elements = get_orphan_elements(ifcfile)
