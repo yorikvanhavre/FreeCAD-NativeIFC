@@ -20,6 +20,8 @@
 # *                                                                         *
 # ***************************************************************************
 
+"""This module contains IFC object definitions"""
+
 
 class ifc_object:
 

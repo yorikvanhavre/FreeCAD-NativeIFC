@@ -22,6 +22,7 @@
 
 """This module contains all the tools to create FreeCAD geometry from IFC objects"""
 
+
 import time
 import FreeCAD
 from FreeCAD import Base
@@ -346,7 +347,7 @@ def get_decomposed_elements(element, obj=None):
         element, is_recursive=False
     ):
         if child.id() not in child_ids:
-            if not child in result:
+            if child not in result:
                 result.append(child)
             # for el in get_decomposed_elements(child, obj):
             for el in ifcopenshell.util.element.get_decomposition(child):

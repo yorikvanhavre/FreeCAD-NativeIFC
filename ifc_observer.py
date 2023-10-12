@@ -20,7 +20,8 @@
 # *                                                                         *
 # ***************************************************************************
 
-"""Document observer for documents containing NativeIFC objects"""
+"""Document observer to act on documents containing NativeIFC objects"""
+
 
 import os
 import FreeCAD
@@ -46,43 +47,6 @@ class ifc_observer:
         # that occurs when the saveAs file dialog is shown
         # TODO find a more solid way
         QtCore.QTimer.singleShot(100, self.save)
-
-    def save(self):
-        """Saves all IFC documents contained in self.docname Document"""
-
-        if not hasattr(self, "docname"):
-            return
-        if self.docname not in FreeCAD.listDocuments():
-            return
-        doc = FreeCAD.getDocument(self.docname)
-        objs = []
-        for obj in doc.findObjects(Type="Part::FeaturePython"):
-            if hasattr(obj, "IfcFilePath") and hasattr(obj, "Modified"):
-                if obj.Modified:
-                    objs.append(obj)
-        if objs:
-            import ifc_tools  # lazy loading
-
-            ppath = "User parameter:BaseApp/Preferences/Mod/NativeIFC"
-            params = FreeCAD.ParamGet(ppath)
-            ask = params.GetBool("AskBeforeSaving", True)
-            if ask and FreeCAD.GuiUp:
-                import FreeCADGui
-
-                moddir = os.path.dirname(__file__)
-                uifile = os.path.join(moddir, "ui", "dialogExport.ui")
-                dlg = FreeCADGui.PySideUic.loadUi(uifile)
-                result = dlg.exec_()
-                if not result:
-                    return
-                ask = dlg.checkAskBeforeSaving.isChecked()
-                params.SetBool("AskBeforeSaving", ask)
-
-            for obj in objs:
-                if obj.IfcFilePath and getattr(obj.Proxy, "ifcfile", None):
-                    obj.ViewObject.Proxy.save()
-                else:
-                    obj.ViewObject.Proxy.save_as()
 
     def slotDeletedObject(self, obj):
         """Deletes the corresponding object in the IFC document"""
@@ -120,3 +84,84 @@ class ifc_observer:
                         ]
                         if len(child) == 1:
                             child[0].StepId = new_id
+
+    def slotCreatedObject(self, obj):
+        """If this is an IFC document, turn the object into IFC"""
+
+        doc = getattr(obj, "Document", None)
+        if doc:
+            if hasattr(doc, "IfcFilePath"):
+                from PySide2 import QtCore  # lazy loading
+                self.objname = obj.Name
+                self.docname = obj.Document.Name
+                # delaying to make sure all other properties are set
+                QtCore.QTimer.singleShot(100, self.convert)
+
+    def save(self):
+        """Saves all IFC documents contained in self.docname Document"""
+
+        if not hasattr(self, "docname"):
+            return
+        if self.docname not in FreeCAD.listDocuments():
+            return
+        doc = FreeCAD.getDocument(self.docname)
+        del self.docname
+        objs = []
+        if hasattr(doc, "IfcFilePath") and hasattr(doc, "Modified"):
+            if doc.Modified:
+                objs.append(doc)
+        else:
+            for obj in doc.findObjects(Type="Part::FeaturePython"):
+                if hasattr(obj, "IfcFilePath") and hasattr(obj, "Modified"):
+                    if obj.Modified:
+                        objs.append(obj)
+        if objs:
+            import ifc_tools  # lazy loading
+
+            ppath = "User parameter:BaseApp/Preferences/Mod/NativeIFC"
+            params = FreeCAD.ParamGet(ppath)
+            ask = params.GetBool("AskBeforeSaving", True)
+            if ask and FreeCAD.GuiUp:
+                import FreeCADGui
+
+                moddir = os.path.dirname(__file__)
+                uifile = os.path.join(moddir, "ui", "dialogExport.ui")
+                dlg = FreeCADGui.PySideUic.loadUi(uifile)
+                result = dlg.exec_()
+                if not result:
+                    return
+                ask = dlg.checkAskBeforeSaving.isChecked()
+                params.SetBool("AskBeforeSaving", ask)
+
+            for obj in objs:
+                if obj.IfcFilePath and getattr(obj.Proxy, "ifcfile", None):
+                    obj.ViewObject.Proxy.save()
+                else:
+                    obj.ViewObject.Proxy.save_as()
+
+    def convert(self):
+        """Converts an object to IFC"""
+
+        if not hasattr(self, "objname") or not hasattr(self, "docname"):
+            return
+        if self.docname not in FreeCAD.listDocuments():
+            return
+        doc = FreeCAD.getDocument(self.docname)
+        if not doc:
+            return
+        obj = doc.getObject(self.objname)
+        if not obj:
+            return
+        if "StepId" in obj.PropertiesList:
+            return
+        del self.docname
+        del self.objname
+        if obj.isDerivedFrom("Part::Feature"):
+            if "IfcType" in obj.PropertiesList:
+                print("Converting", obj.Label, "to IFC")
+                import ifc_tools  # lazy loading
+                import ifc_geometry  # lazy loading
+
+                newobj = ifc_tools.aggregate(obj, doc)
+                ifc_geometry.add_geom_properties(newobj)
+                doc.recompute()

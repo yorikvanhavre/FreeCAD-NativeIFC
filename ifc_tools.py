@@ -1206,7 +1206,11 @@ def load_orphans(obj):
     shapemode = obj.ShapeMode
     elements = get_orphan_elements(ifcfile)
     if elements:
-        group = get_group(obj, "IfcOrphansGroup")
-        for element in elements:
-            child = create_object(element, doc, ifcfile, shapemode)
-            group.addObject(child)
+        if PARAMS.GetBool("SingleDoc", False):
+            for element in elements:
+                child = create_object(element, doc, ifcfile, shapemode)
+        else:
+            group = get_group(obj, "IfcOrphansGroup")
+            for element in elements:
+                child = create_object(element, doc, ifcfile, shapemode)
+                group.addObject(child)

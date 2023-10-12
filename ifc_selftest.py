@@ -20,6 +20,8 @@
 # *                                                                         *
 # ***************************************************************************
 
+"""Unit test for the Native IFC module"""
+
 import os
 import time
 import tempfile
