@@ -447,6 +447,7 @@ def create_ghost(document, ifcfile, project):
         return
     if not document:
         return
+    delete_ghost(document)
     sg = FreeCADGui.getDocument(document.Name).ActiveView.getSceneGraph()
     elements = get_decomposed_elements(project)
     elements = filter_types(elements)

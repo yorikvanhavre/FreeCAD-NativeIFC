@@ -78,10 +78,25 @@ class ifc_object:
         self.rebuild_classlist(obj)
         if hasattr(obj, "IfcFilePath"):
             # once we have loaded the project, recalculate child coin nodes
-            for child in obj.OutListRecursive:
-                if getattr(child, "ShapeMode", None) == "Coin":
-                    child.Proxy.cached = True
-                    child.touch()
+            from PySide2 import QtCore  # lazy loading
+            if obj.OutListRecursive:
+                for child in obj.OutListRecursive:
+                    if getattr(child, "ShapeMode", None) == "Coin":
+                        child.Proxy.cached = True
+                        child.touch()
+            else:
+                obj.Proxy.cached = True
+                QtCore.QTimer.singleShot(100, obj.touch)
+            QtCore.QTimer.singleShot(100, obj.Document.recompute)
+            QtCore.QTimer.singleShot(100, self.fit_all)
+
+    def fit_all(self):
+        """Fits the view"""
+
+        import FreeCAD
+        if FreeCAD.GuiUp:
+            import FreeCADGui
+            FreeCADGui.SendMsgToActiveView("ViewFit")
 
     def rebuild_classlist(self, obj, setprops=False):
         """rebuilds the list of Class enum property according to current class"""

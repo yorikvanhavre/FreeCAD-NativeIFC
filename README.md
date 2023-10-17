@@ -112,7 +112,7 @@ The roadmap below will show you an overview of the current state of the implemen
 
 * Mixed or single document mode must be clearly choosable and identified by the user:
   * [x] When opening an IFC file: Option in the import dialog
-  * [ ] When opening a FreeCAD file: Implicit - to be tested
+  * [x] When opening a FreeCAD file: Implicit
   * [ ] When creating a FreeCAD file
   * [ ] When inserting an IFC file
 * Create example workflows:

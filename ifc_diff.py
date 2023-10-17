@@ -24,8 +24,10 @@
 
 import os
 import difflib
+import FreeCAD
 import FreeCADGui
 import ifcopenshell
+translate = FreeCAD.Qt.translate
 
 
 def get_diff(proj):
@@ -49,15 +51,18 @@ def get_diff(proj):
 def htmlize(diff):
     """Returns an HTML version of a diff list"""
 
-    diff = diff.split("\n")
-    html = "<html><body>\n"
-    for l in diff:
-        if l.startswith("+"):
-            html += "<span style='color:green;'>" + l[:100] + "</span><br/>\n"
-        elif l.startswith("-"):
-            html += "<span style='color:red;'>" + l[:100] + "</span><br/>\n"
-        else:
-            html += l + "<br/>\n"
+    html = "<html><body>\n" 
+    if diff:
+        diff = diff.split("\n")
+        for l in diff:
+            if l.startswith("+"):
+                html += "<span style='color:green;'>" + l[:100] + "</span><br/>\n"
+            elif l.startswith("-"):
+                html += "<span style='color:red;'>" + l[:100] + "</span><br/>\n"
+            else:
+                html += l + "<br/>\n"
+    else:
+        html += translate("BIM","No changes to display.") + "<br/>\n"
     html += "</body></html>"
     return html
 
@@ -67,5 +72,6 @@ def show_diff(diff):
 
     b = os.path.dirname(__file__)
     dlg = FreeCADGui.PySideUic.loadUi(os.path.join(b, "ui", "dialogDiff.ui"))
+    dlg.textEdit.setStyleSheet("background-color: white; color: black;");
     dlg.textEdit.setHtml(htmlize(diff))
     result = dlg.exec_()

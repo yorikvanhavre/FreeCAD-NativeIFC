@@ -97,6 +97,30 @@ class ifc_observer:
                 # delaying to make sure all other properties are set
                 QtCore.QTimer.singleShot(100, self.convert)
 
+    def slotActivateDocument(self, doc):
+        """Check if we need to display a ghost"""
+        
+        if hasattr(doc, "Proxy") and hasattr(doc.Proxy, "ifcfile"):
+            if doc.Objects:
+                from PySide2 import QtCore  # lazy loading
+                for obj in doc.Objects:
+                    if getattr(obj, "ShapeMode", None) == "Coin":
+                        obj.Proxy.cached = True
+                        QtCore.QTimer.singleShot(100, obj.touch)
+                QtCore.QTimer.singleShot(100, doc.recompute)
+                QtCore.QTimer.singleShot(100, self.fit_all)
+            else:
+                if not hasattr(doc.Proxy, "ghost"):
+                    import ifc_generator
+                    ifc_generator.create_ghost(doc)
+
+    def fit_all(self):
+        """Fits the view"""
+
+        if FreeCAD.GuiUp:
+            import FreeCADGui
+            FreeCADGui.SendMsgToActiveView("ViewFit")
+
     def save(self):
         """Saves all IFC documents contained in self.docname Document"""
 
