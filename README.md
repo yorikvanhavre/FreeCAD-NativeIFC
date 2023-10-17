@@ -63,7 +63,6 @@ The roadmap below will show you an overview of the current state of the implemen
 * [x] Expand properties
 * [x] Allow to regroup elements
 * [x] Handle drag/drop
-* [ ] Handle undo/redo
 * [x] Allow to change the IFC schema
 * [x] Support layers
 * [x] Support groups
@@ -83,6 +82,7 @@ The roadmap below will show you an overview of the current state of the implemen
 #### Additionals
 
 - [x] Implement single document mode
+* [ ] Handle undo/redo
 * [ ] ~~Add this to the addons manager~~ cancelled because it will be merged with BIM
 * [ ] Add to BIM WB dependencies/ reorganize addon
 * [ ] Verify and adapt 2D view generation workflow
