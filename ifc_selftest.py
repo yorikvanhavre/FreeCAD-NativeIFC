@@ -47,12 +47,14 @@ IFCOPENHOUSE_IFC4 = (
 IFC_FILE_PATH = None  # downloaded IFC file path
 FCSTD_FILE_PATH = None  # saved FreeCAD file
 PARAMS = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Mod/NativeIFC")
-SDU = int(PARAMS.GetBool("SingleDoc", False)) # number of created objects is different if singledoc
+SINGLEDOC = False # This allows to force singledoc mode for all tests
+SDU = int(SINGLEDOC) # number of objects is different in singledoc
 
 """
 unit tests for the NativeIFC functionality. To run the tests, either:
 - in terminal mode: FreeCAD -t ifc_selftest
-- in the FreeCAD UI: Switch to Test Framework workbench, press "Self test" and choose ifc_selftest in the list
+- in the FreeCAD UI: Switch to Test Framework workbench, press "Self test" and 
+  choose ifc_selftest in the list
 """
 
 
@@ -110,7 +112,7 @@ class NativeIFCTest(unittest.TestCase):
         clearObjects()
         fp = getIfcFilePath()
         ifc_import.insert(
-            fp, "IfcTest", strategy=0, shapemode=1, switchwb=0, silent=True
+            fp, "IfcTest", strategy=0, shapemode=1, switchwb=0, silent=True, singledoc=SINGLEDOC
         )
         fco = len(FreeCAD.getDocument("IfcTest").Objects)
         self.failUnless(fco == 1 - SDU, "ImportCoinSingle failed")
@@ -122,7 +124,7 @@ class NativeIFCTest(unittest.TestCase):
         clearObjects()
         fp = getIfcFilePath()
         ifc_import.insert(
-            fp, "IfcTest", strategy=1, shapemode=1, switchwb=0, silent=True
+            fp, "IfcTest", strategy=1, shapemode=1, switchwb=0, silent=True, singledoc=SINGLEDOC
         )
         fco = len(FreeCAD.getDocument("IfcTest").Objects)
         self.failUnless(fco == 4 - SDU, "ImportCoinStructure failed")
@@ -133,7 +135,7 @@ class NativeIFCTest(unittest.TestCase):
         clearObjects()
         fp = getIfcFilePath()
         d = ifc_import.insert(
-            fp, "IfcTest", strategy=2, shapemode=1, switchwb=0, silent=True
+            fp, "IfcTest", strategy=2, shapemode=1, switchwb=0, silent=True, singledoc=SINGLEDOC
         )
         path = tempfile.mkstemp(suffix=".FCStd")[1]
         d.saveAs(path)
@@ -146,7 +148,7 @@ class NativeIFCTest(unittest.TestCase):
         clearObjects()
         fp = getIfcFilePath()
         d = ifc_import.insert(
-            fp, "IfcTest", strategy=2, shapemode=0, switchwb=0, silent=True
+            fp, "IfcTest", strategy=2, shapemode=0, switchwb=0, silent=True, singledoc=SINGLEDOC
         )
         fco = len(FreeCAD.getDocument("IfcTest").Objects)
         self.failUnless(fco > 4 - SDU, "ImportShapeFull failed")
@@ -191,7 +193,7 @@ class NativeIFCTest(unittest.TestCase):
         clearObjects()
         fp = getIfcFilePath()
         ifc_import.insert(
-            fp, "IfcTest", strategy=2, shapemode=1, switchwb=0, silent=True
+            fp, "IfcTest", strategy=2, shapemode=1, switchwb=0, silent=True, singledoc=SINGLEDOC
         )
         obj = FreeCAD.getDocument("IfcTest").Objects[-1]
         proj = ifc_tools.get_project(obj)
@@ -234,7 +236,7 @@ class NativeIFCTest(unittest.TestCase):
         clearObjects()
         fp = getIfcFilePath()
         ifc_import.insert(
-            fp, "IfcTest", strategy=2, shapemode=1, switchwb=0, silent=True
+            fp, "IfcTest", strategy=2, shapemode=1, switchwb=0, silent=True, singledoc=SINGLEDOC
         )
         obj = FreeCAD.getDocument("IfcTest").getObject("IfcObject00" + str(4 - SDU))
         elem = ifc_tools.get_ifc_element(obj)
@@ -249,7 +251,7 @@ class NativeIFCTest(unittest.TestCase):
         clearObjects()
         fp = getIfcFilePath()
         ifc_import.insert(
-            fp, "IfcTest", strategy=2, shapemode=0, switchwb=0, silent=True
+            fp, "IfcTest", strategy=2, shapemode=0, switchwb=0, silent=True, singledoc=SINGLEDOC
         )
         obj = FreeCAD.getDocument("IfcTest").getObject("IfcObject004")
         ifc_geometry.add_geom_properties(obj)
@@ -262,7 +264,7 @@ class NativeIFCTest(unittest.TestCase):
         clearObjects()
         fp = getIfcFilePath()
         ifc_import.insert(
-            fp, "IfcTest", strategy=2, shapemode=0, switchwb=0, silent=True
+            fp, "IfcTest", strategy=2, shapemode=0, switchwb=0, silent=True, singledoc=SINGLEDOC
         )
         ifcfile = ifc_tools.get_ifcfile(FreeCAD.getDocument("IfcTest").Objects[-1])
         count1 = len(ifcfile.by_type("IfcProduct"))
@@ -275,7 +277,7 @@ class NativeIFCTest(unittest.TestCase):
         clearObjects()
         fp = getIfcFilePath()
         ifc_import.insert(
-            fp, "IfcTest", strategy=2, shapemode=0, switchwb=0, silent=True
+            fp, "IfcTest", strategy=2, shapemode=0, switchwb=0, silent=True, singledoc=SINGLEDOC
         )
         proj = FreeCAD.getDocument("IfcTest").Objects[0]
         ifc_materials.load_materials(proj)
@@ -294,7 +296,7 @@ class NativeIFCTest(unittest.TestCase):
         clearObjects()
         fp = getIfcFilePath()
         ifc_import.insert(
-            fp, "IfcTest", strategy=2, shapemode=0, switchwb=0, silent=True
+            fp, "IfcTest", strategy=2, shapemode=0, switchwb=0, silent=True, singledoc=SINGLEDOC
         )
         proj = FreeCAD.getDocument("IfcTest").Objects[0]
         ifcfile = ifc_tools.get_ifcfile(proj)
@@ -310,7 +312,7 @@ class NativeIFCTest(unittest.TestCase):
         clearObjects()
         fp = getIfcFilePath()
         ifc_import.insert(
-            fp, "IfcTest", strategy=2, shapemode=0, switchwb=0, silent=True
+            fp, "IfcTest", strategy=2, shapemode=0, switchwb=0, silent=True, singledoc=SINGLEDOC
         )
         obj = FreeCAD.getDocument("IfcTest").getObject("IfcObject004")
         ifcfile = ifc_tools.get_ifcfile(obj)

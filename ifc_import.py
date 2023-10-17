@@ -49,7 +49,7 @@ def open(filename):
 
 
 def insert(
-    filename, docname, strategy=None, shapemode=None, switchwb=None, silent=False
+    filename, docname, strategy=None, shapemode=None, switchwb=None, silent=False, singledoc=None
 ):
     """Inserts an IFC document in a FreeCAD document"""
 
@@ -60,7 +60,9 @@ def insert(
         return
     stime = time.time()
     document = FreeCAD.getDocument(docname)
-    if params.GetBool("SingleDoc", False):
+    if singledoc is None:
+        singledoc = params.GetBool("SingleDoc", False)
+    if singledoc:
         prj_obj = ifc_tools.convert_document(document, filename, shapemode, strategy)
     else:
         prj_obj = ifc_tools.create_document_object(document, filename, shapemode, strategy)
