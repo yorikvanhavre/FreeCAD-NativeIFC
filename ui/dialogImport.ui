@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>353</width>
-    <height>328</height>
+    <width>368</width>
+    <height>402</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -38,21 +38,14 @@
        </item>
       </widget>
      </item>
-     <item row="1" column="0">
-      <widget class="QLabel" name="label">
-       <property name="text">
-        <string>Initial import</string>
-       </property>
-      </widget>
-     </item>
-     <item row="2" column="0">
+     <item row="3" column="0">
       <widget class="QLabel" name="label_2">
        <property name="text">
         <string>Objects type</string>
        </property>
       </widget>
      </item>
-     <item row="2" column="1">
+     <item row="3" column="1">
       <widget class="QComboBox" name="comboShapeMode">
        <property name="toolTip">
         <string>The type of object created at import. Mesh is faster, but Shapes are more precise. You can convert between the two anytime by right-clicking the object tree</string>
@@ -73,6 +66,37 @@
        <item>
         <property name="text">
          <string>No 3D representation</string>
+        </property>
+       </item>
+      </widget>
+     </item>
+     <item row="1" column="0">
+      <widget class="QLabel" name="label">
+       <property name="text">
+        <string>Initial import</string>
+       </property>
+      </widget>
+     </item>
+     <item row="2" column="0">
+      <widget class="QLabel" name="label_3">
+       <property name="text">
+        <string>Document type</string>
+       </property>
+      </widget>
+     </item>
+     <item row="2" column="1">
+      <widget class="QComboBox" name="comboSingleDoc">
+       <property name="toolTip">
+        <string>This defines how the IFC data is stored in the FreeCAD document. 'Single IFC document' means that the FreeCAD document is the IFC document, anything you create in it belongs to the IFC document too. 'Use IFCdocument object' means that an object will be created inside the FreeCAD document to represent the IFC document. You will be able to add non-IFC objects alongside.</string>
+       </property>
+       <item>
+        <property name="text">
+         <string>Single IFC document</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>Use IFC document object</string>
         </property>
        </item>
       </widget>
@@ -126,16 +150,6 @@
      </property>
      <property name="text">
       <string>Preload layers</string>
-     </property>
-    </widget>
-   </item>
-   <item>
-    <widget class="QCheckBox" name="checkSingleDoc">
-     <property name="toolTip">
-      <string>If this is checked, a FreeCAD document corresponds to one IFC document, and does not allow to contain multiple projects. This is still experimental.</string>
-     </property>
-     <property name="text">
-      <string>Single document paradigm</string>
      </property>
     </widget>
    </item>

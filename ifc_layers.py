@@ -53,6 +53,8 @@ def get_layer(layer, project):
     """Returns (creates if necessary) a layer object in the given project"""
 
     group = ifc_tools.get_group(project, "IfcLayersGroup")
+    if not group:
+        return None
     if hasattr(project, "Document"):
         doc = project.Document
     else:

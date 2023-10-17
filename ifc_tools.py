@@ -425,6 +425,8 @@ def add_object(document, otype=None, oname="IfcObject"):
     """adds a new object to a FreeCAD document.
     otype can be 'project', 'group', 'material', 'layer' or None (normal object)"""
 
+    if not document:
+        return None
     proxy = ifc_objects.ifc_object(otype)
     if otype == "group":
         proxy = None
@@ -1172,6 +1174,8 @@ def get_orphan_elements(ifcfile):
 def get_group(project, name):
     """returns a group of the given type under the given IFC project. Creates it if needed"""
 
+    if not project:
+        return None
     if hasattr(project, "Group"):
         group = project.Group
     elif hasattr(project, "Objects"):

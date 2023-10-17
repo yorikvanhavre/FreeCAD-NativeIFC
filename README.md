@@ -94,6 +94,7 @@ The roadmap below will show you an overview of the current state of the implemen
 
 #### Edit mode
 
+- [ ] Common system: Geometry properties are created on entering edit mode, on-screen trackers system
 * [ ] Edit single-line axis endpoints for walls
 * [ ] Edit single-line axis endpoints for extruded profiles
 * [ ] Edit rectangle widths

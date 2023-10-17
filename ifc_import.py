@@ -137,7 +137,7 @@ def get_options(
         dlg.checkLoadPsets.setChecked(psets)
         dlg.checkLoadMaterials.setChecked(materials)
         dlg.checkLoadLayers.setChecked(layers)
-        dlg.checkSingleDoc.setChecked(singledoc)
+        dlg.comboSingleDoc.setCurrentIndex(1-int(singledoc))
         result = dlg.exec_()
         if not result:
             return None, None, None
@@ -149,7 +149,7 @@ def get_options(
         psets = dlg.checkLoadPsets.isChecked()
         materials = dlg.checkLoadMaterials.isChecked()
         layers = dlg.checkLoadLayers.isChecked()
-        singledoc = dlg.checkSingleDoc.isChecked()
+        singledoc = dlg.comboSingleDoc.currentIndex()
         params.SetInt("ImportStrategy", strategy)
         params.SetInt("ShapeMode", shapemode)
         params.SetBool("SwitchWB", switchwb)
@@ -158,7 +158,7 @@ def get_options(
         params.SetBool("LoadPsets", psets)
         params.SetBool("LoadMaterials", materials)
         params.SetBool("LoadLayers", layers)
-        params.SetBool("SingleDoc", singledoc)
+        params.SetBool("SingleDoc", bool(1-singledoc))
     return strategy, shapemode, switchwb
 
 
