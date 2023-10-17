@@ -31,6 +31,7 @@ import FreeCAD
 import Part
 import Mesh
 import Draft
+import Arch
 import exportIFC
 import exportIFCHelper
 
@@ -47,6 +48,7 @@ import ifc_objects
 import ifc_viewproviders
 import ifc_import
 import ifc_layers
+import ifc_generator
 
 SCALE = 1000.0  # IfcOpenShell works in meters, FreeCAD works in mm
 SHORT = False  # If True, only Step ID attribute is created
@@ -99,8 +101,6 @@ def create_document_object(
         create_children(obj, ifcfile, recursive=True, assemblies=False)
     # create default structure
     if full:
-        import Arch  # lazy loading
-
         site = aggregate(Arch.makeSite(), obj)
         building = aggregate(Arch.makeBuilding(), site)
         storey = aggregate(Arch.makeFloor(), building)
@@ -123,23 +123,14 @@ def convert_document(document, filename=None, shapemode=0, strategy=0, silent=Fa
     document.setPropertyStatus("Proxy", "Transient")
     document.Proxy = ifc_objects.document_object()
     ifcfile, project, full = setup_project(document, filename, shapemode, silent)
-    if strategy == 0 and FreeCAD.GuiUp:
-        # TODO PROVISORY - for testing only
-        # import FreeCADGui # lazy loading
-        # sg = FreeCADGui.getDocument(document.Name).ActiveView.getSceneGraph()
-        # elements = ifc_generator.get_decomposed_elements(proj)
-        # elements = ifc_generator.filter_types(elements)
-        # node = ifc_generator.generate_coin(ifcfile, elements)[0]
-        # sg.addChild(node)
-        pass
+    if strategy == 0:
+        ifc_generator.create_ghost(document, ifcfile, project)
     elif strategy == 1:
         create_children(document, ifcfile, recursive=True, only_structure=True)
     elif strategy == 2:
         create_children(document, ifcfile, recursive=True, assemblies=False)
     # create default structure
     if full:
-        import Arch  # lazy loading
-
         site = aggregate(Arch.makeSite(), document)
         building = aggregate(Arch.makeBuilding(), site)
         storey = aggregate(Arch.makeFloor(), building)

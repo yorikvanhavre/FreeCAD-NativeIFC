@@ -154,11 +154,13 @@ class ifc_vp_object:
         if not obj:
             obj = self.Object
         ifcfile = ifc_tools.get_ifcfile(obj)
+        nc = []
         if ifcfile:
-            ifc_tools.create_children(
+            nc = ifc_tools.create_children(
                 obj, ifcfile, recursive=False, assemblies=True, expand=False
             )
         obj.Document.recompute()
+        return nc
 
     def collapseChildren(self):
         """Collapses the children of this object"""

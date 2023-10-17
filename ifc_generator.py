@@ -30,6 +30,7 @@ import Part
 import ifcopenshell
 import ifc_tools
 import multiprocessing
+import FreeCADGui
 from pivy import coin
 
 
@@ -437,3 +438,28 @@ def apply_coin_placement(node, placement):
     verts = [FreeCAD.Vector(p.getValue()) for p in coords.point.getValues()]
     verts = [tuple(placement.multVec(v)) for v in verts]
     coords.point.setValues(verts)
+
+
+def create_ghost(document, ifcfile, project):
+    """Creates a coin representation of the given ifcfile in the given document"""
+
+    if not FreeCAD.GuiUp:
+        return
+    if not document:
+        return
+    sg = FreeCADGui.getDocument(document.Name).ActiveView.getSceneGraph()
+    elements = get_decomposed_elements(project)
+    elements = filter_types(elements)
+    node = generate_coin(ifcfile, elements)[0]
+    document.Proxy.ghost = node
+    sg.addChild(document.Proxy.ghost)
+
+
+def delete_ghost(document):
+    """Deletes the associated ghost of the document"""
+
+    if hasattr(document, "Proxy"):
+        if hasattr(document.Proxy, "ghost"):
+            sg = FreeCADGui.getDocument(document.Name).ActiveView.getSceneGraph()
+            sg.removeChild(document.Proxy.ghost)
+            del document.Proxy.ghost

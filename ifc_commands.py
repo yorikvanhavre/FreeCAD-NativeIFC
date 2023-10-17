@@ -49,7 +49,7 @@ class IFC_Diff:
         tt = QT_TRANSLATE_NOOP("IFC_Diff", "Shows the current unsaved changes in the IFC file")
         return {
             "Pixmap": os.path.join(os.path.dirname(__file__), "icons", "IFC.svg"),
-            "MenuText": QT_TRANSLATE_NOOP("IFC_Diff", "IFC diff..."),
+            "MenuText": QT_TRANSLATE_NOOP("IFC_Diff", "IFC Diff..."),
             "ToolTip": tt,
             "Accel": "I, D",
         }
@@ -62,3 +62,38 @@ class IFC_Diff:
             diff = ifc_diff.get_diff(proj)
             ifc_diff.show_diff(diff)
 
+
+class IFC_Expand:
+    """Expands the children of the selected objects or document"""
+
+    def GetResources(self):
+        tt = QT_TRANSLATE_NOOP("IFC_Expand", "Expands the children of the selected objects or document")
+        return {
+            "Pixmap": os.path.join(os.path.dirname(__file__), "icons", "IFC.svg"),
+            "MenuText": QT_TRANSLATE_NOOP("IFC_Expand", "IFC Expand"),
+            "ToolTip": tt,
+            "Accel": "I, E",
+        }
+
+    def Activated(self):
+        ns = []
+        for obj in FreeCADGui.Selection.getSelection():
+            if hasattr(obj.ViewObject, "Proxy"):
+                if hasattr(obj.ViewObject.Proxy, "hasChildren"):
+                    if obj.ViewObject.Proxy.hasChildren(obj):
+                        no = obj.ViewObject.Proxy.expandChildren(obj)
+                        ns.extend(no)
+        else:
+            import ifc_generator
+            import ifc_tools
+
+            document = FreeCAD.ActiveDocument
+            ifc_generator.delete_ghost(document)
+            ifcfile = ifc_tools.get_ifcfile(document)
+            if ifcfile:
+                ns = ifc_tools.create_children(document, ifcfile, recursive=True, only_structure=True)
+        if ns:
+            document.recompute()
+            FreeCADGui.Selection.clearSelection()
+            for o in ns:
+                FreeCADGui.Selection.addSelection(o)
