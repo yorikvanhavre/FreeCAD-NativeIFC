@@ -97,3 +97,13 @@ class IFC_Expand:
             FreeCADGui.Selection.clearSelection()
             for o in ns:
                 FreeCADGui.Selection.addSelection(o)
+
+
+def get_commands():
+    """Returns a list of IFC commands"""
+
+    return ("IFC_Diff", "IFC_Expand")
+
+
+FreeCADGui.addCommand("IFC_Diff", ifc_commands.IFC_Diff())
+FreeCADGui.addCommand("IFC_Expand", ifc_commands.IFC_Expand())
