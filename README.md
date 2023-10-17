@@ -111,18 +111,19 @@ The roadmap below will show you an overview of the current state of the implemen
 #### Questions to solve
 
 * Mixed or single document mode must be clearly choosable and identified by the user:
-  * When opening an IFC file
-  * When opening a FreeCAD file
-  * When creating a FreeCAD file
+  * [x] When opening an IFC file: Option in the import dialog
+  * [ ] When opening a FreeCAD file: Implicit - to be tested
+  * [ ] When creating a FreeCAD file
+  * [ ] When inserting an IFC file
 * Create example workflows:
-  * I am opening an existing IFC file and I want to modify/add/remove some of its contents: Opening in singledoc mode, modifying, saving.
-  * I am opening an IFC file and I want to include additional IFC files in it: Opening in singledoc mode, insert, choose if merging or not
-    * If merging, merge additional IFC
-    * If not, creating a doc object. Any changes to that doc object must take precedence over host doc
-  * I am creating an IFC file from scratch: Creating a file, choose if singledoc
-  * I am creating a FreeCAD file from scratch, not only IFC: Creating a file, choose no singledoc
-  * I am working on a hybrid FreeCAD file containing a BIM model. I want to export the IFC data consistently while still being able to modify the BIM objects with normal tools
-  * I am working on an IFC file and I want to produce 2D documents out of it, I want to benefit of the full FreeCAD 2D capabilities while saving the result as IFC data
+  * [ ] I am opening an existing IFC file and I want to modify/add/remove some of its contents: Opening in singledoc mode, modifying, saving.
+  * [ ] I am opening an IFC file and I want to include additional IFC files in it: Opening in singledoc mode, insert, choose if merging or not
+    * [ ] If merging, merge additional IFC
+    * [ ] If not, creating a doc object. Any changes to that doc object must take precedence over host doc
+  * [ ] I am creating an IFC file from scratch: Creating a file, choose if singledoc
+  * [ ] I am creating a FreeCAD file from scratch, not only IFC: Creating a file, choose no singledoc
+  * [ ] I am working on a hybrid FreeCAD file containing a BIM model. I want to export the IFC data consistently while still being able to modify the BIM objects with normal tools
+  * [ ] I am working on an IFC file and I want to produce 2D documents out of it, I want to benefit of the full FreeCAD 2D capabilities while saving the result as IFC data
 
 ### Documentation
 
