@@ -92,6 +92,7 @@ class ifc_observer:
         if doc:
             if hasattr(doc, "IfcFilePath"):
                 from PySide2 import QtCore  # lazy loading
+
                 self.objname = obj.Name
                 self.docname = obj.Document.Name
                 # delaying to make sure all other properties are set
@@ -99,10 +100,11 @@ class ifc_observer:
 
     def slotActivateDocument(self, doc):
         """Check if we need to display a ghost"""
-        
+
         if hasattr(doc, "Proxy") and hasattr(doc.Proxy, "ifcfile"):
             if doc.Objects:
                 from PySide2 import QtCore  # lazy loading
+
                 for obj in doc.Objects:
                     if getattr(obj, "ShapeMode", None) == "Coin":
                         obj.Proxy.cached = True
@@ -112,6 +114,7 @@ class ifc_observer:
             else:
                 if not hasattr(doc.Proxy, "ghost"):
                     import ifc_generator
+
                     ifc_generator.create_ghost(doc)
 
     def fit_all(self):
@@ -119,6 +122,7 @@ class ifc_observer:
 
         if FreeCAD.GuiUp:
             import FreeCADGui
+
             FreeCADGui.SendMsgToActiveView("ViewFit")
 
     def save(self):

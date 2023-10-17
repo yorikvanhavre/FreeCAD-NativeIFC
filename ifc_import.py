@@ -49,7 +49,13 @@ def open(filename):
 
 
 def insert(
-    filename, docname, strategy=None, shapemode=None, switchwb=None, silent=False, singledoc=None
+    filename,
+    docname,
+    strategy=None,
+    shapemode=None,
+    switchwb=None,
+    silent=False,
+    singledoc=None,
 ):
     """Inserts an IFC document in a FreeCAD document"""
 
@@ -65,7 +71,9 @@ def insert(
     if singledoc:
         prj_obj = ifc_tools.convert_document(document, filename, shapemode, strategy)
     else:
-        prj_obj = ifc_tools.create_document_object(document, filename, shapemode, strategy)
+        prj_obj = ifc_tools.create_document_object(
+            document, filename, shapemode, strategy
+        )
     if params.GetBool("LoadOrphans", False):
         ifc_tools.load_orphans(prj_obj)
     if not silent and params.GetBool("LoadMaterials", False):
@@ -139,7 +147,7 @@ def get_options(
         dlg.checkLoadPsets.setChecked(psets)
         dlg.checkLoadMaterials.setChecked(materials)
         dlg.checkLoadLayers.setChecked(layers)
-        dlg.comboSingleDoc.setCurrentIndex(1-int(singledoc))
+        dlg.comboSingleDoc.setCurrentIndex(1 - int(singledoc))
         result = dlg.exec_()
         if not result:
             return None, None, None
@@ -160,7 +168,7 @@ def get_options(
         params.SetBool("LoadPsets", psets)
         params.SetBool("LoadMaterials", materials)
         params.SetBool("LoadLayers", layers)
-        params.SetBool("SingleDoc", bool(1-singledoc))
+        params.SetBool("SingleDoc", bool(1 - singledoc))
     return strategy, shapemode, switchwb
 
 

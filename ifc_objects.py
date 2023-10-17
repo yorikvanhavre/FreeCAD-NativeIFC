@@ -79,6 +79,7 @@ class ifc_object:
         if hasattr(obj, "IfcFilePath"):
             # once we have loaded the project, recalculate child coin nodes
             from PySide2 import QtCore  # lazy loading
+
             if obj.OutListRecursive:
                 for child in obj.OutListRecursive:
                     if getattr(child, "ShapeMode", None) == "Coin":
@@ -94,8 +95,10 @@ class ifc_object:
         """Fits the view"""
 
         import FreeCAD
+
         if FreeCAD.GuiUp:
             import FreeCADGui
+
             FreeCADGui.SendMsgToActiveView("ViewFit")
 
     def rebuild_classlist(self, obj, setprops=False):

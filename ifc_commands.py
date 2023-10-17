@@ -31,6 +31,7 @@ import FreeCADGui
 def QT_TRANSLATE_NOOP(scope, text):
     return text
 
+
 def get_project():
     """Gets the current project"""
 
@@ -46,7 +47,9 @@ class IFC_Diff:
     """Shows a diff of the changes in the current IFC document"""
 
     def GetResources(self):
-        tt = QT_TRANSLATE_NOOP("IFC_Diff", "Shows the current unsaved changes in the IFC file")
+        tt = QT_TRANSLATE_NOOP(
+            "IFC_Diff", "Shows the current unsaved changes in the IFC file"
+        )
         return {
             "Pixmap": os.path.join(os.path.dirname(__file__), "icons", "IFC.svg"),
             "MenuText": QT_TRANSLATE_NOOP("IFC_Diff", "IFC Diff..."),
@@ -67,7 +70,9 @@ class IFC_Expand:
     """Expands the children of the selected objects or document"""
 
     def GetResources(self):
-        tt = QT_TRANSLATE_NOOP("IFC_Expand", "Expands the children of the selected objects or document")
+        tt = QT_TRANSLATE_NOOP(
+            "IFC_Expand", "Expands the children of the selected objects or document"
+        )
         return {
             "Pixmap": os.path.join(os.path.dirname(__file__), "icons", "IFC.svg"),
             "MenuText": QT_TRANSLATE_NOOP("IFC_Expand", "IFC Expand"),
@@ -91,7 +96,9 @@ class IFC_Expand:
             ifc_generator.delete_ghost(document)
             ifcfile = ifc_tools.get_ifcfile(document)
             if ifcfile:
-                ns = ifc_tools.create_children(document, ifcfile, recursive=True, only_structure=True)
+                ns = ifc_tools.create_children(
+                    document, ifcfile, recursive=True, only_structure=True
+                )
         if ns:
             document.recompute()
             FreeCADGui.Selection.clearSelection()
@@ -103,6 +110,7 @@ def get_commands():
     """Returns a list of IFC commands"""
 
     return ["IFC_Diff", "IFC_Expand"]
+
 
 # initialize commands
 FreeCADGui.addCommand("IFC_Diff", IFC_Diff())
