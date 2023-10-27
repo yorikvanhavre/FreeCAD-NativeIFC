@@ -95,7 +95,7 @@ def add_layers(obj, element=None, ifcfile=None, proj=None):
     layers = ifcopenshell.util.element.get_layers(ifcfile, element)
     for layer in layers:
         lay = get_layer(layer, proj)
-        if not obj in lay.Group:
+        if lay and not obj in lay.Group:
             lay.Proxy.addObject(lay, obj)
 
 
