@@ -3,8 +3,8 @@
 
   <name>NativeIFC</name>
   <description>A FreeCAD module to work with IFC files natively</description>
-  <version>2022.10.20</version>
-  <date>2022-10-20</date>
+  <version>2023.10.27</version>
+  <date>2023-10-27</date>
   <maintainer email="yorik@uncreated.net">Yorik van Havre</maintainer>
   <license file="LICENSE">GPLv3</license>
   <pythonmin>3.0.0</pythonmin>
