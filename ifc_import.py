@@ -41,10 +41,12 @@ def open(filename):
     """Opens an IFC file"""
 
     name = os.path.splitext(os.path.basename(filename))[0]
+    FreeCAD.IsOpeningIFC = True
     doc = FreeCAD.newDocument()
     doc.Label = name
     FreeCAD.setActiveDocument(doc.Name)
     insert(filename, doc.Name)
+    del FreeCAD.IsOpeningIFC
     return doc
 
 

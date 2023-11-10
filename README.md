@@ -115,7 +115,7 @@ The roadmap below will show you an overview of the current state of the implemen
 * Mixed or single document mode must be clearly choosable and identified by the user:
   * [x] When opening an IFC file: Option in the import dialog
   * [x] When opening a FreeCAD file: Implicit
-  * [ ] When creating a FreeCAD file
+  * [x] When creating a FreeCAD file: Dialog pops up
   * [ ] When inserting an IFC file
 * Create example workflows:
   * [ ] I am opening an existing IFC file and I want to modify/add/remove some of its contents: Opening in singledoc mode, modifying, saving.

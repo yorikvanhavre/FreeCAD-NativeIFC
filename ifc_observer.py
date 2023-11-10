@@ -37,6 +37,8 @@ def add_observer():
 class ifc_observer:
     """A general document observer that handles IFC objects"""
 
+    # slots
+
     def slotStartSaveDocument(self, doc, value):
         """Save all IFC documents in this doc"""
 
@@ -101,21 +103,28 @@ class ifc_observer:
     def slotActivateDocument(self, doc):
         """Check if we need to display a ghost"""
 
-        if hasattr(doc, "Proxy") and hasattr(doc.Proxy, "ifcfile"):
-            if doc.Objects:
-                from PySide2 import QtCore  # lazy loading
+        from PySide2 import QtCore  # lazy loading
 
-                for obj in doc.Objects:
-                    if getattr(obj, "ShapeMode", None) == "Coin":
-                        obj.Proxy.cached = True
-                        QtCore.QTimer.singleShot(100, obj.touch)
-                QtCore.QTimer.singleShot(100, doc.recompute)
-                QtCore.QTimer.singleShot(100, self.fit_all)
-            else:
-                if not hasattr(doc.Proxy, "ghost"):
-                    import ifc_generator
+        if hasattr(doc, "Proxy"):
+            if hasattr(doc.Proxy, "ifcfile"):
+                # this runs when loading a file
+                if getattr(doc, "Objects", ""):
+                    for obj in doc.Objects:
+                        if getattr(obj, "ShapeMode", None) == "Coin":
+                            obj.Proxy.cached = True
+                            QtCore.QTimer.singleShot(100, obj.touch)
+                    QtCore.QTimer.singleShot(100, doc.recompute)
+                    QtCore.QTimer.singleShot(100, self.fit_all)
+                else:
+                    if not hasattr(doc.Proxy, "ghost"):
+                        import ifc_generator
 
-                    ifc_generator.create_ghost(doc)
+                        ifc_generator.create_ghost(doc)
+        else:
+            # this is a new file, wait a bit to make sure all components are populated
+            QtCore.QTimer.singleShot(1000, self.propose_conversion)
+
+    # implementation methods
 
     def fit_all(self):
         """Fits the view"""
@@ -193,3 +202,41 @@ class ifc_observer:
                 newobj = ifc_tools.aggregate(obj, doc)
                 ifc_geometry.add_geom_properties(newobj)
                 doc.recompute()
+
+    def propose_conversion(self):
+        """Propose a conversion of the current document"""
+
+        doc = FreeCAD.ActiveDocument
+        if not getattr(FreeCAD, "IsOpeningIFC", False):
+            if not hasattr(doc, "Proxy"):
+                if not getattr(doc, "Objects", True):
+                    if not doc.FileName:
+                        if not hasattr(doc, "IfcFilePath"):
+                            # this is really a new, empty document
+                            import FreeCADGui
+                            from PySide import QtCore, QtGui  # lazy loading
+
+                            if FreeCADGui.activeWorkbench().name() != "BIMWorkbench":
+                                return
+                            d = os.path.dirname(__file__)
+                            dlg = FreeCADGui.PySideUic.loadUi(
+                                os.path.join(d, "ui", "dialogConvertDocument.ui")
+                            )
+                            result = dlg.exec_()
+                            self.full = dlg.checkStructure.isChecked()
+                            if result:
+                                QtCore.QTimer.singleShot(1000, self.convert_document)
+
+    def convert_document(self):
+        """Converts the active document"""
+
+        import ifc_tools  # lazy loading
+
+        doc = FreeCAD.ActiveDocument
+        ifc_tools.convert_document(doc, strategy=2, silent=True)
+        if self.full:
+            import Arch
+            site = ifc_tools.aggregate(Arch.makeSite(), doc)
+            building = ifc_tools.aggregate(Arch.makeBuilding(), site)
+            storey = ifc_tools.aggregate(Arch.makeFloor(), building)
+            doc.recompute()

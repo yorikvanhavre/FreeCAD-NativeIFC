@@ -421,6 +421,8 @@ def print_debug(obj):
     """Prints some debug info when an element could not be rendered"""
 
     element = ifc_tools.get_ifc_element(obj)
+    if not element:
+        return
     if not element.is_a("IfcContext") and not element.is_a(
         "IfcSpatialStructureElement"
     ):
