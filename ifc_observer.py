@@ -26,6 +26,8 @@
 import os
 import FreeCAD
 
+params = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Mod/NativeIFC")
+
 
 def add_observer():
     """Adds an observer to the running FreeCAD instance"""
@@ -155,8 +157,6 @@ class ifc_observer:
         if objs:
             import ifc_tools  # lazy loading
 
-            ppath = "User parameter:BaseApp/Preferences/Mod/NativeIFC"
-            params = FreeCAD.ParamGet(ppath)
             ask = params.GetBool("AskBeforeSaving", True)
             if ask and FreeCAD.GuiUp:
                 import FreeCADGui
@@ -218,14 +218,27 @@ class ifc_observer:
 
                             if FreeCADGui.activeWorkbench().name() != "BIMWorkbench":
                                 return
+                            if not params.GetBool("SingleDocAskAgain", True):
+                                if params.GetBool("SingleDoc", True):
+                                    self.full = params.GetBool("ProjectFull", False)
+                                    QtCore.QTimer.singleShot(1000, self.convert_document)
+                                    return
+                                else:
+                                    return
                             d = os.path.dirname(__file__)
                             dlg = FreeCADGui.PySideUic.loadUi(
                                 os.path.join(d, "ui", "dialogConvertDocument.ui")
                             )
+                            dlg.checkStructure.setChecked(params.GetBool("ProjectFull", False))
                             result = dlg.exec_()
                             self.full = dlg.checkStructure.isChecked()
+                            params.SetBool("SingleDocAskAgain", not dlg.checkAskAgain.isChecked())
                             if result:
+                                params.SetBool("SingleDoc", True)
+                                params.SetBool("ProjectFull", self.full)
                                 QtCore.QTimer.singleShot(1000, self.convert_document)
+                            else:
+                                params.SetBool("SingleDoc", False)
 
     def convert_document(self):
         """Converts the active document"""

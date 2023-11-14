@@ -27,9 +27,8 @@ import os
 import FreeCAD
 import FreeCADGui
 
-
-def QT_TRANSLATE_NOOP(scope, text):
-    return text
+translate = FreeCAD.Qt.translate
+QT_TRANSLATE_NOOP = FreeCAD.Qt.QT_TRANSLATE_NOOP
 
 
 def get_project():
@@ -106,12 +105,36 @@ class IFC_Expand:
                 FreeCADGui.Selection.addSelection(o)
 
 
+class IFC_ConvertDocument:
+    """Converts the active document to an IFC document"""
+
+    def GetResources(self):
+        tt = QT_TRANSLATE_NOOP(
+            "IFC_ConvertDocument", "Converts the active document to an IFC document"
+        )
+        return {
+            "Pixmap": os.path.join(os.path.dirname(__file__), "icons", "IFC.svg"),
+            "MenuText": QT_TRANSLATE_NOOP("IFC_ConvertDocument", "Convert document"),
+            "ToolTip": tt,
+            # "Accel": "I, C",
+        }
+
+    def Activated(self):
+        doc = FreeCAD.ActiveDocument
+        if hasattr(doc, "Proxy") and hasattr(doc.Proxy, "ifcfile") and doc.Proxy.ifcfile:
+            FreeCAD.Console.PrintError(translate("BIM","The active document is already an IFC document"))
+        else:
+            import ifc_tools
+            ifc_tools.convert_document(doc)
+
+
 def get_commands():
     """Returns a list of IFC commands"""
 
-    return ["IFC_Diff", "IFC_Expand"]
+    return ["IFC_Diff", "IFC_Expand", "IFC_ConvertDocument"]
 
 
 # initialize commands
 FreeCADGui.addCommand("IFC_Diff", IFC_Diff())
 FreeCADGui.addCommand("IFC_Expand", IFC_Expand())
+FreeCADGui.addCommand("IFC_ConvertDocument", IFC_ConvertDocument())

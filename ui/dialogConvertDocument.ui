@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>305</width>
-    <height>193</height>
+    <width>307</width>
+    <height>219</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -31,6 +31,22 @@
      </property>
      <property name="text">
       <string>Also create a default structure</string>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <widget class="QCheckBox" name="checkAskAgain">
+     <property name="toolTip">
+      <string>If this is checked, you won't be asked again when creating a new FreeCAD document, 
+and that document won't be turned into an IFC document automatically.
+You can still turn a FreeCAD document into an IFC document manually, using
+menu IFC -&gt; Convert document</string>
+     </property>
+     <property name="text">
+      <string>Do not ask again</string>
+     </property>
+     <property name="checked">
+      <bool>false</bool>
      </property>
     </widget>
    </item>
