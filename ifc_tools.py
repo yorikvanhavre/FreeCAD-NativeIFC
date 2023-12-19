@@ -457,6 +457,8 @@ def add_properties(
         ifcentity = get_ifc_element(obj)
     if getattr(ifcentity, "Name", None):
         obj.Label = ifcentity.Name
+    elif getattr(obj, "IfcFilePath", ""):
+        obj.Label = os.path.splitext(os.path.basename(obj.IfcFilePath))[0]
     else:
         obj.Label = "_" + ifcentity.is_a()
     if isinstance(obj, FreeCAD.DocumentObject) and "Group" not in obj.PropertiesList:
