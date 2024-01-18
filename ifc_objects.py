@@ -121,6 +121,12 @@ class ifc_object:
             self.Type = state
         return None
 
+    def dumps(self):
+        return
+
+    def loads(self, _state):
+        return
+
     def execute(self, obj):
         import ifc_generator  # lazy import
 
