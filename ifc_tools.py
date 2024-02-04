@@ -940,6 +940,8 @@ def create_product(obj, parent, ifcfile, ifcclass=None):
     description = getattr(obj, "Description", None)
     if not ifcclass:
         ifcclass = exportIFC.getIfcTypeFromObj(obj)
+    if not ifcclass: 
+        ifcclass = "IfcElement"
     representation, placement = create_representation(obj, ifcfile)
     product = api_run("root.create_entity", ifcfile, ifc_class=ifcclass, name=name)
     set_attribute(ifcfile, product, "Description", description)
