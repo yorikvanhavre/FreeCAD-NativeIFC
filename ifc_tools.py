@@ -866,7 +866,7 @@ def save(obj, filepath=None):
     obj.Modified = False
 
 
-def aggregate(obj, parent):
+def aggregate(obj, parent, ifcclass=None):
     """Takes any FreeCAD object and aggregates it to an existing IFC object"""
 
     proj = get_project(parent)
@@ -890,7 +890,7 @@ def aggregate(obj, parent):
         newobj = obj
         new = False
     else:
-        product = create_product(obj, parent, ifcfile)
+        product = create_product(obj, parent, ifcfile, ifcclass=ifcclass)
         shapemode = getattr(parent, "ShapeMode", DEFAULT_SHAPEMODE)
         newobj = create_object(product, obj.Document, ifcfile, shapemode)
         new = True
@@ -941,7 +941,7 @@ def create_product(obj, parent, ifcfile, ifcclass=None):
     if not ifcclass:
         ifcclass = exportIFC.getIfcTypeFromObj(obj)
     if not ifcclass: 
-        ifcclass = "IfcElement"
+        raise ValueError("No IFC class found for object")
     representation, placement = create_representation(obj, ifcfile)
     product = api_run("root.create_entity", ifcfile, ifc_class=ifcclass, name=name)
     set_attribute(ifcfile, product, "Description", description)

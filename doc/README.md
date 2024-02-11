@@ -234,10 +234,7 @@ box = Part.show(shape)
 project = FreeCAD.ActiveDocument.getObject("IfcObject")
 
 # aggregate our box under it
-new_object = ifc_tools.aggregate(box, project)
-
-# change the type
-new_object.Class = "IFcWall"
+new_object = ifc_tools.aggregate(box, project, ifcclass="IFcWall")
 ```
 
 ### How to add a wall
