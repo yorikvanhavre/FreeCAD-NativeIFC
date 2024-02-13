@@ -117,15 +117,15 @@ class ifc_object:
         return getattr(self, "Type", None)
 
     def __setstate__(self, state):
+        self.loads(state)
+
+    def dumps(self):
+        return getattr(self, "Type", None)
+
+    def loads(self, _state):
         if state and hasattr(state, "Type"):
             self.Type = state
         return None
-
-    def dumps(self):
-        return
-
-    def loads(self, _state):
-        return
 
     def execute(self, obj):
         import ifc_generator  # lazy import
