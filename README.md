@@ -162,4 +162,4 @@ Tests performed on a AMD Ryzen 9 5900HX
 
 This project is sponsored by:
 
-[![](doc/images/otfn-logo.png)](https://opentoolchain-foundation.org/)     [![](doc/images/ngi0-logo.png)](https://nlnet.nl/project/FreeCAD-IFC/)
+[![](doc/images/otfn-logo.png)](https://opentoolchain-foundation.org/) <div style="width: 60px;"></div> [![](doc/images/ngi0-logo.png)](https://nlnet.nl/project/FreeCAD-IFC/)
