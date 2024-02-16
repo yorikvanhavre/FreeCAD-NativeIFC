@@ -117,12 +117,12 @@ The roadmap below will show you an overview of the current state of the implemen
   * [x] When opening a FreeCAD file: Implicit - The file carries the mode already
   * [x] When creating a FreeCAD file: Dialog pops up to choose between Single/Hybrid
   * [ ] When inserting an IFC file:
-     * If the active file has objects:
-        * If the active file is singledoc:
-           * Pop up dialog to ask between Merge/Hybrid
-        * Else: Hybrid
-     * Else:
-        * Hybrid
+    * If the active file has objects:
+      * If the active file is singledoc:
+        * Pop up dialog to ask between Merge/Hybrid
+      * Else: Hybrid
+    * Else:
+      * Hybrid
 * Create example workflows:
   * [ ] I am opening an existing IFC file and I want to modify/add/remove some of its contents: Opening in singledoc mode, modifying, saving.
   * [ ] I am opening an IFC file and I want to include additional IFC files in it: Opening in singledoc mode, insert, choose if merging or not
@@ -162,4 +162,4 @@ Tests performed on a AMD Ryzen 9 5900HX
 
 This project is sponsored by:
 
-[![](doc/images/otfn-logo.png)](https://opentoolchain-foundation.org/)
+[![](doc/images/otfn-logo.png)](https://opentoolchain-foundation.org/)     [![](doc/images/ngi0-logo.png)](https://nlnet.nl/project/FreeCAD-IFC/)
