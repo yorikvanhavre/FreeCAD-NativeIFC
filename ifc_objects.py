@@ -122,7 +122,7 @@ class ifc_object:
     def dumps(self):
         return getattr(self, "Type", None)
 
-    def loads(self, _state):
+    def loads(self, state):
         if state and hasattr(state, "Type"):
             self.Type = state
         return None
