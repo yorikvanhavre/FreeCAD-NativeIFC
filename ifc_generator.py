@@ -72,7 +72,9 @@ def generate_geometry(obj, cached=False):
         else:
             print_debug(obj)
     elif basenode and obj.ShapeMode == "Coin":
-        node, colors, placement = generate_coin(ifcfile, elements, cached)
+        node, colors, placement = generate_coin(
+            ifcfile, elements, cached, obj.ViewObject
+        )
         if node:
             basenode.addChild(node)
         else:
@@ -186,7 +188,7 @@ def generate_shape(ifcfile, elements, cached=False):
     return shape, colors
 
 
-def generate_coin(ifcfile, elements, cached=False):
+def generate_coin(ifcfile, elements, cached=False, vobj=None):
     """Returns a Coin node for a list of elements"""
 
     # setup
@@ -275,13 +277,32 @@ def generate_coin(ifcfile, elements, cached=False):
             ]
             faceset = coin.SoIndexedFaceSet()
             faceset.coordIndex.setValues(faces)
+            node.addChild(faceset)
+
+            # edges color
+            mat = coin.SoMaterial()
+            lcolor = getattr(vobj, "LineColor", (0, 0, 0))
+            mat.diffuseColor.setValue(lcolor[0], lcolor[1], lcolor[2])
+            node.addChild(mat)
+
+            # edges style
+            dst = coin.SoDrawStyle()
+            dst.lineWidth = getattr(vobj, "LineWidth", 1)
+            node.addChild(dst)
+
+            # get edges
+            edges = list(item.geometry.edges)
+            edges = [
+                e for i in range(0, len(edges), 2) for e in edges[i : i + 2] + [-1]
+            ]
+            edgeset = coin.SoIndexedLineSet()
+            edgeset.coordIndex.setValues(edges)
+            node.addChild(edgeset)
 
             # update cahce
             cache["Coin"][item.id] = node
             cache["Placement"][item.id] = placement
 
-            # apply coin node
-            node.addChild(faceset)
             if grouping:
                 # if we are joining nodes together, their placement
                 # must be baked in

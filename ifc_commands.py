@@ -121,10 +121,17 @@ class IFC_ConvertDocument:
 
     def Activated(self):
         doc = FreeCAD.ActiveDocument
-        if hasattr(doc, "Proxy") and hasattr(doc.Proxy, "ifcfile") and doc.Proxy.ifcfile:
-            FreeCAD.Console.PrintError(translate("BIM","The active document is already an IFC document"))
+        if (
+            hasattr(doc, "Proxy")
+            and hasattr(doc.Proxy, "ifcfile")
+            and doc.Proxy.ifcfile
+        ):
+            FreeCAD.Console.PrintError(
+                translate("BIM", "The active document is already an IFC document")
+            )
         else:
             import ifc_tools
+
             ifc_tools.convert_document(doc)
 
 

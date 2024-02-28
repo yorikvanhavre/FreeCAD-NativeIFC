@@ -25,7 +25,6 @@ import FreeCADGui
 
 
 class ifc_vp_object:
-
     """Base class for all blenderbim view providers"""
 
     def attach(self, vobj):
@@ -45,6 +44,15 @@ class ifc_vp_object:
             for child in vobj.Object.Group:
                 child.ViewObject.Visibility = vobj.Visibility
             return True
+        elif prop == "LineColor" and vobj.Object.ShapeMode == "Coin":
+            lc = vobj.LineColor
+            basenode = vobj.RootNode.getChild(2).getChild(0)
+            if basenode.getNumChildren() == 5:
+                basenode[4][0][3].diffuseColor.setValue(lc[0], lc[1], lc[2])
+        elif prop == "LineWidth" and vobj.Object.ShapeMode == "Coin":
+            basenode = vobj.RootNode.getChild(2).getChild(0)
+            if basenode.getNumChildren() == 5:
+                basenode[4][0][4].lineWidth = vobj.LineWidth
 
     def __getstate__(self):
         return None
@@ -311,7 +319,6 @@ class ifc_vp_object:
 
 
 class ifc_vp_document(ifc_vp_object):
-
     """View provider for the IFC document object"""
 
     def getIcon(self):
@@ -422,7 +429,6 @@ class ifc_vp_document(ifc_vp_object):
 
 
 class ifc_vp_group:
-
     """View provider for the IFC group object"""
 
     def getIcon(self):
@@ -437,7 +443,6 @@ class ifc_vp_group:
 
 
 class ifc_vp_material:
-
     """View provider for the IFC group object"""
 
     def attach(self, vobj):

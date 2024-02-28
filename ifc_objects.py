@@ -24,7 +24,6 @@
 
 
 class ifc_object:
-
     """Base class for all IFC-based objects"""
 
     def __init__(self, otype=None):
@@ -247,7 +246,6 @@ class ifc_object:
 
 
 class document_object:
-
     """Holder for the document's IFC objects"""
 
     def __init__(self):

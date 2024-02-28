@@ -221,7 +221,9 @@ class ifc_observer:
                             if not params.GetBool("SingleDocAskAgain", True):
                                 if params.GetBool("SingleDoc", True):
                                     self.full = params.GetBool("ProjectFull", False)
-                                    QtCore.QTimer.singleShot(1000, self.convert_document)
+                                    QtCore.QTimer.singleShot(
+                                        1000, self.convert_document
+                                    )
                                     return
                                 else:
                                     return
@@ -229,10 +231,14 @@ class ifc_observer:
                             dlg = FreeCADGui.PySideUic.loadUi(
                                 os.path.join(d, "ui", "dialogConvertDocument.ui")
                             )
-                            dlg.checkStructure.setChecked(params.GetBool("ProjectFull", False))
+                            dlg.checkStructure.setChecked(
+                                params.GetBool("ProjectFull", False)
+                            )
                             result = dlg.exec_()
                             self.full = dlg.checkStructure.isChecked()
-                            params.SetBool("SingleDocAskAgain", not dlg.checkAskAgain.isChecked())
+                            params.SetBool(
+                                "SingleDocAskAgain", not dlg.checkAskAgain.isChecked()
+                            )
                             if result:
                                 params.SetBool("SingleDoc", True)
                                 params.SetBool("ProjectFull", self.full)
@@ -249,6 +255,7 @@ class ifc_observer:
         ifc_tools.convert_document(doc, strategy=2, silent=True)
         if self.full:
             import Arch
+
             site = ifc_tools.aggregate(Arch.makeSite(), doc)
             building = ifc_tools.aggregate(Arch.makeBuilding(), site)
             storey = ifc_tools.aggregate(Arch.makeFloor(), building)
