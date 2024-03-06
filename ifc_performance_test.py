@@ -129,7 +129,7 @@ class NativeIFCTest(unittest.TestCase):
 
     def testfinal(self):
         print(
-            "| File | File size | Import time (shape) | Import time (coin) | BlenderBIM |"
+            "| File | File size | Import time (coin) | Import time (shape) | BlenderBIM |"
         )
         print(
             "| ---- | --------- | ------------------- | ------------------ | ---------- |"

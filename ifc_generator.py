@@ -20,7 +20,9 @@
 # *                                                                         *
 # ***************************************************************************
 
-"""This module contains all the tools to create FreeCAD geometry from IFC objects"""
+"""This module contains all the tools to create FreeCAD geometry from IFC objects.
+The only entry point in this module is the generate_geometry() function which is
+used by the execute() method of ifc_objects"""
 
 
 import time
@@ -53,12 +55,10 @@ def generate_geometry(obj, cached=False):
         return
     colors = None
 
-    # clean previous representations and collect base coin node, if any
-    basenode = clean_representation(obj)
-
     # workaround for Group property bug: Avoid having a null shape, otherwise
     # a default representation will be created from the object's Group contents
-    obj.Shape = Part.makeBox(1, 1, 1)
+    #obj.Shape = Part.makeBox(1, 1, 1)
+    # fixed in FreeCAD 0.22 - uncomment the line above for earlier versions
 
     # generate the shape or coin node
     ifcfile = ifc_tools.get_ifcfile(obj)
@@ -70,14 +70,15 @@ def generate_geometry(obj, cached=False):
             obj.Shape = shape
             obj.Placement = placement
         else:
+            obj.Shape = Part.Shape()
             print_debug(obj)
-    elif basenode and obj.ShapeMode == "Coin":
-        node, colors, placement = generate_coin(
-            ifcfile, elements, cached, obj.ViewObject
-        )
+    elif obj.ViewObject and obj.ShapeMode == "Coin":
+        node, placement = generate_coin(ifcfile, elements, cached)
         if node:
-            basenode.addChild(node)
+            set_representation(obj.ViewObject, node)
+            colors = node[0]
         else:
+            set_representation(obj.ViewObject, None)
             print_debug(obj)
         if placement:
             obj.Placement = placement
@@ -88,7 +89,7 @@ def generate_geometry(obj, cached=False):
 
 
 def generate_shape(ifcfile, elements, cached=False):
-    """Returns a Part shape for a list of elements"""
+    """Returns a Part shape and a list of colors for a list of elements"""
 
     # setup
     if not elements:
@@ -188,17 +189,18 @@ def generate_shape(ifcfile, elements, cached=False):
     return shape, colors
 
 
-def generate_coin(ifcfile, elements, cached=False, vobj=None):
-    """Returns a Coin node for a list of elements"""
+def generate_coin(ifcfile, elements, cached=False):
+    """Returns coin node data (verts,face and edge index) and a Placement
+    from a list of ifc elements"""
 
     # setup
     # strip out elements without representation, as they can't generate a node anyway
     elements = [e for e in elements if getattr(e, "Representation", None)]
     if not elements:
-        return None, None, None
+        return None, None
     # if we have more than one element, placements will need to be applied on subnodes
     grouping = bool(len(elements) > 1)
-    nodes = coin.SoSeparator()
+    nodes = []
 
     # process cached elements
     placement = None
@@ -209,32 +211,24 @@ def generate_coin(ifcfile, elements, cached=False, vobj=None):
             if element.id() in cache["Placement"]:
                 placement = cache["Placement"][element.id()]
             if element.id() in cache["Coin"]:
-                node = cache["Coin"][element.id()].copy()
+                node = cache["Coin"][element.id()]
                 if grouping:
-                    apply_coin_placement(node, placement)
-                nodes.addChild(node)
+                    print("applying placement")
+                    node = apply_placement(node, placement)
+                nodes.append(node)
             else:
                 rest.append(element)
         if grouping:
             placement = None
         if not rest:
             # all elements have been taken from cache, nothing more to do
-            return nodes, None, placement
+            return unify(nodes), placement
         elements = rest
-
-    # if we already have cache-based nodes, adding nodes inside the iterator causes a crash
-    # so we separate the cached nodes now to be added later
-    if nodes.getNumChildren():
-        print("DEBUG: cached nodes with calculated nodes")
-        cached_nodes = nodes
-        nodes = coin.SoSeparator()
-    else:
-        cached_nodes = None
 
     # prepare the iterator
     iterator = get_geom_iterator(ifcfile, elements, brep_mode=False)
     if iterator is None:
-        return None, None, None
+        return None, None
     total = len(elements)
     progressbar = Base.ProgressIndicator()
     progressbar.start("Generating " + str(total) + " shapes...", total)
@@ -245,87 +239,62 @@ def generate_coin(ifcfile, elements, cached=False, vobj=None):
         item = iterator.get()
         if item and item.id not in done:
             done.append(item.id)
-            node = coin.SoSeparator()
 
-            # get colors
-            mat = coin.SoMaterial()
+            # colors
             if item.geometry.materials:
                 color = item.geometry.materials[0].diffuse
-                color = (color[0], color[1], color[2], 0.0)
-                mat.diffuseColor.setValue(color[:3])
+                color = (float(color[0]), float(color[1]), float(color[2]))
                 # TODO treat transparency
                 # mat.transparency.setValue(0.8)
                 # TODO treat multiple materials
             else:
-                mat.diffuseColor.setValue(0.85, 0.85, 0.85)
-            node.addChild(mat)
+                color = (0.85, 0.85, 0.85)
 
-            # get verts
+            # verts
             matrix = ifc_tools.get_freecad_matrix(item.transformation.matrix.data)
             placement = FreeCAD.Placement(matrix)
             verts = item.geometry.verts
             verts = [FreeCAD.Vector(verts[i : i + 3]) for i in range(0, len(verts), 3)]
             verts = [tuple(v.multiply(ifc_tools.SCALE)) for v in verts]
-            coords = coin.SoCoordinate3()
-            coords.point.setValues(verts)
-            node.addChild(coords)
 
-            # get faces
+            # faces
             faces = list(item.geometry.faces)
             faces = [
                 f for i in range(0, len(faces), 3) for f in faces[i : i + 3] + [-1]
             ]
-            faceset = coin.SoIndexedFaceSet()
-            faceset.coordIndex.setValues(faces)
-            node.addChild(faceset)
 
-            # edges color
-            mat = coin.SoMaterial()
-            lcolor = getattr(vobj, "LineColor", (0, 0, 0))
-            mat.diffuseColor.setValue(lcolor[0], lcolor[1], lcolor[2])
-            node.addChild(mat)
-
-            # edges style
-            dst = coin.SoDrawStyle()
-            dst.lineWidth = getattr(vobj, "LineWidth", 1)
-            node.addChild(dst)
-
-            # get edges
+            # edges
             edges = list(item.geometry.edges)
             edges = [
                 e for i in range(0, len(edges), 2) for e in edges[i : i + 2] + [-1]
             ]
-            edgeset = coin.SoIndexedLineSet()
-            edgeset.coordIndex.setValues(edges)
-            node.addChild(edgeset)
 
-            # update cahce
+            # update cache
+            node = [color, verts, faces, edges]
             cache["Coin"][item.id] = node
             cache["Placement"][item.id] = placement
 
             if grouping:
                 # if we are joining nodes together, their placement
                 # must be baked in
-                node = node.copy()
-                apply_coin_placement(node, placement)
-            nodes.addChild(node)
+                node = apply_placement(node, placement)
+            nodes.append(node)
             progressbar.next(True)
         if not iterator.next():
             break
+
+    # unify nodes
+    nodes = unify(nodes)
 
     # nullify placement if already applied
     if grouping:
         placement = None
 
-    # add achecd nodes
-    if cached_nodes:
-        nodes.addChild(cached_nodes)
-
     # write cache
     set_cache(ifcfile, cache)
 
     progressbar.stop()
-    return nodes, None, placement
+    return nodes, placement
 
 
 def get_decomposition(obj):
@@ -341,7 +310,7 @@ def get_decomposition(obj):
 
 
 def filter_types(elements, obj_ids=[]):
-    """Remove unrenderable elements from the given list"""
+    """Remove unrenderable (for now) elements from the given list"""
 
     elements = [e for e in elements if e.is_a("IfcProduct")]
     elements = [e for e in elements if not e.is_a("IfcFeatureElement")]
@@ -403,6 +372,10 @@ def get_cache(ifcfile):
     """Returns the shape cache dictionary associated with this ifc file"""
 
     for d in FreeCAD.listDocuments().values():
+        if hasattr(d, "Proxy") and hasattr(d.Proxy, "ifcfile"):
+            if d.Proxy.ifcfile == ifcfile:
+                if hasattr(d.Proxy, "ifccache") and d.Proxy.ifccache:
+                    return d.Proxy.ifccache
         for o in d.Objects:
             if hasattr(o, "Proxy") and hasattr(o.Proxy, "ifcfile"):
                 if o.Proxy.ifcfile == ifcfile:
@@ -416,6 +389,10 @@ def set_cache(ifcfile, cache):
     """Sets the given dictionary as shape cache for the given ifc file"""
 
     for d in FreeCAD.listDocuments().values():
+        if hasattr(d, "Proxy") and hasattr(d.Proxy, "ifcfile"):
+            if d.Proxy.ifcfile == ifcfile:
+                d.Proxy.ifccache = cache
+                return
         for o in d.Objects:
             if hasattr(o, "Proxy") and hasattr(o.Proxy, "ifcfile"):
                 if o.Proxy.ifcfile == ifcfile:
@@ -423,19 +400,24 @@ def set_cache(ifcfile, cache):
                     return
 
 
-def clean_representation(obj):
-    """Removes previous representation of an object, if any"""
+def set_representation(vobj, node):
+    """Sets the correct coin nodes for the given Part object"""
 
-    basenode = None
-    if obj.ViewObject:
-        # getChild(2) is master on/off switch,
-        # switch.getChild(0) is flatlines display mode
-        # (1 = shaded, 2 = wireframe, 3 = points)
-        basenode = obj.ViewObject.RootNode.getChild(2).getChild(0)
-        if basenode.getNumChildren() == 5:
-            # Part VP has 4 nodes, we have added 1 more
-            basenode.removeChild(4)
-    return basenode
+    # node = [colors, verts, faces, edges, parts]
+    coords = vobj.RootNode.getChild(1) # SoCoordinate3
+    fset = vobj.RootNode.getChild(2).getChild(1).getChild(6) #SoBrepFaceSet
+    eset = vobj.RootNode.getChild(2).getChild(2).getChild(0).getChild(3) # SoBrepEdgeSet
+    # reset faces and edges
+    fset.coordIndex.deleteValues(0)
+    eset.coordIndex.deleteValues(0)
+    coords.point.deleteValues(0)
+    if not node:
+        return
+    if node[1] and node[2] and node[3] and node[4]:
+        coords.point.setValues(node[1])
+        fset.coordIndex.setValues(node[2])
+        fset.partIndex.setValues(node[4])
+        eset.coordIndex.setValues(node[3])
 
 
 def print_debug(obj):
@@ -444,23 +426,40 @@ def print_debug(obj):
     element = ifc_tools.get_ifc_element(obj)
     if not element:
         return
-    if not element.is_a("IfcContext") and not element.is_a(
-        "IfcSpatialStructureElement"
-    ):
-        print(
-            "DEBUG: No Shape returned for element {}, {}, {}".format(
-                element.id(), element.is_a(), getattr(element, "Name", "")
-            )
+    if element.is_a("IfcContext"):
+        return
+    if element.is_a("IfcSpatialStructureElement"):
+        return
+    print(
+        "DEBUG: No Shape returned for element {}, {}, {}".format(
+            element.id(), element.is_a(), getattr(element, "Name", "")
         )
+    )
 
 
-def apply_coin_placement(node, placement):
-    """Applies the given placement to the given node"""
+def apply_placement(node, placement):
+    """Applies the given placement to the verts in the given node"""
 
-    coords = node.getChild(1)
-    verts = [FreeCAD.Vector(p.getValue()) for p in coords.point.getValues()]
-    verts = [tuple(placement.multVec(v)) for v in verts]
-    coords.point.setValues(verts)
+    verts = [tuple(placement.multVec(FreeCAD.Vector(v))) for v in node[1]]
+    return [node[0], verts, node[2], node[3]]
+
+
+def unify(nodes):
+    """group the subcomponents of a node into one single set of verts, faces, edges"""
+
+    colors = []
+    verts = []
+    faces = []
+    edges = []
+    parts = []
+    for node in nodes:
+        vindex = len(verts)
+        colors.append(node[0])
+        verts.extend(node[1])
+        faces.extend([i+vindex if i >= 0 else i for i in node[2]])
+        edges.extend([i+vindex if i >= 0 else i for i in node[3]])
+        parts.append(len(node[2])//4)
+    return [colors, verts, faces, edges, parts]
 
 
 def create_ghost(document, ifcfile, project):
@@ -474,7 +473,7 @@ def create_ghost(document, ifcfile, project):
     sg = FreeCADGui.getDocument(document.Name).ActiveView.getSceneGraph()
     elements = get_decomposed_elements(project)
     elements = filter_types(elements)
-    node = generate_coin(ifcfile, elements)[0]
+    node, placement = generate_coin(ifcfile, elements)[0]
     document.Proxy.ghost = node
     sg.addChild(document.Proxy.ghost)
 
