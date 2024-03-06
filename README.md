@@ -16,9 +16,9 @@ The roadmap below will show you an overview of the current state of the implemen
 
 ### Roadmap
 
-This project has had one big run in early 2023 that is now more or less complete. Check the [initial roadmap here](docs/roadmap2023.md).
+This project has had one big run in early 2023 that is now more or less complete. Check the [initial roadmap here](doc/roadmap2023.md).
 
-Starting march 2024, this project is also funded by the NLNet foundation, and has a new roadmap, which culminates with the merge of Arch, BIM and NativeIFC and the integration in FreeCAD. Check the [new roadmap here](docs/roadmap2024.md).
+Starting march 2024, this project is also funded by the NLNet foundation, and has a new roadmap, which culminates with the merge of Arch, BIM and NativeIFC and the integration in FreeCAD. Check the [new roadmap here](doc/roadmap2024.md).
 
 ### Documentation
 
