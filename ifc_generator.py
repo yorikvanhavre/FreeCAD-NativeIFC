@@ -57,7 +57,7 @@ def generate_geometry(obj, cached=False):
 
     # workaround for Group property bug: Avoid having a null shape, otherwise
     # a default representation will be created from the object's Group contents
-    #obj.Shape = Part.makeBox(1, 1, 1)
+    # obj.Shape = Part.makeBox(1, 1, 1)
     # fixed in FreeCAD 0.22 - uncomment the line above for earlier versions
 
     # generate the shape or coin node
@@ -404,9 +404,11 @@ def set_representation(vobj, node):
     """Sets the correct coin nodes for the given Part object"""
 
     # node = [colors, verts, faces, edges, parts]
-    coords = vobj.RootNode.getChild(1) # SoCoordinate3
-    fset = vobj.RootNode.getChild(2).getChild(1).getChild(6) #SoBrepFaceSet
-    eset = vobj.RootNode.getChild(2).getChild(2).getChild(0).getChild(3) # SoBrepEdgeSet
+    coords = vobj.RootNode.getChild(1)  # SoCoordinate3
+    fset = vobj.RootNode.getChild(2).getChild(1).getChild(6)  # SoBrepFaceSet
+    eset = (
+        vobj.RootNode.getChild(2).getChild(2).getChild(0).getChild(3)
+    )  # SoBrepEdgeSet
     # reset faces and edges
     fset.coordIndex.deleteValues(0)
     eset.coordIndex.deleteValues(0)
@@ -456,9 +458,9 @@ def unify(nodes):
         vindex = len(verts)
         colors.append(node[0])
         verts.extend(node[1])
-        faces.extend([i+vindex if i >= 0 else i for i in node[2]])
-        edges.extend([i+vindex if i >= 0 else i for i in node[3]])
-        parts.append(len(node[2])//4)
+        faces.extend([i + vindex if i >= 0 else i for i in node[2]])
+        edges.extend([i + vindex if i >= 0 else i for i in node[3]])
+        parts.append(len(node[2]) // 4)
     return [colors, verts, faces, edges, parts]
 
 
