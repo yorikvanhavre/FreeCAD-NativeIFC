@@ -147,6 +147,7 @@ There is however no more advantages to have these different modules separated. T
 - [ ] **Redesign the BIM workbench toolbars** to occupy less space
 - [ ] **Design a better new project wizard** that supports NativeIFC, and allows to be called anytime during the project development
 - [ ] **Design a better views manager** that integrates more seamlessly in the FreeCAD interface and tree workflow, and allows for easy 3D/2D view switch
+- [ ] **Redesign icons** that indicate the basic IFC type and indicate if the geometry is shared or not
 
 ### 9. Documentation and tutorials
 
