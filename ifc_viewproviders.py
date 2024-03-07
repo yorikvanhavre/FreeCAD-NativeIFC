@@ -95,6 +95,10 @@ class ifc_vp_object:
         path = os.path.dirname(os.path.dirname(__file__))
         icon = QtGui.QIcon(os.path.join(path, "icons", "IFC.svg"))
         element = ifc_tools.get_ifc_element(vobj.Object)
+        ifc_menu = None
+
+        # IFC actions
+        actions = []
         if element.is_a("IfcSpatialElement"):
             if (
                 FreeCADGui.ActiveDocument.ActiveView.getActiveObject("NativeIFC")
@@ -108,41 +112,52 @@ class ifc_vp_object:
         if self.hasChildren(vobj.Object):
             action_expand = QtWidgets.QAction(icon, "Expand children", menu)
             action_expand.triggered.connect(self.expandChildren)
-            menu.addAction(action_expand)
+            actions.append(action_expand)
         if vobj.Object.Group:
             action_shrink = QtWidgets.QAction(icon, "Collapse children", menu)
             action_shrink.triggered.connect(self.collapseChildren)
-            menu.addAction(action_shrink)
+            actions.append(action_shrink)
         if vobj.Object.ShapeMode == "Shape":
             t = "Remove shape"
         else:
             t = "Load shape"
         action_shape = QtWidgets.QAction(icon, t, menu)
         action_shape.triggered.connect(self.switchShape)
-        menu.addAction(action_shape)
+        actions.append(action_shape)
         if vobj.Object.ShapeMode == "None":
             action_coin = QtWidgets.QAction(icon, "Load representation", menu)
             action_coin.triggered.connect(self.switchCoin)
-            menu.addAction(action_coin)
+            actions.append(action_coin)
         if element and ifc_tools.has_representation(element):
             action_geom = QtWidgets.QAction(icon, "Add geometry properties", menu)
             action_geom.triggered.connect(self.addGeometryProperties)
-            menu.addAction(action_geom)
+            actions.append(action_geom)
         action_tree = QtWidgets.QAction(icon, "Show geometry tree", menu)
         action_tree.triggered.connect(self.showTree)
-        menu.addAction(action_tree)
+        actions.append(action_tree)
         if ifc_psets.has_psets(self.Object):
             action_props = QtWidgets.QAction(icon, "Expand property sets", menu)
             action_props.triggered.connect(self.showProps)
-            menu.addAction(action_props)
+            actions.append(action_props)
         if ifc_materials.get_material(self.Object):
             action_material = QtWidgets.QAction(icon, "Load material", menu)
             action_material.triggered.connect(self.addMaterial)
-            menu.addAction(action_material)
+            actions.append(action_material)
+        if actions:
+            ifc_menu = QtWidgets.QMenu("IFC")
+            ifc_menu.setIcon(icon)
+            for a in actions:
+                ifc_menu.addAction(a)
+            menu.addMenu(ifc_menu)
+
+        # generic actions
         ficon = QtGui.QIcon.fromTheme("folder", QtGui.QIcon(":/icons/folder.svg"))
         action_group = QtWidgets.QAction(ficon, "Create group...", menu)
         action_group.triggered.connect(self.createGroup)
         menu.addAction(action_group)
+
+        # return submenu for derivated classes
+        return ifc_menu
 
     def hasChildren(self, obj):
         """Returns True if this IFC object can be decomposed"""
@@ -169,6 +184,7 @@ class ifc_vp_object:
                 obj, ifcfile, recursive=False, assemblies=True, expand=False
             )
         obj.Document.recompute()
+        FreeCADGui.updateGui()
 
         # expand the item in the tree view
         mw = FreeCADGui.getMainWindow()
@@ -375,23 +391,26 @@ class ifc_vp_document(ifc_vp_object):
             return iconpath
 
     def setupContextMenu(self, vobj, menu):
-        super().setupContextMenu(vobj, menu)
 
         from PySide2 import QtCore, QtGui, QtWidgets  # lazy import
+
+        ifc_menu = super().setupContextMenu(vobj, menu)
+        if not ifc_menu:
+            ifc_menu = menu
 
         path = os.path.dirname(os.path.dirname(__file__))
         icon = QtGui.QIcon(os.path.join(path, "icons", "IFC.svg"))
         if vobj.Object.Modified:
             action_diff = QtWidgets.QAction(icon, "View diff...", menu)
             action_diff.triggered.connect(self.diff)
-            menu.addAction(action_diff)
+            ifc_menu.addAction(action_diff)
             if vobj.Object.IfcFilePath:
                 action_save = QtWidgets.QAction(icon, "Save IFC file", menu)
                 action_save.triggered.connect(self.save)
-                menu.addAction(action_save)
+                ifc_menu.addAction(action_save)
         action_saveas = QtWidgets.QAction(icon, "Save IFC file as...", menu)
         action_saveas.triggered.connect(self.saveas)
-        menu.addAction(action_saveas)
+        ifc_menu.addAction(action_saveas)
 
     def save(self):
         """Saves the associated IFC file"""
