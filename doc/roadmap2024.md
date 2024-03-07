@@ -27,8 +27,8 @@ Opening existing IFC files typically should "just work". The IFC file contains e
 ##### What needs to be done
 
 - [ ] A **lock system** should be put in place to allow two different scenarios:     
-  1. The user wants to work strictly with IFC object or 
-  2. The user wants to mix IFC and non-IFC (FreeCAD-only) objects. 
+  1. The user wants to work strictly with IFC objects (strtict mode) or 
+  2. The user wants to mix IFC and non-IFC (FreeCAD-only) objects (hybrid mode). 
   The user should be able to change between the two modes at any moment in the project development.
 - [x] A better **display mode** that allows to load all files the same, fastest way. That display mode should handle edges and transparency properly, so there is visually no more need to load the object shapes (heavy) on file load. [dc85ff6](https://github.com/yorikvanhavre/FreeCAD-NativeIFC/commit/dc85ff6123d44e4c773ddad7182f2ed4193a2711) - [37e3d2c](https://github.com/yorikvanhavre/FreeCAD-NativeIFC/commit/37e3d2c2a02ee049891540898923353da94ba346) - [3ff1715](https://github.com/yorikvanhavre/FreeCAD-NativeIFC/commit/3ff1715802d582e4f1c722e8c4010ca10733b80d)
 - [x] An automatic **shape loading mechanism** that seamlessly loads object shapes and geometric properties when needed, for example when they are selected or being edited. [b382938](https://github.com/yorikvanhavre/FreeCAD-NativeIFC/commit/b382938e9facfed61befb644d8d8b7b185d3babe)
