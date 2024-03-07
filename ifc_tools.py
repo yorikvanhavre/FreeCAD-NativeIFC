@@ -735,10 +735,19 @@ def set_colors(obj, colors):
         if hasattr(obj.ViewObject, "ShapeColor"):
             if isinstance(colors[0], (tuple, list)):
                 obj.ViewObject.ShapeColor = colors[0][:3]
+                if len(colors[0]) > 3:
+                    obj.ViewObject.Transparency = int(colors[0][3]*100)
             else:
                 obj.ViewObject.ShapeColor = colors[:3]
+                if len(colors) > 3:
+                    obj.ViewObject.Transparency = int(colors[3]*100)
         if hasattr(obj.ViewObject, "DiffuseColor"):
-            obj.ViewObject.DiffuseColor = colors
+            # strip out transparency value because it currently gives ugly
+            # results in FreeCAD when combining transparent and non-transparent objects
+            if all([len(c) > 3 and c[3] != 0 for c in colors]):
+                obj.ViewObject.DiffuseColor = colors
+            else:
+                obj.ViewObject.DiffuseColor = [c[:3] for c in colors]
 
 
 def get_body_context_ids(ifcfile):

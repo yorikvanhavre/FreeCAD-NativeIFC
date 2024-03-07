@@ -146,8 +146,6 @@ def generate_shape(ifcfile, elements, cached=False):
 
             # get colors
             sstyle = item.geometry.surface_styles
-            # color = (color[0], color[1], color[2], 1.0 - color[3])
-            # TODO temp workaround for tranparency bug
             scolors = []
             if (
                 (len(sstyle) > 4)
@@ -158,13 +156,13 @@ def generate_shape(ifcfile, elements, cached=False):
                 for i in range(len(shape.Solids)):
                     for j in range(len(shape.Solids[i].Faces)):
                         scolors.append(
-                            (sstyle[i * 4], sstyle[i * 4 + 1], sstyle[i * 4 + 2], 0.0)
+                            (sstyle[i * 4], sstyle[i * 4 + 1], sstyle[i * 4 + 2], 1.0 - sstyle[i * 4 + 3])
                         )
                 if len(colors) < len(shape.Faces):
                     for i in range(len(shape.Faces) - len(colors)):
-                        scolors.append((sstyle[0], sstyle[1], sstyle[2], 0.0))
+                        scolors.append((sstyle[0], sstyle[1], sstyle[2], 1.0 - sstyle[3]))
             else:
-                color = (sstyle[0], sstyle[1], sstyle[2], 0.0)
+                color = (sstyle[0], sstyle[1], sstyle[2], 1.0 - sstyle[3])
                 for f in shape.Faces:
                     scolors.append(color)
 
@@ -213,7 +211,6 @@ def generate_coin(ifcfile, elements, cached=False):
             if element.id() in cache["Coin"]:
                 node = cache["Coin"][element.id()]
                 if grouping:
-                    print("applying placement")
                     node = apply_placement(node, placement)
                 nodes.append(node)
             else:
@@ -244,9 +241,9 @@ def generate_coin(ifcfile, elements, cached=False):
             if item.geometry.materials:
                 color = item.geometry.materials[0].diffuse
                 color = (float(color[0]), float(color[1]), float(color[2]))
-                # TODO treat transparency
-                # mat.transparency.setValue(0.8)
-                # TODO treat multiple materials
+                trans = item.geometry.materials[0].transparency
+                if trans >= 0:
+                    color += (float(trans),)
             else:
                 color = (0.85, 0.85, 0.85)
 
