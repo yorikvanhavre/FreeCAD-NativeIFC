@@ -30,7 +30,7 @@ Opening existing IFC files typically should "just work". The IFC file contains e
   1. The user wants to work strictly with IFC object or 
   2. The user wants to mix IFC and non-IFC (FreeCAD-only) objects. 
   The user should be able to change between the two modes at any moment in the project development.
-- [ ] A better **display mode** that allows to load all files the same, fastest way. That display mode should handle edges and transparency properly, so there is visually no more need to load the object shapes (heavy) on file load. [dc85ff6](https://github.com/yorikvanhavre/FreeCAD-NativeIFC/commit/dc85ff6123d44e4c773ddad7182f2ed4193a2711) - [37e3d2c](https://github.com/yorikvanhavre/FreeCAD-NativeIFC/commit/37e3d2c2a02ee049891540898923353da94ba346)
+- [x] A better **display mode** that allows to load all files the same, fastest way. That display mode should handle edges and transparency properly, so there is visually no more need to load the object shapes (heavy) on file load. [dc85ff6](https://github.com/yorikvanhavre/FreeCAD-NativeIFC/commit/dc85ff6123d44e4c773ddad7182f2ed4193a2711) - [37e3d2c](https://github.com/yorikvanhavre/FreeCAD-NativeIFC/commit/37e3d2c2a02ee049891540898923353da94ba346) - [3ff1715](https://github.com/yorikvanhavre/FreeCAD-NativeIFC/commit/3ff1715802d582e4f1c722e8c4010ca10733b80d)
 - [ ] An automatic **shape loading mechanism** that seamlessly loads object shapes and geometric properties when needed, for example when they are selected or being edited.
 - [ ] **Remove the file loading dialog**. All options set in that dialog should be settable at any time later by the user.
 - [ ] Integrate both **FreeCAD and IFC save mechanisms** so a user can just press "Save".
