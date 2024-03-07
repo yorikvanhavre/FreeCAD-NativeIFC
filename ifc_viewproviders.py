@@ -158,6 +158,7 @@ class ifc_vp_object:
         """Creates children of this object"""
 
         import ifc_tools  # lazy import
+        from PySide import QtCore, QtGui
 
         if not obj:
             obj = self.Object
@@ -168,6 +169,19 @@ class ifc_vp_object:
                 obj, ifcfile, recursive=False, assemblies=True, expand=False
             )
         obj.Document.recompute()
+
+        # expand the item in the tree view
+        mw = FreeCADGui.getMainWindow()
+        tree = mw.findChild(QtGui.QDockWidget,"Model")
+        model = tree.findChild(QtGui.QWidget,"Model")
+        splitter = model.findChild(QtGui.QSplitter)
+        tree = splitter.children()[1].children()[0]
+        it = tree.findItems(obj.Label, QtCore.Qt.MatchRecursive, 0)
+        if it:
+            it[0].setExpanded(True)
+            for i in range(it[0].childCount()):
+                it[0].child(i).setExpanded(True)
+
         return nc
 
     def collapseChildren(self):
@@ -316,6 +330,35 @@ class ifc_vp_object:
         group = self.Object.Document.addObject("App::DocumentObjectGroup", "Group")
         ifc_tools.aggregate(group, self.Object)
         self.Object.Document.recompute()
+
+    def doubleClicked(self, vobj):
+        """Expands everything that needs to be expanded"""
+
+        import ifc_geometry  # lazy import
+        import ifc_tools  # lazy import
+        import ifc_psets  # lazy import
+        import ifc_materials  # lazy import
+        import ifc_layers  # lazy import
+
+        # generic data loading
+        ifc_geometry.add_geom_properties(vobj.Object)
+        ifc_psets.show_psets(vobj.Object)
+        ifc_materials.show_material(vobj.Object)
+        ifc_layers.add_layers(vobj.Object)
+
+        # expand children
+        if self.hasChildren(vobj.Object):
+            self.expandChildren()
+            return True
+
+        # load shape
+        element = ifc_tools.get_ifc_element(vobj.Object)
+        if ifc_tools.has_representation(element):
+            if vobj.Object.ShapeMode != "Shape":
+                vobj.Object.ShapeMode = "Shape"
+                vobj.Object.Document.recompute()
+                return True
+        return None
 
 
 class ifc_vp_document(ifc_vp_object):
