@@ -104,17 +104,17 @@ class ifc_vp_object:
                 FreeCADGui.ActiveDocument.ActiveView.getActiveObject("NativeIFC")
                 == vobj.Object
             ):
-                action_activate = QtWidgets.QAction(icon, "Deactivate container", menu)
+                action_activate = QtWidgets.QAction(icon, "Deactivate container")
             else:
-                action_activate = QtWidgets.QAction(icon, "Make active container", menu)
+                action_activate = QtWidgets.QAction(icon, "Make active container")
             action_activate.triggered.connect(self.activate)
             menu.addAction(action_activate)
         if self.hasChildren(vobj.Object):
-            action_expand = QtWidgets.QAction(icon, "Expand children", menu)
+            action_expand = QtWidgets.QAction(icon, "Expand children")
             action_expand.triggered.connect(self.expandChildren)
             actions.append(action_expand)
         if vobj.Object.Group:
-            action_shrink = QtWidgets.QAction(icon, "Collapse children", menu)
+            action_shrink = QtWidgets.QAction(icon, "Collapse children")
             action_shrink.triggered.connect(self.collapseChildren)
             actions.append(action_shrink)
         if vobj.Object.ShapeMode == "Shape":
@@ -125,22 +125,22 @@ class ifc_vp_object:
         action_shape.triggered.connect(self.switchShape)
         actions.append(action_shape)
         if vobj.Object.ShapeMode == "None":
-            action_coin = QtWidgets.QAction(icon, "Load representation", menu)
+            action_coin = QtWidgets.QAction(icon, "Load representation")
             action_coin.triggered.connect(self.switchCoin)
             actions.append(action_coin)
         if element and ifc_tools.has_representation(element):
-            action_geom = QtWidgets.QAction(icon, "Add geometry properties", menu)
+            action_geom = QtWidgets.QAction(icon, "Add geometry properties")
             action_geom.triggered.connect(self.addGeometryProperties)
             actions.append(action_geom)
-        action_tree = QtWidgets.QAction(icon, "Show geometry tree", menu)
+        action_tree = QtWidgets.QAction(icon, "Show geometry tree")
         action_tree.triggered.connect(self.showTree)
         actions.append(action_tree)
         if ifc_psets.has_psets(self.Object):
-            action_props = QtWidgets.QAction(icon, "Expand property sets", menu)
+            action_props = QtWidgets.QAction(icon, "Expand property sets")
             action_props.triggered.connect(self.showProps)
             actions.append(action_props)
         if ifc_materials.get_material(self.Object):
-            action_material = QtWidgets.QAction(icon, "Load material", menu)
+            action_material = QtWidgets.QAction(icon, "Load material")
             action_material.triggered.connect(self.addMaterial)
             actions.append(action_material)
         if actions:
@@ -152,7 +152,7 @@ class ifc_vp_object:
 
         # generic actions
         ficon = QtGui.QIcon.fromTheme("folder", QtGui.QIcon(":/icons/folder.svg"))
-        action_group = QtWidgets.QAction(ficon, "Create group...", menu)
+        action_group = QtWidgets.QAction(ficon, "Create group...")
         action_group.triggered.connect(self.createGroup)
         menu.addAction(action_group)
 
