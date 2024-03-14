@@ -33,6 +33,8 @@ class ifc_object:
             self.Type = (
                 otype[0].upper() + otype[1:]
             )  # capitalize to match Draft standard
+        else:
+            self.Type = "IfcObject"
 
     def onBeforeChange(self, obj, prop):
         if prop == "Schema":
