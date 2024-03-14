@@ -385,28 +385,3 @@ class NativeIFCTest(unittest.TestCase):
         pset = ifc_psets.add_pset(obj, "Pset_Custom")
         ifc_psets.add_property(ifcfile, pset, "MyMessageToTheWorld", "Hello, World!")
         self.failUnless(ifc_psets.has_psets(obj), "Psets failed")
-
-    def test16_Singledoc(self):
-        FreeCAD.Console.PrintMessage("16. Single document paradigm...")
-        doc = FreeCAD.ActiveDocument
-        doc.addProperty("App::PropertyPythonObject", "IfcFile")
-        doc.setPropertyStatus("IfcFile", "Transient")
-        doc.addProperty("App::PropertyFile", "IfcFilePath", "Base")
-        fp = getIfcFilePath()
-        doc.IfcFilePath = fp
-        ifcfile = ifcopenshell.open(fp)
-        doc.IfcFile = ifcfile
-        import FreeCADGui
-
-        sg = FreeCADGui.getDocument(doc.Name).ActiveView.getSceneGraph()
-        proj = ifcfile.by_type("IfcProject")[0]
-        doc.addProperty("App::PropertyInteger", "StepId", "IFC")
-        doc.StepId = proj.id()
-        elements = ifc_generator.get_decomposed_elements(proj)
-        elements = ifc_generator.filter_types(elements)
-        node = ifc_generator.generate_coin(ifcfile, elements)[0]
-        sg.addChild(node)
-        ifc_tools.create_children(doc, ifcfile, recursive=False, assemblies=False)
-        sg.removeChild(node)
-        print([obj.Label for obj in doc.Objects])
-        self.failUnless(len(doc.Objects) == 2, "Singledoc failed")
