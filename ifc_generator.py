@@ -429,8 +429,8 @@ def print_debug(obj):
         return
     if element.is_a("IfcSpatialStructureElement"):
         return
-    print(
-        "DEBUG: No Shape returned for element {}, {}, {}".format(
+    FreeCAD.Console.PrintLog(
+        "DEBUG: No Shape returned for element {}, {}, {}\n".format(
             element.id(), element.is_a(), getattr(element, "Name", "")
         )
     )
