@@ -1040,6 +1040,10 @@ def create_relationship(old_obj, obj, parent, element, ifcfile):
     parent_element = get_ifc_element(parent)
     # case 1: element inside spatiual structure
     if parent_element.is_a("IfcSpatialStructureElement") and element.is_a("IfcElement"):
+        # first remove the FreeCAD object from any parent
+        for old_par in old_obj.InList:
+            if hasattr(old_par, "Group") and old_obj in old_par.Group:
+                old_par.Group = [o for o in old_par.Group if o != old_obj]
         api_run("spatial.unassign_container", ifcfile, product=element)
         uprel = api_run(
             "spatial.assign_container",
