@@ -76,7 +76,7 @@ def insert(
         prj_obj = ifc_tools.create_document_object(
             document, filename, shapemode, strategy
         )
-    if params.GetBool("LoadOrphans", False):
+    if params.GetBool("LoadOrphans", True):
         ifc_tools.load_orphans(prj_obj)
     if not silent and params.GetBool("LoadMaterials", False):
         ifc_materials.load_materials(prj_obj)
@@ -107,7 +107,7 @@ def insert(
 
 
 def get_options(
-    strategy=None, shapemode=None, switchwb=None, silent=False, orphans=None
+    strategy=None, shapemode=None, switchwb=None, silent=False
 ):
     """Shows a dialog to get import options
 
@@ -119,7 +119,6 @@ def get_options(
                2 = all children
     """
 
-    orphans = params.GetBool("LoadOrphans", False)
     psets = params.GetBool("LoadPsets", False)
     materials = params.GetBool("LoadMaterials", False)
     layers = params.GetBool("LoadLayers", False)
@@ -145,7 +144,6 @@ def get_options(
         dlg.comboShapeMode.setCurrentIndex(shapemode)
         dlg.checkSwitchWB.setChecked(switchwb)
         dlg.checkAskAgain.setChecked(ask)
-        dlg.checkLoadOrphans.setChecked(orphans)
         dlg.checkLoadPsets.setChecked(psets)
         dlg.checkLoadMaterials.setChecked(materials)
         dlg.checkLoadLayers.setChecked(layers)
@@ -157,7 +155,6 @@ def get_options(
         shapemode = dlg.comboShapeMode.currentIndex()
         switchwb = dlg.checkSwitchWB.isChecked()
         ask = dlg.checkAskAgain.isChecked()
-        orphans = dlg.checkLoadOrphans.isChecked()
         psets = dlg.checkLoadPsets.isChecked()
         materials = dlg.checkLoadMaterials.isChecked()
         layers = dlg.checkLoadLayers.isChecked()
@@ -166,7 +163,6 @@ def get_options(
         params.SetInt("ShapeMode", shapemode)
         params.SetBool("SwitchWB", switchwb)
         params.SetBool("AskAgain", ask)
-        params.SetBool("LoadOrphans", orphans)
         params.SetBool("LoadPsets", psets)
         params.SetBool("LoadMaterials", materials)
         params.SetBool("LoadLayers", layers)
