@@ -69,9 +69,10 @@ class ifc_observer:
     def slotChangedDocument(self, doc, prop):
         """Watch document IFC properties"""
 
-        if prop == "Schema" and "IfcFilePath" in doc.PropertiesList:
-            import ifc_tools  # lazy import
+        import ifc_tools  # lazy import
+        import ifc_status
 
+        if prop == "Schema" and "IfcFilePath" in doc.PropertiesList:
             schema = doc.Schema
             ifcfile = ifc_tools.get_ifcfile(doc)
             if ifcfile:
@@ -88,6 +89,9 @@ class ifc_observer:
                         ]
                         if len(child) == 1:
                             child[0].StepId = new_id
+            ifc_status.toggle_lock(True)
+        else:
+            ifc_status.toggle_lock(False)
 
     def slotCreatedObject(self, obj):
         """If this is an IFC document, turn the object into IFC"""
@@ -103,26 +107,16 @@ class ifc_observer:
                 QtCore.QTimer.singleShot(100, self.convert)
 
     def slotActivateDocument(self, doc):
-        """Check if we need to display a ghost"""
+        """Check if we need to lock"""
 
         from PySide2 import QtCore  # lazy loading
+        import ifc_status
 
-        if hasattr(doc, "Proxy"):
-            if hasattr(doc.Proxy, "ifcfile"):
-                # this runs when loading a file
-                if getattr(doc, "Objects", ""):
-                    for obj in doc.Objects:
-                        if getattr(obj, "ShapeMode", None) == "Coin":
-                            obj.Proxy.cached = True
-                            QtCore.QTimer.singleShot(100, obj.touch)
-                    QtCore.QTimer.singleShot(100, doc.recompute)
-                    QtCore.QTimer.singleShot(100, self.fit_all)
-                else:
-                    if not hasattr(doc.Proxy, "ghost"):
-                        import ifc_generator
-
-                        ifc_generator.create_ghost(doc)
+        if hasattr(doc, "IfcFilePath"):
+            ifc_status.toggle_lock(True)
         else:
+            ifc_status.toggle_lock(False)
+        if not hasattr(doc, "Proxy"):
             # this is a new file, wait a bit to make sure all components are populated
             QtCore.QTimer.singleShot(1000, self.propose_conversion)
 
@@ -193,18 +187,19 @@ class ifc_observer:
             return
         del self.docname
         del self.objname
-        if obj.isDerivedFrom("Part::Feature"):
-            if "IfcType" in obj.PropertiesList:
-                print("Converting", obj.Label, "to IFC")
-                import ifc_tools  # lazy loading
-                import ifc_geometry  # lazy loading
+        if obj.isDerivedFrom("Part::Feature") or "IfcType" in obj.PropertiesList:
+            FreeCAD.Console.PrintLog("Converting" + obj.Label + "to IFC\n")
+            import ifc_tools  # lazy loading
+            import ifc_geometry  # lazy loading
 
-                newobj = ifc_tools.aggregate(obj, doc)
-                ifc_geometry.add_geom_properties(newobj)
-                doc.recompute()
+            newobj = ifc_tools.aggregate(obj, doc)
+            ifc_geometry.add_geom_properties(newobj)
+            doc.recompute()
 
     def propose_conversion(self):
         """Propose a conversion of the current document"""
+
+        import ifc_status  # lazy loading
 
         doc = FreeCAD.ActiveDocument
         if not getattr(FreeCAD, "IsOpeningIFC", False):
@@ -226,6 +221,7 @@ class ifc_observer:
                                     )
                                     return
                                 else:
+                                    ifc_status.toggle_lock(False)
                                     return
                             d = os.path.dirname(__file__)
                             dlg = FreeCADGui.PySideUic.loadUi(
@@ -250,6 +246,7 @@ class ifc_observer:
         """Converts the active document"""
 
         import ifc_tools  # lazy loading
+        import ifc_status
 
         doc = FreeCAD.ActiveDocument
         ifc_tools.convert_document(doc, strategy=2, silent=True)
@@ -259,4 +256,5 @@ class ifc_observer:
             site = ifc_tools.aggregate(Arch.makeSite(), doc)
             building = ifc_tools.aggregate(Arch.makeBuilding(), site)
             storey = ifc_tools.aggregate(Arch.makeFloor(), building)
+            ifc_status.toggle_lock(True)
             doc.recompute()

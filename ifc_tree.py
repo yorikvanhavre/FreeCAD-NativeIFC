@@ -50,6 +50,10 @@ def get_geometry_tree(element, prefix=""):
         result.extend(get_geometry_tree(element.SweptArea, prefix))
     elif element.is_a("IfcArbitraryClosedProfileDef"):
         result.extend(get_geometry_tree(element.OuterCurve, prefix))
+    elif element.is_a("IfcArbitraryProfileDefWithVoids"):
+        result.extend(get_geometry_tree(element.OuterCurve, prefix))
+        for inn in element.InnerCurves:
+            result.extend(get_geometry_tree(inn, prefix))
     elif element.is_a("IfcMappedItem"):
         result.extend(get_geometry_tree(element.MappingSource[1], prefix))
     elif element.is_a("IfcBooleanClippingResult"):

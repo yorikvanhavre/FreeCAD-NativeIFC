@@ -49,6 +49,7 @@ import ifc_viewproviders
 import ifc_import
 import ifc_layers
 import ifc_generator
+import ifc_status
 
 SCALE = 1000.0  # IfcOpenShell works in meters, FreeCAD works in mm
 SHORT = False  # If True, only Step ID attribute is created
@@ -104,6 +105,7 @@ def create_document_object(
         site = aggregate(Arch.makeSite(), obj)
         building = aggregate(Arch.makeBuilding(), site)
         storey = aggregate(Arch.makeFloor(), building)
+    ifc_status.toggle_lock(False)
     return obj
 
 
@@ -115,25 +117,30 @@ def convert_document(document, filename=None, shapemode=0, strategy=0, silent=Fa
                1 = coin only
                2 = no representation
     strategy:  0 = only root object
-               1 = only bbuilding structure,
+               1 = only bbuilding structure
                2 = all children
+               3 = no children
     """
 
-    document.addProperty("App::PropertyPythonObject", "Proxy")
+    if not "Proxy" in document.PropertiesList:
+        document.addProperty("App::PropertyPythonObject", "Proxy")
     document.setPropertyStatus("Proxy", "Transient")
     document.Proxy = ifc_objects.document_object()
     ifcfile, project, full = setup_project(document, filename, shapemode, silent)
     if strategy == 0:
-        ifc_generator.create_ghost(document, ifcfile, project)
+        create_children(document, ifcfile, recursive=False)
     elif strategy == 1:
         create_children(document, ifcfile, recursive=True, only_structure=True)
     elif strategy == 2:
         create_children(document, ifcfile, recursive=True, assemblies=False)
+    elif strategy == 3:
+        pass
     # create default structure
     if full:
         site = aggregate(Arch.makeSite(), document)
         building = aggregate(Arch.makeBuilding(), site)
         storey = aggregate(Arch.makeFloor(), building)
+    ifc_status.toggle_lock(True)
     return document
 
 
@@ -143,8 +150,10 @@ def setup_project(proj, filename, shapemode, silent):
 
     full = False
     d = "The path to the linked IFC file"
-    proj.addProperty("App::PropertyFile", "IfcFilePath", "Base", d)
-    proj.addProperty("App::PropertyBool", "Modified", "Base")
+    if not "IfcFilePath" in proj.PropertiesList:
+        proj.addProperty("App::PropertyFile", "IfcFilePath", "Base", d)
+    if not "Modified" in proj.PropertiesList:
+        proj.addProperty("App::PropertyBool", "Modified", "Base")
     proj.setPropertyStatus("Modified", "Hidden")
     if filename:
         # opening existing file
@@ -160,7 +169,8 @@ def setup_project(proj, filename, shapemode, silent):
     # https://blenderbim.org/docs-python/autoapi/ifcopenshell/api/owner/create_owner_history/index.html
     proj.Proxy.ifcfile = ifcfile
     add_properties(proj, ifcfile, project, shapemode=shapemode)
-    proj.addProperty("App::PropertyEnumeration", "Schema", "Base")
+    if not "Schema" in proj.PropertiesList:
+        proj.addProperty("App::PropertyEnumeration", "Schema", "Base")
     # bug in FreeCAD - to avoid a crash, pre-populate the enum with one value
     proj.Schema = [ifcfile.wrapped_data.schema_name()]
     proj.Schema = ifcfile.wrapped_data.schema_name()
@@ -268,11 +278,18 @@ def create_children(
 ):
     """Creates a hierarchy of objects under an object"""
 
+    def get_parent_objects(parent):
+        proj = get_project(parent)
+        if hasattr(proj, "OutListRecursive"):
+            return proj.OutListRecursive
+        elif hasattr(proj, "Objects"):
+            return proj.Objects
+
     def create_child(parent, element):
         subresult = []
         # do not create if a child with same stepid already exists
         if not element.id() in [
-            getattr(c, "StepId", 0) for c in getattr(parent, "Group", [])
+            getattr(c, "StepId", 0) for c in get_parent_objects(parent)
         ]:
             doc = getattr(parent, "Document", parent)
             mode = getattr(parent, "ShapeMode", "Coin")
@@ -441,8 +458,9 @@ def add_object(document, otype=None, oname="IfcObject"):
     obj = document.addObject(ftype, oname, proxy, vp, False)
     if obj.ViewObject and otype == "layer":
         from draftviewproviders import view_layer  # lazy import
-
         view_layer.ViewProviderLayer(obj.ViewObject)
+        obj.ViewObject.addProperty("App::PropertyBool","HideChildren","Layer")
+        obj.ViewObject.HideChildren = True
     return obj
 
 
@@ -512,6 +530,10 @@ def add_properties(
                 obj.addProperty("App::PropertyString", "IfcClass", "IFC")
                 obj.setPropertyStatus("IfcClass", "Hidden")
             setattr(obj, "IfcClass", value)
+        elif attr_def and "IfcLengthMeasure" in str(attr_def.type_of_attribute()):
+            obj.addProperty("App::PropertyDistance", attr, "IFC")
+            if value:
+                setattr(obj, attr, value*get_scale(ifcfile))
         elif isinstance(value, int):
             if attr not in obj.PropertiesList:
                 obj.addProperty("App::PropertyInteger", attr, "IFC")
@@ -817,6 +839,14 @@ def get_ios_matrix(m):
     return rmat
 
 
+def get_scale(ifcfile):
+    """Returns the scale factor to convert any file length to mm"""
+
+    scale = ifcopenshell.util.unit.calculate_unit_scale(ifcfile)
+    # the above lines yields meter -> file unit scale factor. We need mm
+    return 0.001 / scale
+
+
 def set_placement(obj):
     """Updates the internal IFC placement according to the object placement"""
 
@@ -827,10 +857,7 @@ def set_placement(obj):
         print("DEBUG: No ifc file for object", obj.Label, "Aborting")
     element = get_ifc_element(obj)
     placement = FreeCAD.Placement(obj.Placement)
-    scale = ifcopenshell.util.unit.calculate_unit_scale(ifcfile)
-    # the above lines yields meter -> file unit scale factor. We need mm
-    scale = 0.001 / scale
-    placement.Base = FreeCAD.Vector(placement.Base).multiply(scale)
+    placement.Base = FreeCAD.Vector(placement.Base).multiply(get_scale(ifcfile))
     new_matrix = get_ios_matrix(placement)
     old_matrix = ifcopenshell.util.placement.get_local_placement(
         element.ObjectPlacement

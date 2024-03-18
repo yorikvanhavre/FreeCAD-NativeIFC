@@ -45,7 +45,7 @@ def open(filename):
     doc = FreeCAD.newDocument()
     doc.Label = name
     FreeCAD.setActiveDocument(doc.Name)
-    insert(filename, doc.Name)
+    insert(filename, doc.Name, singledoc=True)
     del FreeCAD.IsOpeningIFC
     return doc
 
