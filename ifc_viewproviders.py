@@ -493,10 +493,19 @@ class ifc_vp_document(ifc_vp_object):
 class ifc_vp_group:
     """View provider for the IFC group object"""
 
+    def attach(self, vobj):
+        self.Object = vobj.Object
+
     def getIcon(self):
         from PySide2 import QtCore, QtGui  # lazy loading
+        import Draft_rc
+        import Arch_rc
 
-        if not hasattr(self, "modicon"):
+        if "Layer" in self.Object.Name:
+            return ":icons/Draft_Layer.svg"
+        elif "Material" in self.Object.Name:
+            return ":icons/Arch_Material_Group.svg"
+        elif not hasattr(self, "modicon"):
             self.modicon = overlay(
                 QtGui.QIcon.fromTheme("folder", QtGui.QIcon(":/icons/folder.svg")),
                 os.path.join(os.path.dirname(__file__), "icons", "IFC.svg"),
