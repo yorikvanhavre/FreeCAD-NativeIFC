@@ -159,8 +159,8 @@ def lock_document():
             # 2 there is more than one project
             FreeCAD.Console.PrintError("Unable to lock this document because it contains several IFC documents\n")
             toggle_lock(False)
-        else:
-            # 3 there is no project
+        elif doc.Objects:
+            # 3 there is no project but objects
             doc.openTransaction("Lock document")
             ifc_tools.convert_document(doc, silent=True)
             ifcfile = doc.Proxy.ifcfile
@@ -171,6 +171,9 @@ def lock_document():
             ifc_tools.create_children(doc, ifcfile, recursive=True)
             doc.commitTransaction()
             doc.recompute()
+        else:
+            # 4 this is an empty document
+            ifc_tools.convert_document(doc, silent=True)
 
 
 def find_toplevel(objs):
