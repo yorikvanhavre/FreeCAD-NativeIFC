@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>370</width>
-    <height>371</height>
+    <width>551</width>
+    <height>340</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -23,49 +23,17 @@
        </property>
        <item>
         <property name="text">
-         <string>Only root object</string>
+         <string>Only root object (default)</string>
         </property>
        </item>
        <item>
         <property name="text">
-         <string>Project structure</string>
+         <string>Project structure (levels)</string>
         </property>
        </item>
        <item>
         <property name="text">
-         <string>All individual products</string>
-        </property>
-       </item>
-      </widget>
-     </item>
-     <item row="3" column="0">
-      <widget class="QLabel" name="label_2">
-       <property name="text">
-        <string>Objects type</string>
-       </property>
-      </widget>
-     </item>
-     <item row="3" column="1">
-      <widget class="QComboBox" name="comboShapeMode">
-       <property name="toolTip">
-        <string>The type of object created at import. Mesh is faster, but Shapes are more precise. You can convert between the two anytime by right-clicking the object tree</string>
-       </property>
-       <property name="currentIndex">
-        <number>0</number>
-       </property>
-       <item>
-        <property name="text">
-         <string>Full shape</string>
-        </property>
-       </item>
-       <item>
-        <property name="text">
-         <string>Coin representation only</string>
-        </property>
-       </item>
-       <item>
-        <property name="text">
-         <string>No 3D representation</string>
+         <string>All individual IFC objects</string>
         </property>
        </item>
       </widget>
@@ -77,26 +45,58 @@
        </property>
       </widget>
      </item>
-     <item row="2" column="0">
-      <widget class="QLabel" name="label_3">
-       <property name="text">
-        <string>Document type</string>
-       </property>
-      </widget>
-     </item>
-     <item row="2" column="1">
+     <item row="3" column="1">
       <widget class="QComboBox" name="comboSingleDoc">
        <property name="toolTip">
         <string>This defines how the IFC data is stored in the FreeCAD document. 'Single IFC document' means that the FreeCAD document is the IFC document, anything you create in it belongs to the IFC document too. 'Use IFCdocument object' means that an object will be created inside the FreeCAD document to represent the IFC document. You will be able to add non-IFC objects alongside.</string>
        </property>
        <item>
         <property name="text">
-         <string>Single IFC document</string>
+         <string>Locked (IFC objects only)</string>
         </property>
        </item>
        <item>
         <property name="text">
-         <string>Use IFC document object</string>
+         <string>Unlocked (non-IFC objects permitted)</string>
+        </property>
+       </item>
+      </widget>
+     </item>
+     <item row="3" column="0">
+      <widget class="QLabel" name="label_3">
+       <property name="text">
+        <string>Lock document</string>
+       </property>
+      </widget>
+     </item>
+     <item row="2" column="0">
+      <widget class="QLabel" name="label_2">
+       <property name="text">
+        <string>Representation type</string>
+       </property>
+      </widget>
+     </item>
+     <item row="2" column="1">
+      <widget class="QComboBox" name="comboShapeMode">
+       <property name="toolTip">
+        <string>The type of object created at import. Mesh is faster, but Shapes are more precise. You can convert between the two anytime by right-clicking the object tree</string>
+       </property>
+       <property name="currentIndex">
+        <number>1</number>
+       </property>
+       <item>
+        <property name="text">
+         <string>Load the shape (slower)</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>Load 3D representation only, no shape (default)</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>No 3D representation at all</string>
         </property>
        </item>
       </widget>
@@ -110,16 +110,6 @@
      </property>
      <property name="text">
       <string>Switch workbench after import</string>
-     </property>
-    </widget>
-   </item>
-   <item>
-    <widget class="QCheckBox" name="checkLoadOrphans">
-     <property name="toolTip">
-      <string>If this is marked, objects not belonging to any project will be loaded too and placed in a separate group</string>
-     </property>
-     <property name="text">
-      <string>Load orphan objects</string>
      </property>
     </widget>
    </item>
@@ -162,7 +152,7 @@
       <string>Ask me again next time</string>
      </property>
      <property name="checked">
-      <bool>true</bool>
+      <bool>false</bool>
      </property>
     </widget>
    </item>
