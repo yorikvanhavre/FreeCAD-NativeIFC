@@ -533,7 +533,7 @@ def add_properties(
         elif attr_def and "IfcLengthMeasure" in str(attr_def.type_of_attribute()):
             obj.addProperty("App::PropertyDistance", attr, "IFC")
             if value:
-                setattr(obj, attr, value*get_scale(ifcfile))
+                setattr(obj, attr, value*(1/get_scale(ifcfile)))
         elif isinstance(value, int):
             if attr not in obj.PropertiesList:
                 obj.addProperty("App::PropertyInteger", attr, "IFC")
@@ -708,6 +708,9 @@ def set_attribute(ifcfile, element, attribute, value):
 
     if not ifcfile or not element:
         return False
+    if isinstance(value, FreeCAD.Units.Quantity):
+        f = get_scale(ifcfile)
+        value = value.Value * f
     if attribute == "Class":
         if value != element.is_a():
             if value and value.startswith("Ifc"):
@@ -1225,8 +1228,8 @@ def get_group(project, name):
         doc = project
     group = add_object(doc, otype="group", oname=name)
     group.Label = name.strip("Ifc").strip("Group")
-    if FreeCAD.GuiUp:
-        group.ViewObject.ShowInTree = PARAMS.GetBool("ShowDataGroups", False)
+    #if FreeCAD.GuiUp:
+    #    group.ViewObject.ShowInTree = PARAMS.GetBool("ShowDataGroups", False)
     if hasattr(project.Proxy, "addObject"):
         project.Proxy.addObject(project, group)
     return group
