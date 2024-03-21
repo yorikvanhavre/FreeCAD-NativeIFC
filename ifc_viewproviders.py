@@ -72,7 +72,7 @@ class ifc_vp_object:
     def getIcon(self):
         path = os.path.dirname(os.path.dirname(__file__))
         if self.Object.IfcClass == "IfcGroup":
-            from PySide2 import QtGui
+            from PySide import QtGui
 
             return QtGui.QIcon.fromTheme("folder", QtGui.QIcon(":/icons/folder.svg"))
         elif self.Object.ShapeMode == "Shape":
@@ -90,7 +90,7 @@ class ifc_vp_object:
         import ifc_tools  # lazy import
         import ifc_psets
         import ifc_materials
-        from PySide2 import QtCore, QtGui, QtWidgets  # lazy import
+        from PySide import QtCore, QtGui  # lazy import
 
         path = os.path.dirname(os.path.dirname(__file__))
         icon = QtGui.QIcon(os.path.join(path, "icons", "IFC.svg"))
@@ -104,47 +104,47 @@ class ifc_vp_object:
                 FreeCADGui.ActiveDocument.ActiveView.getActiveObject("NativeIFC")
                 == vobj.Object
             ):
-                action_activate = QtWidgets.QAction(icon, "Deactivate container")
+                action_activate = QtGui.QAction(icon, "Deactivate container")
             else:
-                action_activate = QtWidgets.QAction(icon, "Make active container")
+                action_activate = QtGui.QAction(icon, "Make active container")
             action_activate.triggered.connect(self.activate)
             menu.addAction(action_activate)
         if self.hasChildren(vobj.Object):
-            action_expand = QtWidgets.QAction(icon, "Expand children")
+            action_expand = QtGui.QAction(icon, "Expand children")
             action_expand.triggered.connect(self.expandChildren)
             actions.append(action_expand)
         if vobj.Object.Group:
-            action_shrink = QtWidgets.QAction(icon, "Collapse children")
+            action_shrink = QtGui.QAction(icon, "Collapse children")
             action_shrink.triggered.connect(self.collapseChildren)
             actions.append(action_shrink)
         if vobj.Object.ShapeMode == "Shape":
             t = "Remove shape"
         else:
             t = "Load shape"
-        action_shape = QtWidgets.QAction(icon, t, menu)
+        action_shape = QtGui.QAction(icon, t, menu)
         action_shape.triggered.connect(self.switchShape)
         actions.append(action_shape)
         if vobj.Object.ShapeMode == "None":
-            action_coin = QtWidgets.QAction(icon, "Load representation")
+            action_coin = QtGui.QAction(icon, "Load representation")
             action_coin.triggered.connect(self.switchCoin)
             actions.append(action_coin)
         if element and ifc_tools.has_representation(element):
-            action_geom = QtWidgets.QAction(icon, "Add geometry properties")
+            action_geom = QtGui.QAction(icon, "Add geometry properties")
             action_geom.triggered.connect(self.addGeometryProperties)
             actions.append(action_geom)
-        action_tree = QtWidgets.QAction(icon, "Show geometry tree")
+        action_tree = QtGui.QAction(icon, "Show geometry tree")
         action_tree.triggered.connect(self.showTree)
         actions.append(action_tree)
         if ifc_psets.has_psets(self.Object):
-            action_props = QtWidgets.QAction(icon, "Expand property sets")
+            action_props = QtGui.QAction(icon, "Expand property sets")
             action_props.triggered.connect(self.showProps)
             actions.append(action_props)
         if ifc_materials.get_material(self.Object):
-            action_material = QtWidgets.QAction(icon, "Load material")
+            action_material = QtGui.QAction(icon, "Load material")
             action_material.triggered.connect(self.addMaterial)
             actions.append(action_material)
         if actions:
-            ifc_menu = QtWidgets.QMenu("IFC")
+            ifc_menu = QtGui.QMenu("IFC")
             ifc_menu.setIcon(icon)
             for a in actions:
                 ifc_menu.addAction(a)
@@ -152,7 +152,7 @@ class ifc_vp_object:
 
         # generic actions
         ficon = QtGui.QIcon.fromTheme("folder", QtGui.QIcon(":/icons/folder.svg"))
-        action_group = QtWidgets.QAction(ficon, "Create group...")
+        action_group = QtGui.QAction(ficon, "Create group...")
         action_group.triggered.connect(self.createGroup)
         menu.addAction(action_group)
 
@@ -392,7 +392,7 @@ class ifc_vp_document(ifc_vp_object):
 
     def setupContextMenu(self, vobj, menu):
 
-        from PySide2 import QtCore, QtGui, QtWidgets  # lazy import
+        from PySide import QtCore, QtGui  # lazy import
 
         ifc_menu = super().setupContextMenu(vobj, menu)
         if not ifc_menu:
@@ -401,14 +401,14 @@ class ifc_vp_document(ifc_vp_object):
         path = os.path.dirname(os.path.dirname(__file__))
         icon = QtGui.QIcon(os.path.join(path, "icons", "IFC.svg"))
         if vobj.Object.Modified:
-            action_diff = QtWidgets.QAction(icon, "View diff...", menu)
+            action_diff = QtGui.QAction(icon, "View diff...", menu)
             action_diff.triggered.connect(self.diff)
             ifc_menu.addAction(action_diff)
             if vobj.Object.IfcFilePath:
-                action_save = QtWidgets.QAction(icon, "Save IFC file", menu)
+                action_save = QtGui.QAction(icon, "Save IFC file", menu)
                 action_save.triggered.connect(self.save)
                 ifc_menu.addAction(action_save)
-        action_saveas = QtWidgets.QAction(icon, "Save IFC file as...", menu)
+        action_saveas = QtGui.QAction(icon, "Save IFC file as...", menu)
         action_saveas.triggered.connect(self.saveas)
         ifc_menu.addAction(action_saveas)
 
@@ -425,9 +425,9 @@ class ifc_vp_document(ifc_vp_object):
         """Saves the associated IFC file to another file"""
 
         import ifc_tools  # lazy import
-        from PySide2 import QtCore, QtGui, QtWidgets  # lazy import
+        from PySide import QtCore, QtGui  # lazy import
 
-        sf = QtWidgets.QFileDialog.getSaveFileName(
+        sf = QtGui.QFileDialog.getSaveFileName(
             None,
             "Save an IFC file",
             self.Object.IfcFilePath,
@@ -444,20 +444,20 @@ class ifc_vp_document(ifc_vp_object):
     def replace_file(self, obj, newfile):
         """Asks the user if the attached file path needs to be replaced"""
 
-        from PySide2 import QtCore, QtGui, QtWidgets  # lazy import
+        from PySide import QtCore, QtGui  # lazy import
 
         msg = "Replace the stored IFC file path in object "
         msg += self.Object.Label + " with the new one: "
         msg += newfile
         msg += " ?"
-        dlg = QtWidgets.QMessageBox.question(
+        dlg = QtGui.QMessageBox.question(
             None,
             "Replace IFC file path?",
             msg,
-            QtWidgets.QMessageBox.Yes | QtWidgets.QMessageBox.No,
-            QtWidgets.QMessageBox.No,
+            QtGui.QMessageBox.Yes | QtGui.QMessageBox.No,
+            QtGui.QMessageBox.No,
         )
-        if dlg == QtWidgets.QMessageBox.Yes:
+        if dlg == QtGui.QMessageBox.Yes:
             self.Object.IfcFilePath = newfile
             self.Object.Modified = False
             return True
@@ -465,20 +465,20 @@ class ifc_vp_document(ifc_vp_object):
             return False
 
     def schema_warning(self):
-        from PySide2 import QtCore, QtGui, QtWidgets  # lazy import
+        from PySide import QtCore, QtGui  # lazy import
 
         msg = "Warning: This operation will change the whole IFC file contents "
         msg += "and will not give versionable results. It is best to not do "
         msg += "this while you are in the middle of a project. "
         msg += "Do you wish to continue anyway?"
-        dlg = QtWidgets.QMessageBox.question(
+        dlg = QtGui.QMessageBox.question(
             None,
             "Replace IFC file schema?",
             msg,
-            QtWidgets.QMessageBox.Yes | QtWidgets.QMessageBox.No,
-            QtWidgets.QMessageBox.No,
+            QtGui.QMessageBox.Yes | QtGui.QMessageBox.No,
+            QtGui.QMessageBox.No,
         )
-        if dlg == QtWidgets.QMessageBox.Yes:
+        if dlg == QtGui.QMessageBox.Yes:
             return True
         else:
             return False
@@ -497,7 +497,7 @@ class ifc_vp_group:
         self.Object = vobj.Object
 
     def getIcon(self):
-        from PySide2 import QtCore, QtGui  # lazy loading
+        from PySide import QtCore, QtGui  # lazy loading
         import Draft_rc
         import Arch_rc
 
@@ -543,7 +543,7 @@ class ifc_vp_material:
             return ":/icons/Arch_Material.svg"
 
     def updateData(self, obj, prop):
-        from PySide2 import QtCore, QtGui  # lazy loading
+        from PySide import QtCore, QtGui  # lazy loading
 
         if hasattr(self.Object, "Color"):
             c = self.Object.Color
@@ -583,12 +583,12 @@ class ifc_vp_material:
     def setupContextMenu(self, vobj, menu):
         import ifc_tools  # lazy import
         import ifc_psets
-        from PySide2 import QtCore, QtGui, QtWidgets  # lazy import
+        from PySide import QtCore, QtGui  # lazy import
 
         path = os.path.dirname(os.path.dirname(__file__))
         icon = QtGui.QIcon(os.path.join(path, "icons", "IFC.svg"))
         if ifc_psets.has_psets(self.Object):
-            action_props = QtWidgets.QAction(icon, "Expand property sets", menu)
+            action_props = QtGui.QAction(icon, "Expand property sets", menu)
             action_props.triggered.connect(self.showProps)
             menu.addAction(action_props)
 
@@ -604,7 +604,7 @@ class ifc_vp_material:
 def overlay(icon1, icon2):
     """Overlays icon2 onto icon1"""
 
-    from PySide2 import QtCore, QtGui  # lazy loading
+    from PySide import QtCore, QtGui  # lazy loading
 
     if isinstance(icon1, QtGui.QIcon):
         baseicon = icon1.pixmap(32, 32)
