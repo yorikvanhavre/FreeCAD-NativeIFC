@@ -139,17 +139,18 @@ class ifc_observer:
             return
         doc = FreeCAD.getDocument(self.docname)
         del self.docname
-        objs = []
+        projects = []
         if hasattr(doc, "IfcFilePath") and hasattr(doc, "Modified"):
             if doc.Modified:
-                objs.append(doc)
+                projects.append(doc)
         else:
             for obj in doc.findObjects(Type="Part::FeaturePython"):
                 if hasattr(obj, "IfcFilePath") and hasattr(obj, "Modified"):
                     if obj.Modified:
-                        objs.append(obj)
-        if objs:
+                        projects.append(obj)
+        if projects:
             import ifc_tools  # lazy loading
+            import ifc_viewproviders
 
             ask = params.GetBool("AskBeforeSaving", True)
             if ask and FreeCAD.GuiUp:
@@ -164,11 +165,13 @@ class ifc_observer:
                 ask = dlg.checkAskBeforeSaving.isChecked()
                 params.SetBool("AskBeforeSaving", ask)
 
-            for obj in objs:
-                if obj.IfcFilePath and getattr(obj.Proxy, "ifcfile", None):
-                    obj.ViewObject.Proxy.save()
-                else:
-                    obj.ViewObject.Proxy.save_as()
+            for project in projects:
+                if getattr(project.Proxy, "ifcfile", None):
+                    if project.IfcFilePath:
+                        ifc_tools.save(project)
+                    else:
+                        ifc_viewproviders.get_filepath(project)
+                        ifc_tools.save(project)
 
     def convert(self):
         """Converts an object to IFC"""

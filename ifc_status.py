@@ -108,6 +108,7 @@ def unlock_document():
         props += [p for p in doc.PropertiesList if doc.getGroupOfProperty(p) == "IFC"]
         for prop in props:
             doc.removeProperty(prop)
+        project.Modified = True
         doc.commitTransaction()
         doc.recompute()
 
@@ -153,6 +154,7 @@ def lock_document():
                 # 1a all objects are already inside a project
                 pass
             doc.removeObject(project.Name)
+            doc.Modified = True
             doc.commitTransaction()
             doc.recompute()
         elif len(projects) > 1:
@@ -165,10 +167,12 @@ def lock_document():
             ifc_tools.convert_document(doc, silent=True)
             ifcfile = doc.Proxy.ifcfile
             objs = find_toplevel(doc.Objects)
-            exportIFC.export(objs, ifcfile)
+            prefs, context = ifc_tools.get_export_preferences(ifcfile)
+            exportIFC.export(objs, ifcfile, preferences=prefs)
             for n in [o.Name for o in doc.Objects]:
                 doc.removeObject(n)
             ifc_tools.create_children(doc, ifcfile, recursive=True)
+            doc.Modified = True
             doc.commitTransaction()
             doc.recompute()
         else:

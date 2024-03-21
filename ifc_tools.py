@@ -167,6 +167,7 @@ def setup_project(proj, filename, shapemode, silent):
     project = ifcfile.by_type("IfcProject")[0]
     # TODO configure version history
     # https://blenderbim.org/docs-python/autoapi/ifcopenshell/api/owner/create_owner_history/index.html
+    # In IFC4, history is optional. What should we do here?
     proj.Proxy.ifcfile = ifcfile
     add_properties(proj, ifcfile, project, shapemode=shapemode)
     if not "Schema" in proj.PropertiesList:
@@ -1030,8 +1031,8 @@ def get_export_preferences(ifcfile):
     # the above lines yields meter -> file unit scale factor. We need mm
     prefs["SCALE_FACTOR"] = 0.001 / s
     context = ifcfile[
-        get_body_context_ids(ifcfile)[-1]
-    ]  # TODO should this be different?
+        get_body_context_ids(ifcfile)[0]
+    ]  # we take the first one (first found subcontext)
     return prefs, context
 
 

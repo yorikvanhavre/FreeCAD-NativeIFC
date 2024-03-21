@@ -417,29 +417,18 @@ class ifc_vp_document(ifc_vp_object):
 
         import ifc_tools  # lazy import
 
-        ifc_tools.save_ifc(self.Object)
-        self.Object.Modified = False
+        ifc_tools.save(self.Object)
         self.Object.Document.recompute()
 
     def saveas(self):
         """Saves the associated IFC file to another file"""
 
         import ifc_tools  # lazy import
-        from PySide import QtCore, QtGui  # lazy import
 
-        sf = QtGui.QFileDialog.getSaveFileName(
-            None,
-            "Save an IFC file",
-            self.Object.IfcFilePath,
-            "Industry Foundation Classes (*.ifc)",
-        )
-        if sf and sf[0]:
-            sf = sf[0]
-            if not sf.lower().endswith(".ifc"):
-                sf += ".ifc"
-            ifc_tools.save_ifc(self.Object, sf)
-            self.replace_file(self.Object, sf)
-            self.Object.Document.recompute()
+        get_filepath(self.Object)
+        ifc_tools.save(self.Object)
+        self.replace_file(self.Object, sf)
+        self.Object.Document.recompute()
 
     def replace_file(self, obj, newfile):
         """Asks the user if the attached file path needs to be replaced"""
@@ -626,3 +615,22 @@ def overlay(icon1, icon2):
     b.open(QtCore.QIODevice.WriteOnly)
     baseicon.save(b, "XPM")
     return ba.data().decode("latin1")
+
+
+def get_filepath(project):
+    """Saves the associated IFC file to another file"""
+
+    import ifc_tools  # lazy import
+    from PySide import QtCore, QtGui  # lazy import
+
+    sf = QtGui.QFileDialog.getSaveFileName(
+        None,
+        "Save an IFC file",
+        project.IfcFilePath,
+        "Industry Foundation Classes (*.ifc)",
+    )
+    if sf and sf[0]:
+        sf = sf[0]
+        if not sf.lower().endswith(".ifc"):
+            sf += ".ifc"
+        project.IfcFilePath = sf
