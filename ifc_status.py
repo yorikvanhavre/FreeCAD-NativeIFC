@@ -64,7 +64,7 @@ def set_status_widget(statuswidget):
     statuswidget.lock_button = lock_button
 
 
-def toggle_lock(checked):
+def toggle_lock(checked=False):
     """Sets the lock button on/off"""
     
     from PySide import QtGui  # lazy loading
@@ -119,6 +119,7 @@ def lock_document():
     import ifc_tools  # lazy loading
     import exportIFC
     import ifc_geometry
+    from PySide import QtCore
 
     doc = FreeCAD.ActiveDocument
     products = []
@@ -155,12 +156,15 @@ def lock_document():
                 pass
             doc.removeObject(project.Name)
             doc.Modified = True
+            # all objects have been deleted, we need to show at least something
+            if not doc.Objects:
+                ifc_tools.create_children(doc, ifcfile, recursive=True)
             doc.commitTransaction()
             doc.recompute()
         elif len(projects) > 1:
             # 2 there is more than one project
             FreeCAD.Console.PrintError("Unable to lock this document because it contains several IFC documents\n")
-            toggle_lock(False)
+            QtCore.QTimer.singleShot(100, toggle_lock)
         elif doc.Objects:
             # 3 there is no project but objects
             doc.openTransaction("Lock document")
