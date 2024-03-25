@@ -67,7 +67,10 @@ def insert(
         print("Aborted.")
         return
     stime = time.time()
-    document = FreeCAD.getDocument(docname)
+    try:
+        document = FreeCAD.getDocument(docname)
+    except:
+        document = FreeCAD.newDocument()
     if singledoc is None:
         singledoc = params.GetBool("SingleDoc", False)
     if singledoc:

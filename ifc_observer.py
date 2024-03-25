@@ -39,7 +39,11 @@ def add_observer():
 class ifc_observer:
     """A general document observer that handles IFC objects"""
 
-    # slots
+    def __init__(self):
+        # if there is a document open when the observer starts,
+        # check it
+        if FreeCAD.ActiveDocument:
+            self.slotActivateDocument(FreeCAD.ActiveDocument)
 
     def slotStartSaveDocument(self, doc, value):
         """Save all IFC documents in this doc"""
