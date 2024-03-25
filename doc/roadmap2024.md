@@ -1,6 +1,6 @@
 # NativeIFC integration in FreeCAD
 
-This plan is part of the [Native IFC for FreeCAD project at NLNet](https://nlnet.nl/project/FreeCAD-IFC/)
+This plan is part of the [Native IFC for FreeCAD project at NLNet](https://nlnet.nl/project/FreeCAD-IFC/). See also the [2023 roadmap](roadmap2023.md) and the [weekly (hopefully) development notes](https://yorik.uncreated.net/blog/nativeifc).
 
 ![screenshot of the current BIM workbench in action](images/bim1dot01.jpg)
 
