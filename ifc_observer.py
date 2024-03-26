@@ -93,9 +93,9 @@ class ifc_observer:
                         ]
                         if len(child) == 1:
                             child[0].StepId = new_id
-            ifc_status.toggle_lock(True)
-        else:
-            ifc_status.toggle_lock(False)
+                ifc_status.toggle_lock(True)
+            else:
+                ifc_status.toggle_lock(False)
 
     def slotCreatedObject(self, obj):
         """If this is an IFC document, turn the object into IFC"""
