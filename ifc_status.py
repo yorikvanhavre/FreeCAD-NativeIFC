@@ -100,7 +100,7 @@ def unlock_document():
     if "IfcFilePath" in doc.PropertiesList:
         # this is a locked document
         doc.openTransaction("Unlock document")
-        children = [ifc_tools.get_object(o) for o in ifc_tools.get_children(doc)]
+        children = [o for o in doc.Objects if not o.InList]
         if children:
             project = ifc_tools.create_document_object(doc, filename = doc.IfcFilePath, silent = True)
             project.Group = children
@@ -193,6 +193,17 @@ def find_toplevel(objs):
         for parent in obj.InListRecursive:
             if parent in objs:
                 break
+        else:
+            nobjs.append(obj)
+    # filter out 2D objects
+    objs = nobjs
+    nobjs = []
+    for obj in objs:
+        if obj.isDerivedFrom("Part::Feature"):
+            if obj.Shape.Edges and not obj.Shape.Solids:
+                print("Excluding",obj.Label,"- 2D objects not supported yet")
+            else:
+                nobjs.append(obj)
         else:
             nobjs.append(obj)
     return nobjs
