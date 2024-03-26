@@ -32,7 +32,7 @@ import FreeCADGui
 translate = FreeCAD.Qt.translate
 params = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Mod/NativeIFC")
 text_on = translate("BIM", "Strict IFC mode is ON (all objects are IFC)")
-text_off = translate("BIM", "Strict IFC mode is OFF (IFC and non-IFC objects allowed)") 
+text_off = translate("BIM", "Strict IFC mode is OFF (IFC and non-IFC objects allowed)")
 
 
 def set_status_widget(statuswidget):
@@ -43,8 +43,8 @@ def set_status_widget(statuswidget):
     # lock button
     lock_button = QtGui.QAction()
     path = os.path.dirname(os.path.dirname(__file__))
-    icon = QtGui.QIcon(os.path.join(path, "icons", "IFC.svg")) 
-    lock_button.setIcon(icon)  
+    icon = QtGui.QIcon(os.path.join(path, "icons", "IFC.svg"))
+    lock_button.setIcon(icon)
     lock_button.setCheckable(True)
     doc = FreeCAD.ActiveDocument
     if doc and "IfcFilePath" in doc.PropertiesList:
@@ -66,7 +66,7 @@ def set_status_widget(statuswidget):
 
 def toggle_lock(checked=False):
     """Sets the lock button on/off"""
-    
+
     from PySide import QtGui  # lazy loading
 
     mw = FreeCADGui.getMainWindow()
@@ -80,7 +80,7 @@ def toggle_lock(checked=False):
             statuswidget.lock_button.setChecked(False)
             statuswidget.lock_button.setText(" ")
             statuswidget.lock_button.setToolTip(text_off)
-                
+
 
 def do_lock(checked):
     """Locks or unlocks the document"""
@@ -102,7 +102,9 @@ def unlock_document():
         doc.openTransaction("Unlock document")
         children = [o for o in doc.Objects if not o.InList]
         if children:
-            project = ifc_tools.create_document_object(doc, filename = doc.IfcFilePath, silent = True)
+            project = ifc_tools.create_document_object(
+                doc, filename=doc.IfcFilePath, silent=True
+            )
             project.Group = children
         props = ["IfcFilePath", "Modified", "Proxy", "Schema"]
         props += [p for p in doc.PropertiesList if doc.getGroupOfProperty(p) == "IFC"]
@@ -115,7 +117,7 @@ def unlock_document():
 
 def lock_document():
     """Locks the active document"""
-    
+
     import ifc_tools  # lazy loading
     import exportIFC
     import ifc_geometry
@@ -126,14 +128,16 @@ def lock_document():
     spatial = []
     if "IfcFilePath" not in doc.PropertiesList:
         # this is not a locked document
-        projects = [o for o in doc.Objects if getattr(o,"Class",None) == "IfcProject"]
+        projects = [o for o in doc.Objects if getattr(o, "Class", None) == "IfcProject"]
         if len(projects) == 1:
             # 1 there is a project already
             project = projects[0]
             children = project.OutListRecursive
             rest = [o for o in doc.Objects if o not in children and o != project]
             doc.openTransaction("Lock document")
-            ifc_tools.convert_document(doc, filename=project.IfcFilePath, strategy=3, silent=True)
+            ifc_tools.convert_document(
+                doc, filename=project.IfcFilePath, strategy=3, silent=True
+            )
             ifcfile = doc.Proxy.ifcfile
             if rest:
                 # 1b some objects are outside
@@ -146,7 +150,9 @@ def lock_document():
                             if not getattr(product, "VoidsElements", None):
                                 if not getattr(product, "Decomposes", None):
                                     new = ifc_tools.create_object(product, doc, ifcfile)
-                                    children = ifc_tools.create_children(new, ifcfile, recursive=True)
+                                    children = ifc_tools.create_children(
+                                        new, ifcfile, recursive=True
+                                    )
                                     for o in [new] + children:
                                         ifc_geometry.add_geom_properties(o)
                 for n in [o.Name for o in rest]:
@@ -163,7 +169,9 @@ def lock_document():
             doc.recompute()
         elif len(projects) > 1:
             # 2 there is more than one project
-            FreeCAD.Console.PrintError("Unable to lock this document because it contains several IFC documents\n")
+            FreeCAD.Console.PrintError(
+                "Unable to lock this document because it contains several IFC documents\n"
+            )
             QtCore.QTimer.singleShot(100, toggle_lock)
         elif doc.Objects:
             # 3 there is no project but objects
@@ -186,7 +194,7 @@ def lock_document():
 
 def find_toplevel(objs):
     """Finds the top-level objects from the list"""
-    
+
     # filter out any object that depend on another from the list
     nobjs = []
     for obj in objs:
@@ -201,7 +209,7 @@ def find_toplevel(objs):
     for obj in objs:
         if obj.isDerivedFrom("Part::Feature"):
             if obj.Shape.Edges and not obj.Shape.Solids:
-                print("Excluding",obj.Label,"- 2D objects not supported yet")
+                print("Excluding", obj.Label, "- 2D objects not supported yet")
             else:
                 nobjs.append(obj)
         else:

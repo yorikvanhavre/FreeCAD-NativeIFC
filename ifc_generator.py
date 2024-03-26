@@ -156,11 +156,18 @@ def generate_shape(ifcfile, elements, cached=False):
                 for i in range(len(shape.Solids)):
                     for j in range(len(shape.Solids[i].Faces)):
                         scolors.append(
-                            (sstyle[i * 4], sstyle[i * 4 + 1], sstyle[i * 4 + 2], 1.0 - sstyle[i * 4 + 3])
+                            (
+                                sstyle[i * 4],
+                                sstyle[i * 4 + 1],
+                                sstyle[i * 4 + 2],
+                                1.0 - sstyle[i * 4 + 3],
+                            )
                         )
                 if len(colors) < len(shape.Faces):
                     for i in range(len(shape.Faces) - len(colors)):
-                        scolors.append((sstyle[0], sstyle[1], sstyle[2], 1.0 - sstyle[3]))
+                        scolors.append(
+                            (sstyle[0], sstyle[1], sstyle[2], 1.0 - sstyle[3])
+                        )
             else:
                 color = (sstyle[0], sstyle[1], sstyle[2], 1.0 - sstyle[3])
                 for f in shape.Faces:

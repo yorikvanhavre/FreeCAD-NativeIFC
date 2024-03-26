@@ -459,8 +459,9 @@ def add_object(document, otype=None, oname="IfcObject"):
     obj = document.addObject(ftype, oname, proxy, vp, False)
     if obj.ViewObject and otype == "layer":
         from draftviewproviders import view_layer  # lazy import
+
         view_layer.ViewProviderLayer(obj.ViewObject)
-        obj.ViewObject.addProperty("App::PropertyBool","HideChildren","Layer")
+        obj.ViewObject.addProperty("App::PropertyBool", "HideChildren", "Layer")
         obj.ViewObject.HideChildren = True
     return obj
 
@@ -534,7 +535,7 @@ def add_properties(
         elif attr_def and "IfcLengthMeasure" in str(attr_def.type_of_attribute()):
             obj.addProperty("App::PropertyDistance", attr, "IFC")
             if value:
-                setattr(obj, attr, value*(1/get_scale(ifcfile)))
+                setattr(obj, attr, value * (1 / get_scale(ifcfile)))
         elif isinstance(value, int):
             if attr not in obj.PropertiesList:
                 obj.addProperty("App::PropertyInteger", attr, "IFC")
@@ -762,11 +763,11 @@ def set_colors(obj, colors):
             if isinstance(colors[0], (tuple, list)):
                 obj.ViewObject.ShapeColor = colors[0][:3]
                 if len(colors[0]) > 3:
-                    obj.ViewObject.Transparency = int(colors[0][3]*100)
+                    obj.ViewObject.Transparency = int(colors[0][3] * 100)
             else:
                 obj.ViewObject.ShapeColor = colors[:3]
                 if len(colors) > 3:
-                    obj.ViewObject.Transparency = int(colors[3]*100)
+                    obj.ViewObject.Transparency = int(colors[3] * 100)
         if hasattr(obj.ViewObject, "DiffuseColor"):
             # strip out transparency value because it currently gives ugly
             # results in FreeCAD when combining transparent and non-transparent objects
@@ -1229,7 +1230,7 @@ def get_group(project, name):
         doc = project
     group = add_object(doc, otype="group", oname=name)
     group.Label = name.strip("Ifc").strip("Group")
-    #if FreeCAD.GuiUp:
+    # if FreeCAD.GuiUp:
     #    group.ViewObject.ShowInTree = PARAMS.GetBool("ShowDataGroups", False)
     if hasattr(project.Proxy, "addObject"):
         project.Proxy.addObject(project, group)

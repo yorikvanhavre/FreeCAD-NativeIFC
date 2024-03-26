@@ -188,8 +188,8 @@ class ifc_vp_object:
 
         # expand the item in the tree view
         mw = FreeCADGui.getMainWindow()
-        tree = mw.findChild(QtGui.QDockWidget,"Model")
-        model = tree.findChild(QtGui.QWidget,"Model")
+        tree = mw.findChild(QtGui.QDockWidget, "Model")
+        model = tree.findChild(QtGui.QWidget, "Model")
         splitter = model.findChild(QtGui.QSplitter)
         tree = splitter.children()[1].children()[0]
         it = tree.findItems(obj.Label, QtCore.Qt.MatchRecursive, 0)

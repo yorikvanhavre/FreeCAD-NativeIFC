@@ -109,9 +109,7 @@ def insert(
     return document
 
 
-def get_options(
-    strategy=None, shapemode=None, switchwb=None, silent=False
-):
+def get_options(strategy=None, shapemode=None, switchwb=None, silent=False):
     """Shows a dialog to get import options
 
     shapemode: 0 = full shape

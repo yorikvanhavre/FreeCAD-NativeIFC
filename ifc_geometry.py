@@ -277,5 +277,13 @@ def set_geom_property(obj, prop):
                         changed = set_attribute(ifcfile, elem, prop, value)
 
     if changed:
-        FreeCAD.Console.PrintLog("DEBUG: Changing prop" + obj.Label + ":" + str(prop) + "to" + str(getattr(obj, prop)) + "\n")
+        FreeCAD.Console.PrintLog(
+            "DEBUG: Changing prop"
+            + obj.Label
+            + ":"
+            + str(prop)
+            + "to"
+            + str(getattr(obj, prop))
+            + "\n"
+        )
     return changed
