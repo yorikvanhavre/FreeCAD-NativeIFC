@@ -23,13 +23,10 @@
 """This is the main NativeIFC module"""
 
 import os
-import re
 
 # heavyweight libraries - ifc_tools should always be lazy loaded
 
 import FreeCAD
-import Part
-import Mesh
 import Draft
 import Arch
 import exportIFC
@@ -48,7 +45,6 @@ import ifc_objects
 import ifc_viewproviders
 import ifc_import
 import ifc_layers
-import ifc_generator
 import ifc_status
 
 SCALE = 1000.0  # IfcOpenShell works in meters, FreeCAD works in mm
@@ -626,7 +622,10 @@ def get_ifc_classes(obj, baseclass):
     if "StandardCase" in baseclass:
         declaration = declaration.supertype()
     if declaration.supertype():
+        # include sibling classes
         classes = [sub.name() for sub in declaration.supertype().subtypes()]
+        # include superclass too so one can "navigate up"
+        classes.append(declaration.supertype().name())
     # also include subtypes of the current class (ex, StandardCases)
     classes.extend([sub.name() for sub in declaration.subtypes()])
     if baseclass not in classes:
@@ -781,14 +780,15 @@ def get_body_context_ids(ifcfile):
     # This function can become pure IFC
 
     # Facetation is to accommodate broken Revit files
-    # See https://forums.buildingsmart.org/t/suggestions-on-how-to-improve-clarity-of-representation-context-usage-in-documentation/3663/6?u=moult
+    # See https://forums.buildingsmart.org/t/suggestions-on-how-to-improve-clarity\
+    # -of-representation-context-usage-in-documentation/3663/6?u=moult
     body_contexts = [
         c.id()
         for c in ifcfile.by_type("IfcGeometricRepresentationSubContext")
         if c.ContextIdentifier in ["Body", "Facetation"]
     ]
     # Ideally, all representations should be in a subcontext, but some BIM apps don't do this
-    # correctly
+    # correctly, so we add main contexts too
     body_contexts.extend(
         [
             c.id()
@@ -980,15 +980,16 @@ def create_product(obj, parent, ifcfile, ifcclass=None):
     name = obj.Label
     description = getattr(obj, "Description", None)
     if not ifcclass:
-        ifcclass = exportIFC.getIfcTypeFromObj(obj)
+        ifcclass = get_ifctype(obj)
     representation, placement = create_representation(obj, ifcfile)
     product = api_run("root.create_entity", ifcfile, ifc_class=ifcclass, name=name)
     set_attribute(ifcfile, product, "Description", description)
     set_attribute(ifcfile, product, "ObjectPlacement", placement)
-    # TODO below cannot be used at the moment because the ArchIFC epporter returns an
+    # TODO below cannot be used at the moment because the ArchIFC exporter returns an
     # IfcProductDefinitionShape already and not an IfcShapeRepresentation
     # api_run("geometry.assign_representation", ifcfile, product=product, representation=representation)
     set_attribute(ifcfile, product, "Representation", representation)
+    # TODO treat subtractions/additions
     return product
 
 
@@ -1021,6 +1022,22 @@ def create_representation(obj, ifcfile):
         ifcfile, context, obj, preferences=prefs
     )
     return representation, placement
+
+
+def get_ifctype(obj):
+    """Returns a valid IFC type from an object"""
+
+    if hasattr(obj, "Class"):
+        if "ifc" in str(obj.Class).lower():
+            return obj.Class
+    if hasattr(obj,"IfcType") and obj.IfcType != "Undefined":
+        return "Ifc" + obj.IfcType.replace(" ","")
+    dtype = Draft.getType(obj)
+    if dtype in ["App::Part","Part::Compound","Array"]:
+        return "IfcElementAssembly"
+    if dtype in ["App::DocumentObjectGroup"]:
+        ifctype = "IfcGroup"
+    return "IfcBuildingElementProxy"
 
 
 def get_export_preferences(ifcfile):
@@ -1077,12 +1094,20 @@ def create_relationship(old_obj, obj, parent, element, ifcfile):
             if hasattr(old_par, "Group") and old_obj in old_par.Group:
                 old_par.Group = [o for o in old_par.Group if o != old_obj]
         api_run("spatial.unassign_container", ifcfile, product=element)
-        uprel = api_run(
-            "spatial.assign_container",
-            ifcfile,
-            product=element,
-            relating_structure=parent_element,
-        )
+        if element.is_a("IfcOpeningElement"):
+            uprel = api_run(
+                "void.add_opening",
+                ifcfile,
+                opening=element,
+                element=parent_element,
+            )
+        else:
+            uprel = api_run(
+                "spatial.assign_container",
+                ifcfile,
+                product=element,
+                relating_structure=parent_element,
+            )
     # case 2: dooe/window inside element
     # https://standards.buildingsmart.org/IFC/RELEASE/IFC4/ADD2_TC1/HTML/annex/annex-e/wall-with-opening-and-window.htm
     elif parent_element.is_a("IfcElement") and element.is_a() in [
@@ -1248,4 +1273,28 @@ def load_orphans(obj):
     shapemode = obj.ShapeMode
     elements = get_orphan_elements(ifcfile)
     for element in elements:
-        child = create_object(element, doc, ifcfile, shapemode)
+        create_object(element, doc, ifcfile, shapemode)
+
+
+def remove_tree(objs):
+    """Removes all given objects and their children, if not used by others"""
+
+    if not objs:
+        return
+    doc = objs[0].Document
+    nobjs = objs
+    for obj in objs:
+        for child in obj.OutListRecursive:
+            if not child in nobjs:
+                nobjs.append(child)
+    deletelist = []
+    for obj in nobjs:
+        for par in obj.InList:
+            if par not in nobjs:
+                break
+        else:
+            deletelist.append(obj.Name)
+    for n in deletelist:
+        doc.removeObject(n)
+
+
