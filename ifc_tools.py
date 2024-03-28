@@ -45,7 +45,6 @@ import ifc_objects
 import ifc_viewproviders
 import ifc_import
 import ifc_layers
-import ifc_status
 
 SCALE = 1000.0  # IfcOpenShell works in meters, FreeCAD works in mm
 SHORT = False  # If True, only Step ID attribute is created
@@ -101,7 +100,6 @@ def create_document_object(
         site = aggregate(Arch.makeSite(), obj)
         building = aggregate(Arch.makeBuilding(), site)
         storey = aggregate(Arch.makeFloor(), building)
-    ifc_status.toggle_lock(False)
     return obj
 
 
@@ -136,7 +134,6 @@ def convert_document(document, filename=None, shapemode=0, strategy=0, silent=Fa
         site = aggregate(Arch.makeSite(), document)
         building = aggregate(Arch.makeBuilding(), site)
         storey = aggregate(Arch.makeFloor(), building)
-    ifc_status.toggle_lock(True)
     return document
 
 

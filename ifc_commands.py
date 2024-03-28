@@ -135,13 +135,83 @@ class IFC_ConvertDocument:
             ifc_tools.convert_document(doc)
 
 
+class IFC_MakeProject:
+    """Converts the current selection to an IFC project"""
+
+    def GetResources(self):
+        tt = QT_TRANSLATE_NOOP(
+            "IFC_MakeProject", "Converts the current selection to an IFC project"
+        )
+        return {
+            "Pixmap": os.path.join(os.path.dirname(__file__), "icons", "IFC.svg"),
+            "MenuText": QT_TRANSLATE_NOOP("IFC_MakeProject", "Make IFC project"),
+            "ToolTip": tt,
+            "Accel": "I, P",
+        }
+
+    def IsActive(self):
+        return bool(FreeCADGui.Selection.getSelection())
+
+    def Activated(self):
+        import exportIFC  # lazy loading
+        import ifc_tools
+        from PySide import QtCore, QtGui
+
+        doc = FreeCAD.ActiveDocument
+        objs = FreeCADGui.Selection.getSelection()
+        sf = QtGui.QFileDialog.getSaveFileName(
+            None,
+            "Save an IFC file",
+            None,
+            "Industry Foundation Classes (*.ifc)",
+        )
+        if sf and sf[0]:
+            sf = sf[0]
+            if not sf.lower().endswith(".ifc"):
+                sf += ".ifc"
+            exportIFC.export(objs, sf)
+            ifc_tools.create_document_object(doc, sf, strategy=2)
+            ifc_tools.remove_tree(objs)
+            doc.recompute()
+
+
+class IFC_Save:
+    """Saves the current IFC document"""
+
+    def GetResources(self):
+        tt = QT_TRANSLATE_NOOP(
+            "IFC_Save", "Saves the current IFC document"
+        )
+        return {
+            "Pixmap": os.path.join(os.path.dirname(__file__), "icons", "IFC.svg"),
+            "MenuText": QT_TRANSLATE_NOOP("IFC_Save", "Save IFC file"),
+            "ToolTip": tt,
+            "Accel": "Ctrl+S",
+        }
+
+    def IsActive(self):
+        doc = FreeCAD.ActiveDocument
+        if getattr(doc, "IfcFilePath", None):
+            if getattr(getattr(doc, "Proxy", None), "ifcfile", None):
+                return True
+        return False
+
+    def Activated(self):
+        import ifc_tools  # lazy loading
+
+        doc = FreeCAD.ActiveDocument
+        ifc_tools.save(doc)
+
+
 def get_commands():
     """Returns a list of IFC commands"""
 
-    return ["IFC_Diff", "IFC_Expand", "IFC_ConvertDocument"]
+    return ["IFC_Diff", "IFC_Expand", "IFC_MakeProject"]
 
 
 # initialize commands
 FreeCADGui.addCommand("IFC_Diff", IFC_Diff())
 FreeCADGui.addCommand("IFC_Expand", IFC_Expand())
 FreeCADGui.addCommand("IFC_ConvertDocument", IFC_ConvertDocument())
+FreeCADGui.addCommand("IFC_MakeProject", IFC_MakeProject())
+FreeCADGui.addCommand("IFC_Save", IFC_Save())

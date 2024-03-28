@@ -51,13 +51,8 @@ def set_status_widget(statuswidget):
         checked = True
     else:
         checked = params.GetBool("SingleDoc", False)
-    lock_button.setChecked(checked)
-    if checked:
-        lock_button.setText("🔒")
-        lock_button.setToolTip(text_on)
-    else:
-        lock_button.setText(" ")
-        lock_button.setToolTip(text_off)
+    toggle_lock(checked)
+    set_button(lock_button, checked)
     lock_button.triggered.connect(do_lock)
     lock_button.triggered.connect(toggle_lock)
     statuswidget.addAction(lock_button)
@@ -67,19 +62,46 @@ def set_status_widget(statuswidget):
 def toggle_lock(checked=False):
     """Sets the lock button on/off"""
 
-    from PySide import QtGui  # lazy loading
+    from PySide import QtCore, QtGui  # lazy loading
 
+    # switch Std_Save and IFC_Save
     mw = FreeCADGui.getMainWindow()
+    wb = FreeCADGui.activeWorkbench()
+    save_action = mw.findChild(QtGui.QAction, "Std_Save")
+    if checked and "IFC_Save" in FreeCADGui.listCommands():
+        if not hasattr(FreeCADGui,"IFC_WBManipulator"):
+            FreeCADGui.IFC_WBManipulator = IFC_WBManipulator()
+        # we need to void the shortcut otherwise it keeps active
+        # even if the command is not shown
+        FreeCADGui.IFC_saveshortcut = save_action.shortcut()
+        save_action.setShortcut("")
+        FreeCADGui.addWorkbenchManipulator(FreeCADGui.IFC_WBManipulator)
+        wb.reloadActive()
+    else:
+        if hasattr(FreeCADGui,"IFC_saveshortcut"):
+            save_action.setShortcut(FreeCADGui.IFC_saveshortcut)
+            del FreeCADGui.IFC_saveshortcut
+        if hasattr(FreeCADGui,"IFC_WBManipulator"):
+            FreeCADGui.removeWorkbenchManipulator(FreeCADGui.IFC_WBManipulator)
+            del FreeCADGui.IFC_WBManipulator
+        wb.reloadActive()
+    # set the lock button
     statuswidget = mw.findChild(QtGui.QToolBar, "BIMStatusWidget")
     if hasattr(statuswidget, "lock_button"):
-        if checked:
-            statuswidget.lock_button.setChecked(True)
-            statuswidget.lock_button.setText("🔒")
-            statuswidget.lock_button.setToolTip(text_on)
-        else:
-            statuswidget.lock_button.setChecked(False)
-            statuswidget.lock_button.setText(" ")
-            statuswidget.lock_button.setToolTip(text_off)
+        set_button(statuswidget.lock_button, checked)
+
+
+def set_button(lock_button, checked):
+    """Sets the lock button"""
+
+    if checked:
+        lock_button.setChecked(True)
+        lock_button.setText("🔒")
+        lock_button.setToolTip(text_on)
+    else:
+        lock_button.setChecked(False)
+        lock_button.setText(" ")
+        lock_button.setToolTip(text_off)
 
 
 def do_lock(checked):
@@ -215,3 +237,12 @@ def find_toplevel(objs):
         else:
             nobjs.append(obj)
     return nobjs
+
+
+# add entry to File menu
+# https://github.com/FreeCAD/FreeCAD/pull/10933
+class IFC_WBManipulator:
+    def modifyMenuBar(self):
+        return [{"remove":"Std_Save"},
+                {"insert":"IFC_Save", "menuItem":"Std_SaveAs"},
+               ]

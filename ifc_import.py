@@ -29,6 +29,7 @@ import ifc_tools
 import ifc_psets
 import ifc_materials
 import ifc_layers
+import ifc_status
 
 if FreeCAD.GuiUp:
     import FreeCADGui
@@ -61,7 +62,8 @@ def insert(
 ):
     """Inserts an IFC document in a FreeCAD document"""
 
-    importlib.reload(ifc_tools)  # useful as long as we are in early dev times
+    from PySide import QtCore  # lazy loading
+
     strategy, shapemode, switchwb = get_options(strategy, shapemode, switchwb, silent)
     if strategy is None:
         print("Aborted.")
@@ -75,10 +77,12 @@ def insert(
         singledoc = params.GetBool("SingleDoc", False)
     if singledoc:
         prj_obj = ifc_tools.convert_document(document, filename, shapemode, strategy)
+        QtCore.QTimer.singleShot(100, toggle_lock_on)
     else:
         prj_obj = ifc_tools.create_document_object(
             document, filename, shapemode, strategy
         )
+        QtCore.QTimer.singleShot(100, toggle_lock_off)
     if params.GetBool("LoadOrphans", True):
         ifc_tools.load_orphans(prj_obj)
     if not silent and params.GetBool("LoadMaterials", False):
@@ -191,3 +195,14 @@ def get_project_type(silent=False):
         params.SetBool("ProjectAskAgain", ask)
         params.SetBool("ProjectFull", ptype)
     return ptype
+
+
+# convenience functions
+
+def toggle_lock_on():
+
+    ifc_status.toggle_lock(True)
+
+def toggle_lock_off():
+
+    ifc_status.toggle_lock(False)
