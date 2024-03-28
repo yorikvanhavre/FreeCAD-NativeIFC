@@ -318,9 +318,32 @@ def create_children(
     if not ifcfile:
         ifcfile = get_ifcfile(obj)
     result = []
-    for child in get_children(obj, ifcfile, only_structure, assemblies, expand):
+    children = get_children(obj, ifcfile, only_structure, assemblies, expand)
+    for child in children:
         result.extend(create_child(obj, child))
+    assign_groups(children)
     return result
+
+
+def assign_groups(children):
+    """Fill the groups inthis list"""
+
+    for child in children:
+        if child.is_a("IfcGroup"):
+            grobj = get_object(child)
+            for rel in child.IsGroupedBy:
+                for elem in rel.RelatedObjects:
+                    elobj = get_object(elem)
+                    if elobj:
+                        if len(elobj.InList) == 1:
+                            p = elobj.InList[0]
+                            if elobj in p.Group:
+                                g = p.Group
+                                g.remove(elobj)
+                                p.Group = g
+                        g = grobj.Group
+                        g.append(elobj)
+                        grobj.Group = g
 
 
 def get_children(
