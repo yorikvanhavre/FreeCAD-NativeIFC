@@ -634,3 +634,5 @@ def get_filepath(project):
         if not sf.lower().endswith(".ifc"):
             sf += ".ifc"
         project.IfcFilePath = sf
+        return True
+    return False

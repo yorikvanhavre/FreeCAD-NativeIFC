@@ -251,5 +251,11 @@ def find_toplevel(objs):
 class IFC_WBManipulator:
     def modifyMenuBar(self):
         return [{"remove":"Std_Save"},
-                {"insert":"IFC_Save", "menuItem":"Std_SaveAs"},
+                {"remove":"Std_SaveAs"},
+                {"insert":"IFC_Save", "menuItem":"Std_SaveCopy"},
+                {"insert":"IFC_SaveAs", "menuItem":"Std_SaveCopy"},
+               ]
+    def modifyToolBars(self):
+        return [{"remove" : "Std_Save"},
+                {"append" : "IFC_Save", "toolBar" : "File"},
                ]

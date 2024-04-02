@@ -183,7 +183,7 @@ class IFC_Save:
             "IFC_Save", "Saves the current IFC document"
         )
         return {
-            "Pixmap": os.path.join(os.path.dirname(__file__), "icons", "IFC.svg"),
+            "Pixmap": os.path.join(os.path.dirname(__file__), "icons", "IFC_document.svg"),
             "MenuText": QT_TRANSLATE_NOOP("IFC_Save", "Save IFC file"),
             "ToolTip": tt,
             "Accel": "Ctrl+S",
@@ -208,6 +208,41 @@ class IFC_Save:
             pass
 
 
+class IFC_SaveAs:
+    """Saves the current IFC document as another name"""
+
+    def GetResources(self):
+        tt = QT_TRANSLATE_NOOP(
+            "IFC_SaveAs", "Saves the current IFC document as another file"
+        )
+        return {
+            "Pixmap": os.path.join(os.path.dirname(__file__), "icons", "IFC_document.svg"),
+            "MenuText": QT_TRANSLATE_NOOP("IFC_SaveAs", "Save IFC file as..."),
+            "ToolTip": tt,
+            "Accel": "Ctrl+Shift+S",
+        }
+
+    def IsActive(self):
+        doc = FreeCAD.ActiveDocument
+        if getattr(doc, "IfcFilePath", None):
+            if getattr(getattr(doc, "Proxy", None), "ifcfile", None):
+                return True
+        return False
+
+    def Activated(self):
+        import ifc_tools  # lazy loading
+        import ifc_viewproviders
+
+        doc = FreeCAD.ActiveDocument
+        if get_filepath(doc):
+            ifc_tools.save(doc)
+            gdoc = FreeCADGui.getDocument(doc.Name)
+            try:
+                gdoc.Modified = False
+            except:
+                pass
+
+
 def get_commands():
     """Returns a list of IFC commands"""
 
@@ -220,3 +255,4 @@ FreeCADGui.addCommand("IFC_Expand", IFC_Expand())
 FreeCADGui.addCommand("IFC_ConvertDocument", IFC_ConvertDocument())
 FreeCADGui.addCommand("IFC_MakeProject", IFC_MakeProject())
 FreeCADGui.addCommand("IFC_Save", IFC_Save())
+FreeCADGui.addCommand("IFC_SaveAs", IFC_SaveAs())
