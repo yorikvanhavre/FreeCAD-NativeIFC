@@ -234,7 +234,7 @@ class IFC_SaveAs:
         import ifc_viewproviders
 
         doc = FreeCAD.ActiveDocument
-        if get_filepath(doc):
+        if ifc_viewproviders.get_filepath(doc):
             ifc_tools.save(doc)
             gdoc = FreeCADGui.getDocument(doc.Name)
             try:
