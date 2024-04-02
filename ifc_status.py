@@ -94,14 +94,21 @@ def toggle_lock(checked=False):
 def set_button(lock_button, checked):
     """Sets the lock button"""
 
+    from PySide import QtGui  # lazy loading
+
+    path = os.path.dirname(os.path.dirname(__file__))
     if checked:
         lock_button.setChecked(True)
-        lock_button.setText("🔒")
         lock_button.setToolTip(text_on)
+        icon = QtGui.QIcon(os.path.join(path, "icons", "IFC.svg"))
+        lock_button.setIcon(icon)
     else:
         lock_button.setChecked(False)
-        lock_button.setText(" ")
         lock_button.setToolTip(text_off)
+        image = QtGui.QImage(os.path.join(path, "icons", "IFC.svg"))
+        grayscale = image.convertToFormat(QtGui.QImage.Format_Grayscale8)
+        icon = QIcon(QtGui.QPixmap.fromImage(grayscale))
+        lock_button.setIcon(icon)
 
 
 def do_lock(checked):

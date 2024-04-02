@@ -201,6 +201,11 @@ class IFC_Save:
 
         doc = FreeCAD.ActiveDocument
         ifc_tools.save(doc)
+        gdoc = FreeCADGui.getDocument(doc.Name)
+        try:
+            gdoc.Modified = False
+        except:
+            pass
 
 
 def get_commands():

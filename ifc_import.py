@@ -41,6 +41,8 @@ params = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Mod/NativeIFC")
 def open(filename):
     """Opens an IFC file"""
 
+    from PySide import QtCore  # lazy loading
+
     name = os.path.splitext(os.path.basename(filename))[0]
     FreeCAD.IsOpeningIFC = True
     doc = FreeCAD.newDocument()
@@ -48,6 +50,7 @@ def open(filename):
     FreeCAD.setActiveDocument(doc.Name)
     insert(filename, doc.Name, singledoc=True)
     del FreeCAD.IsOpeningIFC
+    QtCore.QTimer.singleShot(100, unset_modified)
     return doc
 
 
@@ -93,7 +96,7 @@ def insert(
         ifc_psets.load_psets(prj_obj)
     document.recompute()
     # print a reference to the IFC file on the console
-    if FreeCAD.GuiUp:
+    if FreeCAD.GuiUp and params.GetBool("IfcFileToConsole", False):
         if isinstance(prj_obj, FreeCAD.DocumentObject):
             pstr = "FreeCAD.getDocument('{}').{}.Proxy.ifcfile"
             pstr = pstr.format(prj_obj.Document.Name, prj_obj.Name)
@@ -206,3 +209,10 @@ def toggle_lock_on():
 def toggle_lock_off():
 
     ifc_status.toggle_lock(False)
+
+def unset_modified():
+
+    try:
+        FreeCADGui.ActiveDocument.Modified = False
+    except:
+        pass
