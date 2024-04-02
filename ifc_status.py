@@ -107,7 +107,9 @@ def set_button(lock_button, checked):
         lock_button.setToolTip(text_off)
         image = QtGui.QImage(os.path.join(path, "icons", "IFC.svg"))
         grayscale = image.convertToFormat(QtGui.QImage.Format_Grayscale8)
-        icon = QIcon(QtGui.QPixmap.fromImage(grayscale))
+        grayscale = grayscale.convertToFormat(image.format())
+        grayscale.setAlphaChannel(image)
+        icon = QtGui.QIcon(QtGui.QPixmap.fromImage(grayscale))
         lock_button.setIcon(icon)
 
 
@@ -130,6 +132,7 @@ def unlock_document():
         # this is a locked document
         doc.openTransaction("Unlock document")
         children = [o for o in doc.Objects if not o.InList]
+        project = None
         if children:
             project = ifc_tools.create_document_object(
                 doc, filename=doc.IfcFilePath, silent=True
@@ -139,7 +142,8 @@ def unlock_document():
         props += [p for p in doc.PropertiesList if doc.getGroupOfProperty(p) == "IFC"]
         for prop in props:
             doc.removeProperty(prop)
-        project.Modified = True
+        if project:
+            project.Modified = True
         doc.commitTransaction()
         doc.recompute()
 
