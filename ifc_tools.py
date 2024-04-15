@@ -880,6 +880,8 @@ def set_placement(obj):
     ifcfile = get_ifcfile(obj)
     if not ifcfile:
         print("DEBUG: No ifc file for object", obj.Label, "Aborting")
+    if obj.Class in ["IfcProject", "IfcProjectLibrary"]:
+        return
     element = get_ifc_element(obj)
     placement = FreeCAD.Placement(obj.Placement)
     placement.Base = FreeCAD.Vector(placement.Base).multiply(get_scale(ifcfile))
