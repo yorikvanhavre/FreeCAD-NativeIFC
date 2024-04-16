@@ -49,7 +49,7 @@ Typically a user should be able to fire up FreeCAD and start throwing ideas and 
   1. There is no object in the document, or only IFC objects. Locking and unlocking happens with no needed user interaction
   2. There are non-IFC objects in the document and the user wants to lock the file. The non-IFC objects are converted. This is fully undoable. [b739b77](https://github.com/yorikvanhavre/FreeCAD-NativeIFC/commit/b739b77a7068fe80c92481c519cafa9fb9b76431)
 - [x] **Handle project creation**: At some point along the project development, users typically want to "go IFC". They should be halted, be asked which IFC version they want to use, and if they want to work in a locked or unlocked environment. [18dc454](https://github.com/yorikvanhavre/FreeCAD-NativeIFC/commit/18dc454694b70e61cdfbfa6452acc3f5f161ca5a#)
-- [ ] Create an **advanced external reference object**, that is able to handle not only FreeCAD files but also IFC files and possibly other formats too, such as DXF or mesh formats like OBJ, if possible, based on [App::Link](https://wiki.freecad.org/App_Link) structure.
+- [x] Create an **advanced external reference object**, that is able to handle not only FreeCAD files but also IFC files and possibly other formats too, such as DXF or mesh formats like OBJ, if possible, based on [App::Link](https://wiki.freecad.org/App_Link) structure. *Update* Using App::Links has been deemed useless because it wouldn't help with other file formats, and mesh formats have been left out because there is no point in using them in a Reference object, better use the Mesh importer directly. [7d098e4803](https://github.com/FreeCAD/FreeCAD/pull/13287)
 
 ### 3. Add and modify objects
 
