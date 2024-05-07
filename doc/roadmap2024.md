@@ -141,9 +141,9 @@ There is however no more advantages to have these different modules separated. T
 ##### What needs to be done
 
 - [ ] Design a reliable **IfcOpenShell download system** so users can verify, download and update their version of IfcOpenShell
-- [ ] **Retire the Arch workbench**, keep the object structure for backwards compatibility
-- [ ] **Move all Arch tools to BIM**
-- [ ] **Merge NativeIFC**
+- [x] **Retire the Arch workbench**, keep the object structure for backwards compatibility [#13783](https://github.com/FreeCAD/FreeCAD/pull/13783)
+- [x] **Move all Arch tools to BIM** [#13783](https://github.com/FreeCAD/FreeCAD/pull/13783)
+- [x] **Merge NativeIFC** [#13783](https://github.com/FreeCAD/FreeCAD/pull/13783)
 - [ ] **Redesign the BIM workbench toolbars** to occupy less space
 - [ ] **Design a better new project wizard** that supports NativeIFC, and allows to be called anytime during the project development
 - [ ] **Design a better views manager** that integrates more seamlessly in the FreeCAD interface and tree workflow, and allows for easy 3D/2D view switch
