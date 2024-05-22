@@ -140,7 +140,7 @@ There is however no more advantages to have these different modules separated. T
 
 ##### What needs to be done
 
-- [ ] Design a reliable **IfcOpenShell download system** so users can verify, download and update their version of IfcOpenShell
+- [x] Design a reliable **IfcOpenShell download system** so users can verify, download and update their version of IfcOpenShell [bd143fe](https://github.com/FreeCAD/FreeCAD/commit/bd143feae20f97203e9d0526a46706da1150326e)
 - [x] **Retire the Arch workbench**, keep the object structure for backwards compatibility [#13783](https://github.com/FreeCAD/FreeCAD/pull/13783)
 - [x] **Move all Arch tools to BIM** [#13783](https://github.com/FreeCAD/FreeCAD/pull/13783)
 - [x] **Merge NativeIFC** [#13783](https://github.com/FreeCAD/FreeCAD/pull/13783)
