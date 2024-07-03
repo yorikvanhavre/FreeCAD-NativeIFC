@@ -2,6 +2,8 @@
 
 ![FreeCAD screenshot](doc/images/main.jpg)
 
+### NOTE: Starting from FreeCAD 1.0, NativeIFC is integrated in the BIM workbench. There is no need to install anything more
+
 This project implements [NativeIFC](https://github.com/brunopostle/ifcmerge/blob/main/docs/whitepaper.rst) concept into [FreeCAD](https://freecad.org). It allows FreeCAD users to open, manipulate and create [IFC](https://en.wikipedia.org/wiki/Industry_Foundation_Classes) files natively in FreeCAD.
 
 Although FreeCAD already supports opening and saving IFC files through the [Arch workbench](https://wiki.freecad.org/Arch_Workbench), it does so, like most other BIM applications, by translating to and from the IFC file format and FreeCAD's internal data model. This means two translations, one when opening and another one when saving, which cause a) data loss, and b) a complete rewrite of the file, which turns it unsuitable for [version control systems](https://en.wikipedia.org/wiki/Version_control) like [Git](https://en.wikipedia.org/wiki/Git).
