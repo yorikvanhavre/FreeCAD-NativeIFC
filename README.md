@@ -2,7 +2,9 @@
 
 ![FreeCAD screenshot](doc/images/main.jpg)
 
-### NOTE: Starting from FreeCAD 1.0, NativeIFC is integrated in the BIM workbench. There is no need to install anything more
+### NOTE: Starting from FreeCAD 1.0, NativeIFC is integrated in the BIM workbench. There is no need to install anything more.
+
+**Read more at https://wiki.freecad.org/NativeIFC**
 
 This project implements [NativeIFC](https://github.com/brunopostle/ifcmerge/blob/main/docs/whitepaper.rst) concept into [FreeCAD](https://freecad.org). It allows FreeCAD users to open, manipulate and create [IFC](https://en.wikipedia.org/wiki/Industry_Foundation_Classes) files natively in FreeCAD.
 
