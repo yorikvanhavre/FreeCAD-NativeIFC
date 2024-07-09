@@ -144,7 +144,7 @@ There is however no more advantages to have these different modules separated. T
 - [x] **Retire the Arch workbench**, keep the object structure for backwards compatibility [#13783](https://github.com/FreeCAD/FreeCAD/pull/13783)
 - [x] **Move all Arch tools to BIM** [#13783](https://github.com/FreeCAD/FreeCAD/pull/13783)
 - [x] **Merge NativeIFC** [#13783](https://github.com/FreeCAD/FreeCAD/pull/13783)
-- [ ] **Redesign the BIM workbench toolbars** to occupy less space
+- [x] **Redesign the BIM workbench toolbars** to occupy less space [#14087](https://github.com/FreeCAD/FreeCAD/pull/14087)
 - [ ] **Design a better new project wizard** that supports NativeIFC, and allows to be called anytime during the project development
 - [ ] **Design a better views manager** that integrates more seamlessly in the FreeCAD interface and tree workflow, and allows for easy 3D/2D view switch
 - [ ] **Redesign icons** that indicate the basic IFC type and indicate if the geometry is shared or not
@@ -158,4 +158,4 @@ A good documentation is fundamental for an efficient workflow and an easier lear
 - [ ] Enumerate, verify, harmonize and update all the **documentation of available BIM tools**
 - [ ] Provide a quality **NativeIFC workflow tutorial**
 - [ ] Provide a quality **Hybrid (FreeCAD + IFC) workflow tutorial**
-- [ ] Rebuild built-in **example models** of a detail, a house, and a larger structure (concrete/metal structure)
+- [x] Rebuild built-in **example models**: a basic BIM project with structure, section planes and 2D sheets [#14937](https://github.com/FreeCAD/FreeCAD/pull/14937)
