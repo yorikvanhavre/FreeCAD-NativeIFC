@@ -29,11 +29,11 @@ Opening existing IFC files typically should "just work". The IFC file contains e
 - [x] A **lock system** should be put in place to allow two different scenarios:     
   1. The user wants to work strictly with IFC objects (strict mode) or 
   2. The user wants to mix IFC and non-IFC (FreeCAD-only) objects (hybrid mode). 
-     The user should be able to change between the two modes at any moment in the project development. [b739b77](https://github.com/yorikvanhavre/FreeCAD-NativeIFC/commit/b739b77a7068fe80c92481c519cafa9fb9b76431)
-- [x] A better **display mode** that allows to load all files the same, fastest way. That display mode should handle edges and transparency properly, so there is visually no more need to load the object shapes (heavy) on file load. [dc85ff6](https://github.com/yorikvanhavre/FreeCAD-NativeIFC/commit/dc85ff6123d44e4c773ddad7182f2ed4193a2711) - [37e3d2c](https://github.com/yorikvanhavre/FreeCAD-NativeIFC/commit/37e3d2c2a02ee049891540898923353da94ba346) - [3ff1715](https://github.com/yorikvanhavre/FreeCAD-NativeIFC/commit/3ff1715802d582e4f1c722e8c4010ca10733b80d)
-- [x] An automatic **shape loading mechanism** that seamlessly loads object shapes and geometric properties when needed, for example when they are selected or being edited. [b382938](https://github.com/yorikvanhavre/FreeCAD-NativeIFC/commit/b382938e9facfed61befb644d8d8b7b185d3babe)
-- [x] **Remove the file loading dialog**. All options set in that dialog should be settable at any time later by the user. [a64871a](https://github.com/yorikvanhavre/FreeCAD-NativeIFC/commit/a64871adb06a60b52ff1ccf1b48413731ad4a58c)
-- [x] Integrate both **FreeCAD and IFC save mechanisms** so a user can just press "Save". [18dc454](https://github.com/yorikvanhavre/FreeCAD-NativeIFC/commit/18dc454694b70e61cdfbfa6452acc3f5f161ca5a) - [e996f86](https://github.com/yorikvanhavre/FreeCAD-NativeIFC/commit/e996f86fed6c144b9af6c18037e76717ea9d56dc)
+     The user should be able to change between the two modes at any moment in the project development. [b739b77](https://github.com/yorikvanhavre/FreeCAD-NativeIFC/commit/b739b77a7068fe80c92481c519cafa9fb9b76431) - [blog](https://yorik.uncreated.net/blog/2024-003-freecad-news-17)
+- [x] A better **display mode** that allows to load all files the same, fastest way. That display mode should handle edges and transparency properly, so there is visually no more need to load the object shapes (heavy) on file load. [dc85ff6](https://github.com/yorikvanhavre/FreeCAD-NativeIFC/commit/dc85ff6123d44e4c773ddad7182f2ed4193a2711) - [37e3d2c](https://github.com/yorikvanhavre/FreeCAD-NativeIFC/commit/37e3d2c2a02ee049891540898923353da94ba346) - [3ff1715](https://github.com/yorikvanhavre/FreeCAD-NativeIFC/commit/3ff1715802d582e4f1c722e8c4010ca10733b80d) - [blog](https://yorik.uncreated.net/blog/2024-002-freecad-news-16)
+- [x] An automatic **shape loading mechanism** that seamlessly loads object shapes and geometric properties when needed, for example when they are selected or being edited. [b382938](https://github.com/yorikvanhavre/FreeCAD-NativeIFC/commit/b382938e9facfed61befb644d8d8b7b185d3babe) - [blog](https://yorik.uncreated.net/blog/2024-002-freecad-news-16)
+- [x] **Remove the file loading dialog**. All options set in that dialog should be settable at any time later by the user. [a64871a](https://github.com/yorikvanhavre/FreeCAD-NativeIFC/commit/a64871adb06a60b52ff1ccf1b48413731ad4a58c) - [blog](https://yorik.uncreated.net/blog/2024-004-freecad-news-18)
+- [x] Integrate both **FreeCAD and IFC save mechanisms** so a user can just press "Save". [18dc454](https://github.com/yorikvanhavre/FreeCAD-NativeIFC/commit/18dc454694b70e61cdfbfa6452acc3f5f161ca5a) - [e996f86](https://github.com/yorikvanhavre/FreeCAD-NativeIFC/commit/e996f86fed6c144b9af6c18037e76717ea9d56dc) - [blog](https://yorik.uncreated.net/blog/2024-004-freecad-news-18)
 
 ### 2. Creating files from scratch, and attach existing files
 
@@ -47,9 +47,9 @@ Typically a user should be able to fire up FreeCAD and start throwing ideas and 
 
 - [x] **Refine the lock system** so it handles the following scenarios: 
   1. There is no object in the document, or only IFC objects. Locking and unlocking happens with no needed user interaction
-  2. There are non-IFC objects in the document and the user wants to lock the file. The non-IFC objects are converted. This is fully undoable. [b739b77](https://github.com/yorikvanhavre/FreeCAD-NativeIFC/commit/b739b77a7068fe80c92481c519cafa9fb9b76431)
-- [x] **Handle project creation**: At some point along the project development, users typically want to "go IFC". They should be halted, be asked which IFC version they want to use, and if they want to work in a locked or unlocked environment. [18dc454](https://github.com/yorikvanhavre/FreeCAD-NativeIFC/commit/18dc454694b70e61cdfbfa6452acc3f5f161ca5a#)
-- [x] Create an **advanced external reference object**, that is able to handle not only FreeCAD files but also IFC files and possibly other formats too, such as DXF or mesh formats like OBJ, if possible, based on [App::Link](https://wiki.freecad.org/App_Link) structure. *Update* Using App::Links has been deemed useless because it wouldn't help with other file formats, and mesh formats have been left out because there is no point in using them in a Reference object, better use the Mesh importer directly. [7d098e4803](https://github.com/FreeCAD/FreeCAD/pull/13287)
+  2. There are non-IFC objects in the document and the user wants to lock the file. The non-IFC objects are converted. This is fully undoable. [b739b77](https://github.com/yorikvanhavre/FreeCAD-NativeIFC/commit/b739b77a7068fe80c92481c519cafa9fb9b76431) [blog](https://yorik.uncreated.net/blog/2024-004-freecad-news-18)
+- [x] **Handle project creation**: At some point along the project development, users typically want to "go IFC". They should be halted, be asked which IFC version they want to use, and if they want to work in a locked or unlocked environment. [18dc454](https://github.com/yorikvanhavre/FreeCAD-NativeIFC/commit/18dc454694b70e61cdfbfa6452acc3f5f161ca5a#) [blog](https://yorik.uncreated.net/blog/2024-005-freecad-news-19)
+- [x] Create an **advanced external reference object**, that is able to handle not only FreeCAD files but also IFC files and possibly other formats too, such as DXF or mesh formats like OBJ, if possible, based on [App::Link](https://wiki.freecad.org/App_Link) structure. *Update* Using App::Links has been deemed useless because it wouldn't help with other file formats, and mesh formats have been left out because there is no point in using them in a Reference object, better use the Mesh importer directly. [7d098e4803](https://github.com/FreeCAD/FreeCAD/pull/13287) [blog](https://yorik.uncreated.net/blog/2024-005-freecad-news-19)
 
 ### 3. Add and modify objects
 
@@ -140,11 +140,11 @@ There is however no more advantages to have these different modules separated. T
 
 ##### What needs to be done
 
-- [x] Design a reliable **IfcOpenShell download system** so users can verify, download and update their version of IfcOpenShell [bd143fe](https://github.com/FreeCAD/FreeCAD/commit/bd143feae20f97203e9d0526a46706da1150326e)
-- [x] **Retire the Arch workbench**, keep the object structure for backwards compatibility [#13783](https://github.com/FreeCAD/FreeCAD/pull/13783)
-- [x] **Move all Arch tools to BIM** [#13783](https://github.com/FreeCAD/FreeCAD/pull/13783)
-- [x] **Merge NativeIFC** [#13783](https://github.com/FreeCAD/FreeCAD/pull/13783)
-- [x] **Redesign the BIM workbench toolbars** to occupy less space [#14087](https://github.com/FreeCAD/FreeCAD/pull/14087)
+- [x] Design a reliable **IfcOpenShell download system** so users can verify, download and update their version of IfcOpenShell [bd143fe](https://github.com/FreeCAD/FreeCAD/commit/bd143feae20f97203e9d0526a46706da1150326e) - [blog](https://yorik.uncreated.net/blog/2024-007-freecad-news-21)
+- [x] **Retire the Arch workbench**, keep the object structure for backwards compatibility [#13783](https://github.com/FreeCAD/FreeCAD/pull/13783)  - [blog](https://yorik.uncreated.net/blog/2024-007-freecad-news-21)
+- [x] **Move all Arch tools to BIM** [#13783](https://github.com/FreeCAD/FreeCAD/pull/13783) - [blog](https://yorik.uncreated.net/blog/2024-007-freecad-news-21)
+- [x] **Merge NativeIFC** [#13783](https://github.com/FreeCAD/FreeCAD/pull/13783) [blog](https://yorik.uncreated.net/blog/2024-007-freecad-news-21)
+- [x] **Redesign the BIM workbench toolbars** to occupy less space [#14087](https://github.com/FreeCAD/FreeCAD/pull/14087) - [blog](https://yorik.uncreated.net/blog/2024-008-frreecad-news-22)
 - [ ] **Design a better new project wizard** that supports NativeIFC, and allows to be called anytime during the project development
 - [ ] **Design a better views manager** that integrates more seamlessly in the FreeCAD interface and tree workflow, and allows for easy 3D/2D view switch
 - [ ] **Redesign icons** that indicate the basic IFC type and indicate if the geometry is shared or not
