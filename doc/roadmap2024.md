@@ -143,11 +143,11 @@ There is however no more advantages to have these different modules separated. T
 - [x] Design a reliable **IfcOpenShell download system** so users can verify, download and update their version of IfcOpenShell [bd143fe](https://github.com/FreeCAD/FreeCAD/commit/bd143feae20f97203e9d0526a46706da1150326e) - [blog](https://yorik.uncreated.net/blog/2024-007-freecad-news-21)
 - [x] **Retire the Arch workbench**, keep the object structure for backwards compatibility [#13783](https://github.com/FreeCAD/FreeCAD/pull/13783)  - [blog](https://yorik.uncreated.net/blog/2024-007-freecad-news-21)
 - [x] **Move all Arch tools to BIM** [#13783](https://github.com/FreeCAD/FreeCAD/pull/13783) - [blog](https://yorik.uncreated.net/blog/2024-007-freecad-news-21)
-- [x] **Merge NativeIFC** [#13783](https://github.com/FreeCAD/FreeCAD/pull/13783) [blog](https://yorik.uncreated.net/blog/2024-007-freecad-news-21)
+- [x] **Merge NativeIFC** [#13783](https://github.com/FreeCAD/FreeCAD/pull/13783) - [blog](https://yorik.uncreated.net/blog/2024-007-freecad-news-21)
 - [x] **Redesign the BIM workbench toolbars** to occupy less space [#14087](https://github.com/FreeCAD/FreeCAD/pull/14087) - [blog](https://yorik.uncreated.net/blog/2024-008-frreecad-news-22)
 - [ ] **Design a better new project wizard** that supports NativeIFC, and allows to be called anytime during the project development
 - [ ] **Design a better views manager** that integrates more seamlessly in the FreeCAD interface and tree workflow, and allows for easy 3D/2D view switch
-- [ ] **Redesign icons** that indicate the basic IFC type and indicate if the geometry is shared or not
+- [x] **Redesign icons** that indicate the basic IFC type and indicate if the geometry is shared or not [#14959](https://github.com/FreeCAD/FreeCAD/pull/14959)
 
 ### 9. Documentation and tutorials
 
