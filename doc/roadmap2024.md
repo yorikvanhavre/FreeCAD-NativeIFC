@@ -146,7 +146,7 @@ There is however no more advantages to have these different modules separated. T
 - [x] **Merge NativeIFC** [#13783](https://github.com/FreeCAD/FreeCAD/pull/13783) - [blog](https://yorik.uncreated.net/blog/2024-007-freecad-news-21)
 - [x] **Redesign the BIM workbench toolbars** to occupy less space [#14087](https://github.com/FreeCAD/FreeCAD/pull/14087) - [blog](https://yorik.uncreated.net/blog/2024-008-frreecad-news-22)
 - [ ] **Design a better new project wizard** that supports NativeIFC, and allows to be called anytime during the project development
-- [ ] **Design a better views manager** that integrates more seamlessly in the FreeCAD interface and tree workflow, and allows for easy 3D/2D view switch
+- [x] **Design a better views manager** that integrates more seamlessly in the FreeCAD interface and tree workflow, and allows for easy 3D/2D view switch [#15836](https://github.com/FreeCAD/FreeCAD/pull/15836) - [blog](https://yorik.uncreated.net/blog/2024-009-frreecad-news-23)
 - [x] **Redesign icons** that indicate the basic IFC type and indicate if the geometry is shared or not [#14959](https://github.com/FreeCAD/FreeCAD/pull/14959)
 
 ### 9. Documentation and tutorials
