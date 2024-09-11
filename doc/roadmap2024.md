@@ -158,4 +158,4 @@ A good documentation is fundamental for an efficient workflow and an easier lear
 - [ ] Enumerate, verify, harmonize and update all the **documentation of available BIM tools**
 - [ ] Provide a quality **NativeIFC workflow tutorial**
 - [ ] Provide a quality **Hybrid (FreeCAD + IFC) workflow tutorial**
-- [x] Rebuild built-in **example models**: a basic BIM project with structure, section planes and 2D sheets [#14937](https://github.com/FreeCAD/FreeCAD/pull/14937) - [#15443](https://github.com/FreeCAD/FreeCAD/pull/15443)
+- [x] Rebuild built-in **example models**: a basic BIM project with structure, section planes and 2D sheets [#14937](https://github.com/FreeCAD/FreeCAD/pull/14937) - [#15443](https://github.com/FreeCAD/FreeCAD/pull/15443) - [310b7ff](https://github.com/yorikvanhavre/FreeCAD-BIM-examples/commit/310b7ffc78c729be5a77e1e4845366ecf69687bf)
