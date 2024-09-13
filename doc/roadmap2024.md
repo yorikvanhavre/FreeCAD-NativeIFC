@@ -145,9 +145,9 @@ There is however no more advantages to have these different modules separated. T
 - [x] **Move all Arch tools to BIM** [#13783](https://github.com/FreeCAD/FreeCAD/pull/13783) - [blog](https://yorik.uncreated.net/blog/2024-007-freecad-news-21)
 - [x] **Merge NativeIFC** [#13783](https://github.com/FreeCAD/FreeCAD/pull/13783) - [blog](https://yorik.uncreated.net/blog/2024-007-freecad-news-21)
 - [x] **Redesign the BIM workbench toolbars** to occupy less space [#14087](https://github.com/FreeCAD/FreeCAD/pull/14087) - [blog](https://yorik.uncreated.net/blog/2024-008-frreecad-news-22)
-- [ ] **Design a better new project wizard** that supports NativeIFC, and allows to be called anytime during the project development
+- [ ] **Design a better new project wizard** that supports NativeIFC, and allows to be called anytime during the project development. This is postponed because the project wizard creates many 2D elements, so this will be done after item 6.1 (2D support), so we can have a better, proper system that works equally in both IFC/non-IFC modes.
 - [x] **Design a better views manager** that integrates more seamlessly in the FreeCAD interface and tree workflow, and allows for easy 3D/2D view switch [#15836](https://github.com/FreeCAD/FreeCAD/pull/15836) - [blog](https://yorik.uncreated.net/blog/2024-009-frreecad-news-23)
-- [x] **Redesign icons** that indicate the basic IFC type and indicate if the geometry is shared or not [#14959](https://github.com/FreeCAD/FreeCAD/pull/14959)
+- [x] **Redesign icons** that indicate the basic IFC type and indicate if the geometry is shared or not [#14959](https://github.com/FreeCAD/FreeCAD/pull/14959) - [blog](https://yorik.uncreated.net/blog/2024-010-freecad-news-24)
 
 ### 9. Documentation and tutorials
 
@@ -158,4 +158,4 @@ A good documentation is fundamental for an efficient workflow and an easier lear
 - [ ] Enumerate, verify, harmonize and update all the **documentation of available BIM tools**
 - [ ] Provide a quality **NativeIFC workflow tutorial**
 - [ ] Provide a quality **Hybrid (FreeCAD + IFC) workflow tutorial**
-- [x] Rebuild built-in **example models**: a basic BIM project with structure, section planes and 2D sheets [#14937](https://github.com/FreeCAD/FreeCAD/pull/14937) - [#15443](https://github.com/FreeCAD/FreeCAD/pull/15443) - [310b7ff](https://github.com/yorikvanhavre/FreeCAD-BIM-examples/commit/310b7ffc78c729be5a77e1e4845366ecf69687bf)
+- [x] Rebuild built-in **example models**: a basic BIM project with structure, section planes and 2D sheets [#14937](https://github.com/FreeCAD/FreeCAD/pull/14937) - [#15443](https://github.com/FreeCAD/FreeCAD/pull/15443) - [310b7ff](https://github.com/yorikvanhavre/FreeCAD-BIM-examples/commit/310b7ffc78c729be5a77e1e4845366ecf69687bf) - [blog](https://yorik.uncreated.net/blog/2024-010-freecad-news-24)
