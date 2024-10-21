@@ -116,8 +116,8 @@ There is already a well-established and relatively efficient workflow to produce
 
 ##### What needs to be done
 
-- [x] Allow to **store working planes, 2D data and sheets data** inside the IFC model [#16629](https://github.com/FreeCAD/FreeCAD/pull/16629)
-- [x] Design and build a nicer **UX workflow** to produce 2D drawings, based on the current shape2DView -> 2D work -> Techdraw page workflow [#15836](https://github.com/FreeCAD/FreeCAD/pull/15836)
+- [x] Allow to **store working planes, 2D data and sheets data** inside the IFC model [#16629](https://github.com/FreeCAD/FreeCAD/pull/16629) - [blog](https://yorik.uncreated.net/blog/2024-011-freecad-news-25)
+- [x] Design and build a nicer **UX workflow** to produce 2D drawings, based on the current shape2DView -> 2D work -> Techdraw page workflow [#15836](https://github.com/FreeCAD/FreeCAD/pull/15836) = [blog](https://yorik.uncreated.net/blog/2024-011-freecad-news-25)
 
 ### 7. Produce quantity takeoffs and other schedules
 
