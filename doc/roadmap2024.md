@@ -101,9 +101,9 @@ Property sets are a very important feature of the IFC standard. It allows to def
 
 ##### What needs to be done
 
-- [ ] Offer a reliable, documented translation between IFC property types and FreeCAD property types
-- [ ] Offer a nicer interface to add and remove custom properties
-- [ ] Define a clear way to identify IFC-handled property sets
+- [x] Offer a reliable, documented translation between IFC property types and FreeCAD property types - [#18067](https://github.com/FreeCAD/FreeCAD/pull/18067)
+- [x] Offer a nicer interface to add and remove custom properties - [#18067](https://github.com/FreeCAD/FreeCAD/pull/18067)
+- [] Define a clear way to identify IFC-handled property sets - Basically everything is handled except default groups - Needs to be documented
 
 ### 6. Produce 2D drawings (plans, sections, etc)
 
