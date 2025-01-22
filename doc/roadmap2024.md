@@ -85,12 +85,13 @@ Organizing the model and its objects is one of the most fundamental operations n
 
 ##### What needs to be done
 
-- [ ] Support **types**. Types allow any IFC object to reference a type that define some of its properties. Then the individual objects can use the type's attributes or define (override) with their own. This is a fundamental mechanism and should be available throughout the BIM project. One should be able to:
+- [x] Support **types**. Types allow any IFC object to reference a type that define some of its properties. Then the individual objects can use the type's attributes or define (override) with their own. This is a fundamental mechanism and should be available throughout the BIM project. One should be able to:
   1. Design any kind of object and define it as a type
   2. Turn any existing object into a type
   3. Make any IFC object a child of a type
-- [ ] **Handle classification** for IFC objects
-- [ ] **Handle quantity sets** for IFC objects
+  [#18264](https://github.com/FreeCAD/FreeCAD/pull/18264) - [blog](https://yorik.uncreated.net/blog/2025/001-freecad-news-28)
+- [x] **Handle classification** for IFC objects [#18689](https://github.com/FreeCAD/FreeCAD/pull/18689) - [blog](https://yorik.uncreated.net/blog/2025/001-freecad-news-28)
+- [x] **Handle quantity sets** for IFC objects [#18689](https://github.com/FreeCAD/FreeCAD/pull/18689) - [blog](https://yorik.uncreated.net/blog/2025/001-freecad-news-28)
 
 ### 5. View, add and modify properties and property sets
 
@@ -117,7 +118,7 @@ There is already a well-established and relatively efficient workflow to produce
 ##### What needs to be done
 
 - [x] Allow to **store working planes, 2D data and sheets data** inside the IFC model [#16629](https://github.com/FreeCAD/FreeCAD/pull/16629) - [blog](https://yorik.uncreated.net/blog/2024-011-freecad-news-25)
-- [x] Design and build a nicer **UX workflow** to produce 2D drawings, based on the current shape2DView -> 2D work -> Techdraw page workflow [#15836](https://github.com/FreeCAD/FreeCAD/pull/15836) = [blog](https://yorik.uncreated.net/blog/2024-011-freecad-news-25)
+- [x] Design and build a nicer **UX workflow** to produce 2D drawings, based on the current shape2DView -> 2D work -> Techdraw page workflow [#15836](https://github.com/FreeCAD/FreeCAD/pull/15836) - [blog](https://yorik.uncreated.net/blog/2024-011-freecad-news-25)
 
 ### 7. Produce quantity takeoffs and other schedules
 
@@ -125,8 +126,8 @@ It is already possible to extract any kind of data and quantity form any FreeCAD
 
 ##### What needs to be done
 
-- [ ] Support **quantity sets** and design a good workflow to define and handle them in FreeCAD
-- [ ] Design **property set and quantity sets systems** so they can be used to store spreadsheets data
+- [x] Support **quantity sets** and design a good workflow to define and handle them in FreeCAD [#18689](https://github.com/FreeCAD/FreeCAD/pull/18689) - [blog](https://yorik.uncreated.net/blog/2025/001-freecad-news-28)
+- [x] Design **property set and quantity sets systems** so they can be used to store spreadsheets data [#18689](https://github.com/FreeCAD/FreeCAD/pull/18689) - [blog](https://yorik.uncreated.net/blog/2025/001-freecad-news-28)
 
 ### 8. Merge NativeIFC, BIM and Arch
 
